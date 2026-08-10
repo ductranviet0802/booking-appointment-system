@@ -1,0 +1,55 @@
+{
+  "name": "booking-appointment-system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build --webpack",
+    "start": "next start",
+    "lint": "eslint .",
+    "test": "jest --runInBand",
+    "typecheck": "tsc --noEmit",
+    "test:watch": "jest --watch",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:migrate": "node scripts/prisma-with-direct-url.mjs migrate dev",
+    "prisma:migrate:status": "node scripts/prisma-with-direct-url.mjs migrate status",
+    "prisma:migrate:deploy": "node scripts/prisma-with-direct-url.mjs migrate deploy",
+    "prisma:precheck:confirmed-slots": "node scripts/precheck-confirmed-slot-duplicates.mjs",
+    "prisma:seed": "node prisma/seed.js",
+    "seed": "npm run prisma:seed"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "bcrypt": "^6.0.0",
+    "date-fns": "^4.1.0",
+    "jose": "^6.2.2",
+    "jsonwebtoken": "^9.0.3",
+    "next": "16.2.1",
+    "pg": "^8.20.0",
+    "prisma": "^7.6.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.1",
+    "jest": "^30.3.0",
+    "tailwindcss": "^4",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5"
+  }
+}

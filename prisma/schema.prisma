@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELED
+}
+
+model User {
+  id        String    @id @default(uuid()) @db.Uuid
+  email     String    @unique @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  name      String    @db.VarChar(255)
+  phone     String?   @db.VarChar(20)
+  role      UserRole  @default(PATIENT)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  bookings  Booking[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Specialty {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?
+  icon        String?  @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  doctors     Doctor[]
+
+  @@map("specialties")
+}
+
+model Hospital {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String     @db.VarChar(255)
+  address   String?    @db.VarChar(500)
+  phone     String?    @db.VarChar(20)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  locations Location[]
+  doctors   Doctor[]
+
+  @@map("hospitals")
+}
+
+model Location {
+  id         String   @id @default(uuid()) @db.Uuid
+  hospitalId String   @map("hospital_id") @db.Uuid
+  address    String   @db.VarChar(500)
+  city       String   @db.VarChar(100)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@index([hospitalId, city], map: "locations_hospital_id_city_idx")
+  @@map("locations")
+}
+
+model Doctor {
+  id          String     @id @default(uuid()) @db.Uuid
+  specialtyId String     @map("specialty_id") @db.Uuid
+  hospitalId  String     @map("hospital_id") @db.Uuid
+  name        String     @db.VarChar(255)
+  experience  Int
+  rating      Decimal    @default(0.0) @db.Decimal(2, 1)
+  fee         Int
+  description String?
+  avatar      String?    @db.VarChar(500)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  specialty Specialty    @relation(fields: [specialtyId], references: [id])
+  hospital  Hospital     @relation(fields: [hospitalId], references: [id])
+  slots     DoctorSlot[]
+
+  @@index([specialtyId])
+  @@index([hospitalId])
+  @@index([rating])
+  @@index([fee])
+  @@map("doctors")
+}
+
+model DoctorSlot {
+  id        String    @id @default(uuid()) @db.Uuid
+  doctorId  String    @map("doctor_id") @db.Uuid
+  date      DateTime  @db.Date
+  startTime DateTime  @map("start_time") @db.Time(0)
+  endTime   DateTime  @map("end_time") @db.Time(0)
+  isBooked  Boolean   @default(false) @map("is_booked")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  doctor   Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([doctorId, date], map: "doctor_slots_doctor_id_date_idx")
+  @@index([date, isBooked], map: "doctor_slots_date_is_booked_idx")
+  @@map("doctor_slots")
+}
+
+model Booking {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  slotId    String        @map("slot_id") @db.Uuid
+  status    BookingStatus @default(CONFIRMED)
+  notes     String?
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot DoctorSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status], map: "bookings_user_id_status_idx")
+  @@index([userId, createdAt], map: "bookings_user_id_created_at_idx")
+  @@index([slotId], map: "bookings_slot_id_idx")
+  @@map("bookings")
+}
