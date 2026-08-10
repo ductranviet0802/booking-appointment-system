@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export default async function DoctorDetailPage({
   params,
