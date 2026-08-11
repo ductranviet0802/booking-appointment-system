@@ -83,7 +83,6 @@ Seed sẽ tạo:
 - 12 specialties
 - 4 hospitals
 - 25 doctors
-- admin user (`ductv7` / `Admin1234`)
 - ~12,000 slots trong 30 ngày (09:00-17:00, mỗi 30 phút)
 - sample bookings cho trạng thái CONFIRMED/CANCELED
 

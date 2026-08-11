@@ -1,6 +1,20 @@
 import { ApiError } from "@/lib/errors";
 import type { NextRequest } from "next/server";
 
+// Behind a reverse proxy (Caddy) the app is reached over plain HTTP internally
+// even though the public site is HTTPS, so `request.nextUrl.origin` reports
+// the wrong protocol/host. Reconstruct the public-facing origin from
+// X-Forwarded-Proto/Host (set by Caddy) when present. Safe to trust here
+// because the app container is not reachable except via the proxy on the
+// shared Docker network (no public host port).
+function currentOrigin(request: NextRequest) {
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const protocol = forwardedProto || request.nextUrl.protocol.replace(":", "");
+  const host = forwardedHost || request.nextUrl.host;
+  return `${protocol}://${host}`;
+}
+
 function sameOrigin(request: NextRequest, candidate: string | null) {
   if (!candidate) {
     return false;
@@ -8,7 +22,7 @@ function sameOrigin(request: NextRequest, candidate: string | null) {
 
   try {
     const incoming = new URL(candidate);
-    return incoming.origin === request.nextUrl.origin;
+    return incoming.origin === currentOrigin(request);
   } catch {
     return false;
   }

@@ -3,7 +3,7 @@ import { DoctorCard } from "@/components/DoctorCard";
 import { Card } from "@/components/ui/Card";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [specialties, featuredDoctors] = await Promise.all([
