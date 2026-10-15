@@ -1,15 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5faff;
-  --foreground: #0f172a;
+  --background: #f4f9ff;
+  --foreground: #0f1c2e;
   --surface: #ffffff;
-  --surface-muted: #f4f7fb;
-  --border: #d6e2ee;
-  --primary: #0d9488;
-  --primary-soft: #ecfeff;
-  --shadow-soft: 0 12px 30px -22px rgba(15, 23, 42, 0.45);
-  --shadow-medium: 0 18px 38px -24px rgba(20, 71, 84, 0.38);
+  --surface-muted: #eef6ff;
+  --border: #d9e7f5;
+  --primary: #0094ff;
+  --primary-dark: #0077d4;
+  --mint: #b7f0dc;
+  --primary-soft: #e7f5ff;
+  --shadow-soft: 0 18px 40px -28px rgba(15, 59, 96, 0.36);
+  --shadow-medium: 0 24px 52px -28px rgba(15, 59, 96, 0.35);
   --font-app-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-app-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
@@ -23,16 +25,14 @@
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(167, 243, 208, 0.36), transparent 48%),
-    radial-gradient(circle at 90% 10%, rgba(191, 219, 254, 0.5), transparent 45%),
-    linear-gradient(180deg, #f8fbff 0%, var(--background) 100%);
+    radial-gradient(circle at 12% 0%, rgba(183, 240, 220, 0.36), transparent 33%),
+    radial-gradient(circle at 90% 8%, rgba(147, 218, 255, 0.35), transparent 34%),
+    linear-gradient(180deg, #fbfdff 0%, var(--background) 100%);
+  background-repeat: no-repeat;
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-app-sans);
   line-height: 1.5;
-}
-
-a {
-  color: inherit;
 }
 
 * {
@@ -40,19 +40,78 @@ a {
 }
 
 ::selection {
-  background: rgba(20, 184, 166, 0.24);
+  background: rgba(0, 148, 255, 0.22);
+}
+
+h1, h2 {
+  letter-spacing: -0.025em;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+h3, h4 {
+  letter-spacing: -0.025em;
+}
+
+/* Shared visual language for the existing Tailwind markup. */
+.home-hero-grid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+}
+
+.hero-illustration {
+  position: relative;
+  min-height: 250px;
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, rgba(224, 244, 255, .9), rgba(231, 251, 242, .78));
+  overflow: hidden;
+}
+
+.hero-illustration::before,
+.hero-illustration::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(0, 148, 255, .12);
+}
+
+.hero-illustration::before { width: 180px; height: 180px; right: -42px; top: -48px; }
+.hero-illustration::after { width: 120px; height: 120px; left: -35px; bottom: -42px; background: rgba(55, 205, 147, .18); }
+
+.hero-illustration svg { position: absolute; inset: 0; width: 100%; height: 100%; padding: 1.4rem; }
+
+.section-kicker { color: var(--primary-dark); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+
+.auth-visual { min-height: 390px; background: radial-gradient(circle at 85% 16%, rgba(0, 148, 255, .45), transparent 28%), linear-gradient(145deg, #0f1c2e, #143b58); }
+
+.booking-form-layout > h1 { grid-column: 1 / -1; }
+
+@media (min-width: 900px) {
+  .booking-form-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr); align-items: start; column-gap: 1.5rem; row-gap: 1.25rem; }
+  .booking-form-layout > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+  .booking-form-card, .booking-confirmation-card { height: 100%; }
+}
+
+@media (min-width: 768px) {
+  .home-hero-grid { grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr); }
+}
+
+@media (max-width: 640px) {
+  .hero-illustration { min-height: 190px; }
 }
 
 .surface-card {
   background: color-mix(in srgb, var(--surface) 94%, #eff9ff 6%);
   border: 1px solid color-mix(in srgb, var(--border) 70%, white 30%);
   box-shadow: var(--shadow-soft);
+  border-radius: 1.25rem;
 }
 
 .surface-card-strong {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.98));
   border: 1px solid color-mix(in srgb, var(--border) 76%, white 24%);
   box-shadow: var(--shadow-medium);
+  border-radius: 1.75rem;
 }
 
 @keyframes fade-up {

@@ -109,6 +109,24 @@ npm run test
 npm run lint
 ```
 
+### Playwright E2E
+
+```bash
+npx playwright install chromium firefox webkit
+npm run test:e2e
+npm run test:e2e:report
+```
+
+Bộ E2E chạy trên Chromium, Firefox, WebKit và Mobile Chrome. Mỗi lần chạy tự khởi tạo PostgreSQL tạm trên localhost, áp dụng migrations, tạo dữ liệu mẫu và khởi động ứng dụng ở cổng `3217`. Các thao tác đăng ký, đặt và hủy lịch đi qua API thật trên database tạm này; `DATABASE_URL` của môi trường không được dùng. Database tạm được dừng và xóa khi server kiểm thử kết thúc. Cần để cổng `3217` trống hoặc đặt `E2E_PORT` sang cổng khác.
+
+Kiểm thử bao gồm tìm kiếm/bộ lọc, xác thực, toàn bộ vòng đời booking, trạng thái lỗi API và bố cục ở các chiều rộng 390/768/1440px. Mock chỉ dùng cho các trạng thái lỗi/loading; luồng booking thành công sử dụng API và database thật. Screenshot, video và trace được lưu trong `test-results/` khi lỗi; báo cáo HTML ở `playwright-report/`. Ảnh kiểm tra bố cục được lưu cùng kết quả test, không dùng giao diện cũ làm chuẩn pixel cho thiết kế mới.
+
+Chạy riêng một trình duyệt:
+
+```bash
+npm run test:e2e -- --project=chromium
+```
+
 ## API health
 
 ```bash

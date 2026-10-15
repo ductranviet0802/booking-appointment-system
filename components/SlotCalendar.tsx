@@ -26,8 +26,8 @@ export function SlotCalendar({
             type="button"
             className={`min-h-11 rounded-xl border px-3 py-2 text-left text-sm transition duration-200 ${
               active
-                ? "border-teal-500 bg-teal-50 text-teal-700 shadow-[0_10px_20px_-18px_rgba(20,184,166,0.9)]"
-                : "border-zinc-300 bg-white text-zinc-700 hover:-translate-y-0.5 hover:border-teal-300 hover:bg-teal-50/40"
+                ? "border-sky-500 bg-sky-50 text-sky-700 shadow-[0_10px_20px_-18px_rgba(0,148,255,0.9)]"
+                : "border-sky-100 bg-white text-zinc-700 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50/40"
             }`}
             onClick={() => onSelect(value)}
           >

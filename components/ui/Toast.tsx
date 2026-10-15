@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={cn(
               "animate-fade-up pointer-events-auto flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium text-white shadow-[0_16px_32px_-20px_rgba(15,23,42,0.85)] backdrop-blur",
               item.tone === "success"
-                ? "border-emerald-400/40 bg-gradient-to-r from-emerald-500 to-teal-600"
+                ? "border-emerald-400/40 bg-gradient-to-r from-emerald-500 to-sky-600"
                 : "border-rose-400/40 bg-gradient-to-r from-rose-500 to-rose-600",
             )}
           >

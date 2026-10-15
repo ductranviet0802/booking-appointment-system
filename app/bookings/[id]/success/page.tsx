@@ -74,7 +74,7 @@ export default function BookingSuccessPage() {
 
         <Link
           href="/bookings/me"
-          className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-teal-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:brightness-105"
+          className="inline-flex min-h-11 items-center rounded-xl bg-gradient-to-r from-sky-500 to-blue-700 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:brightness-105"
           data-testid="booking-success-my-bookings-link"
         >
           Đi tới lịch của tôi

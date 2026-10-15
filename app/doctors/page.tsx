@@ -112,7 +112,7 @@ export default function DoctorsPage() {
         </p>
       </div>
 
-      <div data-testid="doctors-page-content" className="grid gap-4 lg:grid-cols-[260px_1fr]">
+      <div data-testid="doctors-page-content" className="grid gap-6 lg:grid-cols-[270px_1fr]">
         <div data-testid="doctors-page-sidebar" className="animate-fade-up" style={{ animationDelay: "50ms" }}>
           <FilterSidebar specialties={specialties} value={filters} onChange={updateFilters} />
         </div>

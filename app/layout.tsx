@@ -26,7 +26,7 @@ export default function RootLayout({
         <AppProviders>
           <div data-testid="app-shell" className="flex min-h-screen flex-col">
             <Navbar />
-            <main data-testid="app-main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
+            <main data-testid="app-main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 md:px-6 md:py-12">
               {children}
             </main>
             <Footer />
