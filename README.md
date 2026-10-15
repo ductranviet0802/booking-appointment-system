@@ -54,6 +54,22 @@ npm run prisma:precheck:confirmed-slots
 npm run seed
 ```
 
+`npm run seed` là seed phá hủy dữ liệu hiện có để dựng lại toàn bộ fixture. Khi database đã có dữ liệu, dùng slot feed để bổ sung các slot còn thiếu mà không xóa booking hoặc cập nhật slot đã tồn tại:
+
+```bash
+npm run slots:feed -- --dry-run
+npm run slots:feed
+npm run slots:feed -- --month 2026-11
+```
+
+Không nên chỉ chạy theo tháng: hãy chạy `npm run slots:feed` hằng ngày bằng cron trên host có cùng các biến môi trường để duy trì rolling horizon mà API cho phép đặt. Tùy chọn `--month` nạp cả tháng được chọn; API vẫn giới hạn ngày theo `BOOKING_WINDOW_DAYS`, các slot trong ngày đã qua có thể hết hạn, và cache riêng của API là 30 giây.
+
+Ví dụ cron trên host đặt múi giờ UTC, chạy mỗi ngày lúc 00:05 UTC (07:05 giờ Việt Nam; đổi đường dẫn theo host), với thư mục làm việc và environment giống ứng dụng:
+
+```cron
+5 0 * * * cd /srv/booking-appointment-system && /usr/bin/npm run slots:feed >> /var/log/booking-slots-feed.log 2>&1
+```
+
 ## Migration Connectivity
 
 Prisma Migrate nên dùng direct PostgreSQL URL thay vì pooler URL để tránh lỗi `P1017` / `Schema engine error`.

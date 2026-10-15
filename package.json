@@ -17,12 +17,14 @@
     "prisma:migrate:deploy": "node scripts/prisma-with-direct-url.mjs migrate deploy",
     "prisma:precheck:confirmed-slots": "node scripts/precheck-confirmed-slot-duplicates.mjs",
     "prisma:seed": "node prisma/seed.js",
+    "slots:feed": "node prisma/feed-slots.js",
     "seed": "npm run prisma:seed"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@next/env": "16.2.1",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "bcrypt": "^6.0.0",
