@@ -29,23 +29,23 @@ export function Navbar() {
   return (
     <header
       data-testid="navbar-root"
-      className="sticky top-0 z-40 border-b border-zinc-200/70 bg-white/80 backdrop-blur-xl"
+      className="sticky top-0 z-40 border-b border-sky-100/80 bg-white/90 backdrop-blur-xl"
     >
       <div
         data-testid="navbar-content"
-        className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:px-6"
+        className="mx-auto flex min-h-16 w-full max-w-6xl flex-wrap items-center justify-between gap-y-2 px-4 py-2 md:px-6"
       >
-        <div data-testid="navbar-left" className="flex items-center gap-8">
+        <div data-testid="navbar-left" className="flex min-w-0 items-center gap-4 sm:gap-8">
           <Link
             href="/"
             prefetch={false}
             data-testid="navbar-brand"
-            className="bg-gradient-to-r from-teal-700 to-cyan-700 bg-clip-text text-lg font-black tracking-tight text-transparent"
+            className="bg-gradient-to-r from-sky-500 to-blue-700 bg-clip-text text-lg font-black tracking-tight text-transparent"
           >
             BookingCare
           </Link>
 
-          <nav data-testid="navbar-nav" className="hidden items-center gap-4 md:flex">
+          <nav data-testid="navbar-nav" className="flex flex-wrap items-center gap-1 sm:gap-2">
             {links.map((link) => (
               <Link
                 key={link.href}
@@ -53,8 +53,8 @@ export function Navbar() {
                 prefetch={false}
                 data-testid={`navbar-link-${link.href === "/" ? "home" : link.href.replace("/", "")}`}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900",
-                  pathname === link.href && "bg-teal-50 text-teal-700",
+                  "rounded-full px-2.5 py-1.5 text-xs font-semibold text-zinc-600 transition hover:bg-sky-50 hover:text-slate-900 sm:px-3 sm:text-sm",
+                  pathname === link.href && "bg-sky-50 text-sky-700",
                 )}
               >
                 {link.label}
@@ -68,7 +68,7 @@ export function Navbar() {
                 data-testid="navbar-link-my-bookings"
                 className={cn(
                   "rounded-full px-3 py-1.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900",
-                  pathname.startsWith("/bookings") && "bg-teal-50 text-teal-700",
+                  pathname.startsWith("/bookings") && "bg-sky-50 text-sky-700",
                 )}
               >
                 Lịch của tôi
@@ -77,7 +77,7 @@ export function Navbar() {
           </nav>
         </div>
 
-        <div data-testid="navbar-right" className="flex items-center gap-2">
+        <div data-testid="navbar-right" className="flex flex-wrap items-center justify-end gap-2">
           {user ? (
             <>
               <Badge data-testid="navbar-user-name" tone="success">

@@ -106,7 +106,7 @@ export default function SearchPage() {
                   data-testid={`search-result-link-${doctor.id}`}
                   href={`/doctors/${doctor.id}`}
                   prefetch={false}
-                  className="text-sm font-semibold text-teal-700"
+                  className="text-sm font-semibold text-sky-700"
                 >
                   Xem
                 </Link>

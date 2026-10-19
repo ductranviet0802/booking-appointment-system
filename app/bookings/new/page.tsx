@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { SlotCalendar } from "@/components/SlotCalendar";
 import { SlotPicker } from "@/components/SlotPicker";
+import { Select } from "@/components/ui/Select";
 import { apiGet, apiPost, clearApiCache, ClientApiError } from "@/lib/client-api";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -110,29 +111,24 @@ export default function NewBookingPage() {
   };
 
   return (
-    <div className="space-y-5" data-testid="booking-new-page">
+    <div className="booking-form-layout space-y-5" data-testid="booking-new-page">
       <h1 className="animate-fade-up text-3xl font-black text-zinc-900" data-testid="booking-new-title">
         Đặt lịch khám
       </h1>
 
-      <Card className="animate-fade-up space-y-4" style={{ animationDelay: "50ms" }} data-testid="booking-new-form-card">
+      <Card className="booking-form-card animate-fade-up space-y-4" style={{ animationDelay: "50ms" }} data-testid="booking-new-form-card">
         <div data-testid="booking-new-doctor-field">
-          <label className="mb-1.5 block text-sm font-semibold text-zinc-800" data-testid="booking-new-doctor-label">
+          <label id="booking-new-doctor-label" className="mb-1.5 block text-sm font-semibold text-zinc-800" data-testid="booking-new-doctor-label">
             Chọn bác sĩ
           </label>
-          <select
-            className="min-h-11 w-full rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none ring-teal-500 transition duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-200"
+          <Select
+            triggerTestId="booking-new-doctor-select"
+            labelId="booking-new-doctor-label"
             value={selectedDoctorId}
-            onChange={(event) => setSelectedDoctorId(event.target.value)}
-            data-testid="booking-new-doctor-select"
-          >
-            <option value="">-- Chọn bác sĩ --</option>
-            {doctors.map((doctor) => (
-              <option key={doctor.id} value={doctor.id} data-testid={`booking-new-doctor-option-${doctor.id}`}>
-                {doctor.name} - {doctor.specialty.name}
-              </option>
-            ))}
-          </select>
+            onValueChange={setSelectedDoctorId}
+            placeholder="-- Chọn bác sĩ --"
+            options={[{ value: "", label: "-- Chọn bác sĩ --" }, ...doctors.map((doctor) => ({ value: doctor.id, label: `${doctor.name} - ${doctor.specialty.name}`, "data-testid": `booking-new-doctor-option-${doctor.id}` }))]}
+          />
         </div>
 
         <div className="space-y-2" data-testid="booking-new-date-field">
@@ -176,7 +172,7 @@ export default function NewBookingPage() {
       </Card>
 
       <Card
-        className="animate-fade-up space-y-2"
+        className="booking-confirmation-card animate-fade-up space-y-2"
         style={{ animationDelay: "100ms" }}
         data-testid="booking-new-confirmation-card"
       >

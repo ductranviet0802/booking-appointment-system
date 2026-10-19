@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 
 type Option = { id: string; name: string };
 
@@ -100,25 +101,21 @@ export function FilterSidebar({
       className="surface-card space-y-4 rounded-3xl border border-zinc-200/80 p-4"
     >
       <div data-testid="doctors-filter-specialty-group">
-        <label
+          <label
           data-testid="doctors-filter-specialty-label"
+            id="doctors-filter-specialty-label"
           className="mb-1.5 block text-sm font-semibold text-zinc-800"
         >
           Chuyên khoa
         </label>
-        <select
-          data-testid="doctors-filter-specialty-select"
-          className="min-h-11 w-full rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none ring-teal-500 transition duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-200"
+        <Select
+          triggerTestId="doctors-filter-specialty-select"
+          labelId="doctors-filter-specialty-label"
           value={value.specialty_id ?? ""}
-          onChange={(event) => onChange({ ...value, specialty_id: event.target.value || undefined })}
-        >
-          <option value="">Tất cả chuyên khoa</option>
-          {specialties.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
+          onValueChange={(next) => onChange({ ...value, specialty_id: next || undefined })}
+          placeholder="Tất cả chuyên khoa"
+          options={[{ value: "", label: "Tất cả chuyên khoa" }, ...specialties.map((item) => ({ value: item.id, label: item.name }))]}
+        />
       </div>
 
       <div data-testid="doctors-filter-city-group">
@@ -159,19 +156,17 @@ export function FilterSidebar({
       </div>
 
       <div data-testid="doctors-filter-sort-group">
-        <label data-testid="doctors-filter-sort-label" className="mb-1.5 block text-sm font-semibold text-zinc-800">
+        <label id="doctors-filter-sort-label" data-testid="doctors-filter-sort-label" className="mb-1.5 block text-sm font-semibold text-zinc-800">
           Sắp xếp
         </label>
-        <select
-          data-testid="doctors-filter-sort-select"
-          className="min-h-11 w-full rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none ring-teal-500 transition duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-200"
+        <Select
+          triggerTestId="doctors-filter-sort-select"
+          labelId="doctors-filter-sort-label"
           value={value.sort ?? ""}
-          onChange={(event) => onChange({ ...value, sort: event.target.value || undefined })}
-        >
-          <option value="">Mặc định</option>
-          <option value="rating">Đánh giá cao</option>
-          <option value="fee">Phí thấp đến cao</option>
-        </select>
+          onValueChange={(next) => onChange({ ...value, sort: next || undefined })}
+          placeholder="Mặc định"
+          options={[{ value: "", label: "Mặc định" }, { value: "rating", label: "Đánh giá cao" }, { value: "fee", label: "Phí thấp đến cao" }]}
+        />
       </div>
 
       <Button

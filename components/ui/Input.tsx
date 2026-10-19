@@ -14,7 +14,7 @@ export function Input({ className, error, "data-testid": dataTestId = "ui-input"
       <input
         data-testid={dataTestId}
         className={cn(
-          "min-h-11 w-full rounded-xl border border-zinc-300/90 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none ring-teal-500 transition duration-200 placeholder:text-zinc-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-200",
+          "min-h-11 w-full rounded-xl border border-sky-100 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none ring-sky-500 transition duration-200 placeholder:text-zinc-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-200",
           error ? "border-rose-400 ring-rose-300 focus:border-rose-500 focus:ring-rose-200" : "",
           className,
         )}

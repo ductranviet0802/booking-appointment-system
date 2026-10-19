@@ -56,7 +56,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md" data-testid="register-page">
+    <div className="auth-shell mx-auto grid w-full max-w-4xl gap-6 lg:grid-cols-[.9fr_1.1fr]" data-testid="register-page">
+      <div className="auth-visual hidden rounded-3xl bg-[#0f1c2e] p-8 text-white lg:flex lg:flex-col lg:justify-between" aria-hidden="true">
+        <div className="text-3xl font-black tracking-tight">Booking<span className="text-sky-300">Care</span></div>
+        <div><p className="mb-2 text-sm font-semibold uppercase tracking-[.18em] text-sky-300">Bắt đầu hành trình</p><p className="text-2xl font-semibold leading-tight">Một tài khoản, mọi lịch hẹn.</p></div>
+      </div>
       <Card className="animate-fade-up space-y-4" data-testid="register-card">
         <h1 className="text-2xl font-black" data-testid="register-title">
           Đăng ký tài khoản
@@ -111,7 +115,7 @@ export default function RegisterPage() {
           <Link
             href="/auth/login"
             prefetch={false}
-            className="font-semibold text-teal-700 hover:text-teal-800"
+            className="font-semibold text-sky-700 hover:text-sky-800"
             data-testid="register-login-link"
           >
             Đăng nhập
