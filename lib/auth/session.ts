@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 export const SESSION_COOKIE = "sid";
 export const LANG_COOKIE = "lang";
 export const GUARD_COOKIE = "gid";
+/** a message id for the next screen after a redirect that cannot carry a body (PI002 after the NT-06 link); 60 s */
+export const FLASH_COOKIE = "flash";
 export const LANG_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 
 const MIN = 60_000;

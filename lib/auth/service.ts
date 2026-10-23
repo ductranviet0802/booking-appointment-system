@@ -157,7 +157,7 @@ export async function logout(sessionToken: string | undefined, now = new Date())
     : null;
   await revokeSessionToken(prisma, sessionToken, now);
   // T004 → P01 (patients), T089 → P02 (staff)
-  return done({ destination: row && row.account.role !== "PATIENT" ? "/login" : "/" });
+  return done({ destination: row && row.account.role !== "PATIENT" ? "/login" : "/", code: "PI011" });
 }
 
 // ── _common event 9 (更新4) ─────────────────────────────────────────────────────────────────────────────────────
