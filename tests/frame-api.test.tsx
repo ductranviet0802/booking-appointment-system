@@ -2,13 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextRequest } from "next/server";
 
 jest.mock("@/lib/auth/context", () => ({ getSession: jest.fn(), guardScreen: jest.fn() }));
-jest.mock("@/lib/prisma", () => ({
-  prisma: {
-    account: { update: jest.fn() },
-    consent: { createMany: jest.fn() },
-    consentDocument: { findMany: jest.fn() },
-  },
-}));
+jest.mock("@/lib/prisma", () => ({ prisma: { account: { update: jest.fn() } } }));
 jest.mock("next/navigation", () => ({ usePathname: () => "/", useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }));
 jest.mock("next/link", () => ({ __esModule: true, default: (p: { href: string; children: React.ReactNode }) => <a href={p.href}>{p.children}</a> }));
 jest.mock("@/components/ui/Toast", () => ({ useToast: () => ({ toast: jest.fn() }), useLang: () => "ja" }));
@@ -16,18 +10,13 @@ jest.mock("@/lib/client/api", () => ({ useApiFetch: () => jest.fn(), postJson: j
 
 import { getSession } from "@/lib/auth/context";
 import { prisma } from "@/lib/prisma";
-import { POST as postConsents } from "@/app/api/consents/route";
 import { POST as postLocale } from "@/app/api/locale/route";
 import { PatientHeader } from "@/components/frame/PatientHeader";
 import { StaffHeader } from "@/components/frame/StaffHeader";
 import { staffMenu } from "@/lib/frame/menu";
 
 const session = getSession as jest.Mock;
-const db = prisma as unknown as {
-  account: { update: jest.Mock };
-  consent: { createMany: jest.Mock };
-  consentDocument: { findMany: jest.Mock };
-};
+const db = prisma as unknown as { account: { update: jest.Mock } };
 
 const req = (url: string, body: unknown) =>
   new NextRequest(`http://localhost${url}`, {
@@ -57,30 +46,6 @@ describe("POST /api/locale", () => {
     const res = await postLocale(req("/api/locale", { language: "en" }));
     expect(res.status).toBe(200);
     expect(db.account.update).not.toHaveBeenCalled();
-  });
-});
-
-describe("POST /api/consents", () => {
-  it("PE008 and nothing written when a shown kind is not agreed", async () => {
-    session.mockResolvedValue(patient(["TERMS", "PRIVACY"]));
-    const res = await postConsents(req("/api/consents", { consents: { TERMS: { version: "1.0", agreed: true } } }));
-    expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ code: "PE008", params: { kinds: ["PRIVACY"] } });
-    expect(db.consent.createMany).not.toHaveBeenCalled();
-  });
-  it("writes one row per kind on success", async () => {
-    session.mockResolvedValue(patient(["TERMS"]));
-    db.consentDocument.findMany.mockResolvedValue([{ kind: "TERMS", version: "1.0" }]);
-    const res = await postConsents(req("/api/consents", { consents: { TERMS: { version: "1.0", agreed: true } } }));
-    expect(res.status).toBe(200);
-    expect(db.consent.createMany.mock.calls[0][0].data).toHaveLength(1);
-  });
-  it("rejects a version the server does not know", async () => {
-    session.mockResolvedValue(patient(["TERMS"]));
-    db.consentDocument.findMany.mockResolvedValue([{ kind: "TERMS", version: "1.0" }]);
-    const res = await postConsents(req("/api/consents", { consents: { TERMS: { version: "9.9", agreed: true } } }));
-    expect(res.status).toBe(400);
-    expect(db.consent.createMany).not.toHaveBeenCalled();
   });
 });
 

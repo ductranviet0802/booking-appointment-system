@@ -39,15 +39,17 @@ export function ConsentForm({ lang, items, next }: { lang: Lang; items: ConsentI
   async function submit() {
     setBusy(true);
     try {
-      const body = Object.fromEntries(items.map((i) => [i.kind, { version: i.version, agreed: !!checked[i.kind] }]));
-      const res = await apiFetch(...postJson("/api/consents", { consents: body }));
+      // a kind present = its check was set, with the version shown (agreeConsents, lib/auth/service.ts)
+      const versions = Object.fromEntries(items.filter((i) => checked[i.kind]).map((i) => [i.kind, i.version]));
+      const res = await apiFetch(...postJson("/api/auth/consent", { versions }));
       if (!res) return;
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        router.push(next);
+        router.push(data.destination ?? next);
         router.refresh();
-      } else if (res.status === 400) {
-        const data = await res.json().catch(() => ({}));
-        if (data.code === "PE008") setFailed((data.params?.kinds as ConsentKind[] | undefined) ?? items.map((i) => i.kind));
+      } else if (res.status === 400 && data.code === "PE008") {
+        const fields = ((data.errors ?? []) as { field: string }[]).map((e) => e.field);
+        setFailed(items.filter((i) => fields.includes(KEYS[i.kind].agree)).map((i) => i.kind));
       } else if (res.status === 401) {
         router.refresh(); // session gone → the guard answers with ER-05
       }
