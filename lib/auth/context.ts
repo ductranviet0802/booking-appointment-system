@@ -6,6 +6,7 @@ import { forbidden, notFound, redirect, unauthorized } from "next/navigation";
 import { cache } from "react";
 import { decideAccess, internalPath, type SessionState } from "@/lib/auth/access";
 import { readGuard } from "@/lib/auth/guard-store";
+import { PATH_HEADER } from "@/lib/auth/path-header";
 import { pendingConsents, staffClinics } from "@/lib/auth/scope";
 import { GUARD_COOKIE, readSession, SESSION_COOKIE } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
@@ -35,8 +36,7 @@ export type SessionContext = {
   reconsent: Array<"TERMS" | "PRIVACY">;
 };
 
-/** request header set by proxy.ts on page requests: path + query of the request (the login-guard target) */
-export const PATH_HEADER = "x-pathname";
+export { PATH_HEADER };
 
 /** the session state of a cookie value: anonymous, invalid (expired / revoked → ER-05) or valid with its context */
 export async function resolveSession(token: string | undefined, now = new Date()): Promise<SessionState> {
@@ -91,7 +91,7 @@ export async function guardTarget() {
  * Access check of 02 §2 for a screen, called at the top of its page. Returns the session (null = anonymous allowed).
  * Otherwise it does not return: redirect (login guard to P02 with the target kept, logged-in redirects, CF-04 re-consent,
  * P05 初回変更), unauthorized() → ER-05 (session expired / revoked) or forbidden() → ER-03 (staff without the screen / clinic).
- * A patient on a staff screen gets notFound() → ER-01 (no disclosure, 01 §3.2).
+ * A patient on a staff screen is sent to P06 (02 §2 "—": login guard → P02 → P06).
  */
 export async function guardScreen(screen: ScreenId): Promise<SessionContext | null> {
   const s = await currentState();

@@ -141,8 +141,10 @@ export async function login(input: Client & { email: unknown; password: unknown;
   if (!session) return locked(new Date(now.getTime() + LOCK_MS), now);
 
   const destination = await landingOf(session.token, input.guardId, now);
+  // message shown on the destination: PW006 on CF-04 (T011), PI022 on P05 (T012), else PI012 (T009 / T010)
+  const code = destination === CONSENT_PATH ? "PW006" : destination === FIRST_CHANGE_PATH ? "PI022" : "PI012";
   return done(
-    { destination, role: account.role },
+    { destination, role: account.role, code },
     { session, language: account.role === "PATIENT" ? account.language : undefined },
   );
 }
@@ -173,7 +175,8 @@ export async function switchClinic(sessionToken: string | undefined, clinicId: u
 
 // ── P03 events 5, 6, 8 · P02 event 8 ───────────────────────────────────────────────────────────────────────────
 
-const verifyUrl = (token: string) => `${APP_CONFIG.baseUrl}/api/auth/verify?token=${token}`;
+/** the NT-06 link opens P03 with the query `token` (P03 event 6, Q5); proxy.ts hands it to /api/auth/verify */
+const verifyUrl = (token: string) => `${APP_CONFIG.baseUrl}/register?token=${token}`;
 
 /** P03 Q6 = A: the versions shown when the screen opened; unknown → null (a value the UI cannot produce) */
 async function shownVersions(raw: unknown, language: Language, now: Date) {
@@ -307,6 +310,7 @@ export async function verifyEmail(
     return { session, account };
   }).catch(rollbackAsNull);
   if (!result) return fail(400, "PE004");
+  // 02 T017: the return target only when the link opens in the same browser while the guard record lives
   const destination = await landingOf(result.session.token, input.guardId, now);
   return done({ destination, code: "PI002" }, { session: result.session, language: result.account.language });
 }

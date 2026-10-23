@@ -57,6 +57,8 @@ export function internalPath(candidate: unknown): string | null {
 /** P screens that need a patient session ("—" for anonymous in 02 §2) */
 const PATIENT_LOGIN_SCREENS = new Set<ScreenId>(["P06", "P07", "P12", "P13", "P14", "P15", "P16"]);
 
+const AUTH_SCREENS = new Set<ScreenId>(["P02", "P03", "P04", "P05"]);
+
 /** staff screens by role; A03 for reception per Q-006 (read-only comes with A03) */
 const STAFF_ACCESS: Partial<Record<ScreenId, Role[]>> = {
   S01: ["RECEPTION", "ADMIN", "DOCTOR"],
@@ -90,9 +92,10 @@ export function decideAccess(screen: ScreenId, s: SessionState, path: string): D
   const firstChangeMode = screen === "P05" && path.split(/[?#]/)[0] === FIRST_CHANGE_PATH;
   const needsLogin = PATIENT_LOGIN_SCREENS.has(screen) || isStaffScreen(screen) || firstChangeMode;
 
-  if (s.state !== "valid") {
-    if (!needsLogin) return { kind: "allow" };
-    return { kind: s.state === "invalid" ? "unauthorized" : "login" };
+  if (s.state === "anonymous") return needsLogin ? { kind: "login" } : { kind: "allow" };
+  if (s.state === "invalid") {
+    // T068 / _common event 12: "any screen" → ER-05; P02–P05 stay open as the ways out of ER-05 (質疑 drafted)
+    return AUTH_SCREENS.has(screen) && !firstChangeMode ? { kind: "allow" } : { kind: "unauthorized" };
   }
   // a token link always runs token mode, whatever the session (02 §2 P05 note)
   if (screen === "P05" && !firstChangeMode) return { kind: "allow" };
@@ -101,7 +104,8 @@ export function decideAccess(screen: ScreenId, s: SessionState, path: string): D
   if (account.role === "PATIENT") {
     if (firstChangeMode) return { kind: "redirect", to: PATIENT_HOME };
     if (reconsent.length > 0) return { kind: "redirect", to: CONSENT_PATH };
-    if (isStaffScreen(screen)) return { kind: "notFound" };
+    // 02 §2 "—" for patients = login guard to P02, which sends a logged-in patient on to P06 (質疑 drafted)
+    if (isStaffScreen(screen)) return { kind: "redirect", to: PATIENT_HOME };
     if (screen === "P02" || screen === "P03" || screen === "P04") return { kind: "redirect", to: PATIENT_HOME };
     return { kind: "allow" };
   }

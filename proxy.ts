@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { PATH_HEADER } from "@/lib/auth/path-header";
 import type { RateLimitGroup } from "@/lib/config";
 import { consumeRateLimitToken } from "@/lib/rate-limiter";
 
@@ -73,6 +74,19 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (!pathname.startsWith("/api/")) {
+    // P03 event 6/7: the NT-06 link opens /register?token=… and is handled before any redirect of the page
+    if (pathname === "/register" && request.nextUrl.searchParams.has("token")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/api/auth/verify";
+      return NextResponse.rewrite(url);
+    }
+    // the login-guard target of guardScreen (F9-03); always overwritten so a client cannot plant it
+    const headers = new Headers(request.headers);
+    headers.set(PATH_HEADER, pathname + request.nextUrl.search);
+    return NextResponse.next({ request: { headers } });
+  }
+
   if (!shouldBypassBotFilter(pathname) && isBotRequest(request)) {
     return rejectRequest(request, 403, "BOT_BLOCKED", "Request blocked.");
   }
@@ -97,6 +111,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
