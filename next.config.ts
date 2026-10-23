@@ -30,6 +30,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // forbidden() → app/forbidden.tsx (ER-03), unauthorized() → app/unauthorized.tsx (ER-05)
+  experimental: {
+    authInterrupts: true,
+  },
   turbopack: {
     root: import.meta.dirname,
   },
