@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const envSchema = z.object({
+  APP_BASE_URL: z.string().url().default("http://localhost:3000"),
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
   BOOKING_WINDOW_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1_000).max(300_000).default(60_000),
@@ -16,6 +17,7 @@ const envSchema = z.object({
 });
 
 const env = envSchema.parse({
+  APP_BASE_URL: process.env.APP_BASE_URL,
   BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS,
   BOOKING_WINDOW_DAYS: process.env.BOOKING_WINDOW_DAYS,
   RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
@@ -31,6 +33,8 @@ const env = envSchema.parse({
 });
 
 export const APP_CONFIG = {
+  /** public origin used in mail links (NT-05 / NT-06) */
+  baseUrl: env.APP_BASE_URL.replace(/\/$/, ""),
   auth: {
     bcryptRounds: env.BCRYPT_ROUNDS,
   },
