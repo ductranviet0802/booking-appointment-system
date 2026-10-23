@@ -121,6 +121,7 @@ describe("P10 clinic page", () => {
   });
 
   it("en / vi: UI-language texts, an empty text falls back to ja", async () => {
+    const before = await prisma.clinic.findUniqueOrThrow({ where: { code: "ekimae" } });
     await prisma.clinic.update({ where: { code: "ekimae" }, data: { accessVi: null } });
     const en = await loadClinicPage("honin", "en");
     expect(en!.clinic.name).toBe("○○ Clinic Main");
@@ -134,6 +135,7 @@ describe("P10 clinic page", () => {
     expect(vi!.clinic.notice).toContain("院内研修");
     expect(vi!.clinic.access).toContain("Marunouchi");
     const eki = await loadClinicPage("ekimae", "vi");
+    await prisma.clinic.update({ where: { code: "ekimae" }, data: { accessVi: before.accessVi } });
     expect(eki!.clinic.access).toContain("新宿駅"); // accessVi empty → ja
     expect(renderToStaticMarkup(<ClinicDetail data={vi!} lang="vi" />)).toContain("Giờ khám");
     expect(getLanguage).toBeDefined();

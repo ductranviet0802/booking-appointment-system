@@ -124,7 +124,7 @@ const L = {
   accessLabel: { ja: "アクセス", en: "Access", vi: "Đường đi" }, // 07 §1
   hoursHeading: { ja: "診療時間", en: "Business hours", vi: "Giờ khám" }, // 07 §1
   receptionNote: {
-    ja: "受付は{bands}まで",
+    ja: "受付は{bands} まで",
     en: "Reception closes at {bands}",
     vi: "Ngừng tiếp nhận lúc {bands}",
   }, // draft; 07 §1 term for reception closing time
