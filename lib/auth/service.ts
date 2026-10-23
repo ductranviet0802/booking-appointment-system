@@ -2,6 +2,7 @@
 // returns either the 04 id of the answer or the data for the route handler (cookie, destination). No request objects
 // here, so the tests drive it against the real database.
 import bcrypt from "bcrypt";
+import { randomInt } from "node:crypto";
 import type { Language, Prisma, PrismaClient, Role } from "@prisma/client";
 import {
   CONSENT_PATH, decideAccess, FIRST_CHANGE_PATH, internalPath, PATIENT_HOME, screenOfPath, STAFF_HOME,
@@ -12,7 +13,7 @@ import { overAuthLimit } from "@/lib/auth/rate-limit";
 import { CONSENT_KINDS, currentConsentDocuments, initialClinicId, staffClinics } from "@/lib/auth/scope";
 import { createSession, newSecret, revokeSessionToken, sha256, type NewSession } from "@/lib/auth/session";
 import {
-  blank, checkEmail, checkNewPassword, checkRegistration, normEmail, str, type FieldError,
+  blank, checkEmail, checkNewPassword, checkRegistration, normEmail, passwordRuleOk, str, type FieldError,
 } from "@/lib/auth/validate";
 import { APP_CONFIG } from "@/lib/config";
 import { queueNotification } from "@/lib/notify/queue";
@@ -37,12 +38,43 @@ export const RESET_TOKEN_MS = 30 * 60_000; // F9-02, Q-007
 /** P04 §6 3-1 / Q4 = A: every answer of event 3 leaves after this time, so 3-1 and 3-2 cannot be told apart */
 export const RESET_MIN_RESPONSE_MS = 400;
 
-const audit = (db: Db, a: { accountId: string | null; role: Role | null; action: string; ip: string | null; now: Date }) =>
-  db.auditLog.create({ data: { at: a.now, accountId: a.accountId, role: a.role, action: a.action, ip: a.ip } });
+/** one audit_logs row (03 §3.30); the admin screens (A03 / A05 MASTER_UPDATE) use it too */
+export const audit = (db: Db, a: {
+  accountId: string | null; role: Role | null; action: string; ip: string | null; now: Date;
+  targetType?: string; targetId?: string; clinicId?: string | null; detail?: Prisma.InputJsonValue;
+}) => db.auditLog.create({
+  data: {
+    at: a.now, accountId: a.accountId, role: a.role, action: a.action, ip: a.ip,
+    targetType: a.targetType, targetId: a.targetId, clinicId: a.clinicId ?? null, detail: a.detail,
+  },
+});
+
+/** the only password hash of the app (N-SEC-02) */
+export const hashPassword = (pw: string) => bcrypt.hash(pw, APP_CONFIG.auth.bcryptRounds);
+
+/** revoke every open session of an account (F9-05), or every one but `exceptSessionId` */
+export const revokeAccountSessions = (db: Db, accountId: string, now: Date, exceptSessionId?: string) =>
+  db.session.updateMany({
+    where: { accountId, revokedAt: null, ...(exceptSessionId && { id: { not: exceptSessionId } }) },
+    data: { revokedAt: now },
+  });
+
+const PW_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+/**
+ * A05 initial password (A05 Q3 = A, image 「kT7w-Q2mR-x9Lp」): 12 letters / digits from a secure source in three groups of
+ * four joined by hyphens (the hyphens are part of the password). Meets F9-07; redrawn until it has a letter and a digit.
+ */
+export function newInitialPassword(): string {
+  for (;;) {
+    const raw = Array.from({ length: 12 }, () => PW_CHARS[randomInt(PW_CHARS.length)]).join("");
+    const pw = `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8)}`;
+    if (passwordRuleOk(pw)) return pw;
+  }
+}
 
 let dummyHash: Promise<string> | null = null;
 /** an unknown e-mail still costs one bcrypt compare (no timing difference to a wrong password) */
-const dummy = () => (dummyHash ??= bcrypt.hash("not-a-password-0", APP_CONFIG.auth.bcryptRounds));
+const dummy = () => (dummyHash ??= hashPassword("not-a-password-0"));
 
 const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === "P2002";
 class Rollback extends Error {}
@@ -205,7 +237,7 @@ export async function register(input: Client & { body: Record<string, unknown>; 
   if (checked.errors.length) return fieldFail(checked.errors);
 
   const v = checked.input;
-  const passwordHash = await bcrypt.hash(v.password, APP_CONFIG.auth.bcryptRounds);
+  const passwordHash = await hashPassword(v.password);
   const secret = newSecret();
   const person = {
     nameType: v.nameType, familyName: v.familyName, givenName: v.givenName, familyNameKana: v.familyNameKana,
@@ -377,7 +409,7 @@ export async function resetPassword(
   const errors = checkNewPassword(input.password, input.passwordConfirm);
   if (errors.length) return fieldFail(errors); // 3-3: the token stays unused
   const hash = sha256(str(input.token));
-  const passwordHash = await bcrypt.hash(str(input.password), APP_CONFIG.auth.bcryptRounds);
+  const passwordHash = await hashPassword(str(input.password));
   const ok = await prisma.$transaction(async (tx) => {
     const claimed = await tx.authToken.updateMany({
       where: { tokenHash: hash, purpose: "PASSWORD_RESET", usedAt: null, expiresAt: { gt: now } }, data: { usedAt: now },
@@ -392,7 +424,7 @@ export async function resetPassword(
     if (upd.count !== 1) throw new Rollback();
     const { role } = await tx.account.findUniqueOrThrow({ where: { id: accountId }, select: { role: true } });
     await tx.authToken.updateMany({ where: { accountId, purpose: "PASSWORD_RESET", usedAt: null }, data: { usedAt: now } }); // 更新2
-    await tx.session.updateMany({ where: { accountId, revokedAt: null }, data: { revokedAt: now } }); // 更新3
+    await revokeAccountSessions(tx, accountId, now); // 更新3
     await audit(tx, { accountId, role, action: "PASSWORD_CHANGE", ip: input.ip, now }); // 更新6
     return true;
   }).catch(rollbackAsNull);
@@ -413,11 +445,11 @@ export async function firstPasswordChange(
   if (errors.length) return fieldFail(errors);
   const { passwordHash: current } = await prisma.account.findUniqueOrThrow({ where: { id: account.id }, select: { passwordHash: true } });
   if (await bcrypt.compare(str(input.password), current)) return fieldFail([{ field: "password", code: "PE022" }]);
-  const passwordHash = await bcrypt.hash(str(input.password), APP_CONFIG.auth.bcryptRounds);
+  const passwordHash = await hashPassword(str(input.password));
   const changed = await prisma.$transaction(async (tx) => {
     const upd = await tx.account.updateMany({ where: { id: account.id, mustChangePassword: true }, data: { passwordHash, mustChangePassword: false } });
     if (upd.count !== 1) return false; // a second submit after the first one committed
-    await tx.session.updateMany({ where: { accountId: account.id, revokedAt: null, id: { not: sessionId } }, data: { revokedAt: now } });
+    await revokeAccountSessions(tx, account.id, now, sessionId);
     await audit(tx, { accountId: account.id, role: account.role, action: "PASSWORD_CHANGE", ip: input.ip, now });
     return true;
   });

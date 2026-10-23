@@ -15,9 +15,10 @@ import { createGuard, readGuard, GUARD_TTL_MS } from "@/lib/auth/guard-store";
 import { AUTH_LIMITS, overAuthLimit, resetAuthLimits } from "@/lib/auth/rate-limit";
 import { currentConsentDocuments } from "@/lib/auth/scope";
 import {
-  agreeConsents, checkResetToken, firstPasswordChange, login, logout, maskEmail, register, requestPasswordReset,
-  resendVerification, resetPassword, switchClinic, verifyEmail, type Result,
+  agreeConsents, checkResetToken, firstPasswordChange, login, logout, maskEmail, newInitialPassword, register,
+  requestPasswordReset, resendVerification, resetPassword, switchClinic, verifyEmail, type Result,
 } from "@/lib/auth/service";
+import { passwordRuleOk } from "@/lib/auth/validate";
 import { newSecret, readSession, sha256 } from "@/lib/auth/session";
 import { POST as loginRoute } from "@/app/api/auth/login/route";
 
@@ -719,6 +720,17 @@ describe("P04 / P05 password reset", () => {
     const t = await resetTokenFor(a.email);
     expect(codeOf(await verifyEmail({ ...client, token: t }))).toBe("PE004");
     expect((await prisma.authToken.findUniqueOrThrow({ where: { tokenHash: sha256(t) } })).usedAt).toBeNull();
+  });
+});
+
+describe("A05 initial password", () => {
+  it("is 4-4-4 letters / digits with hyphens, meets F9-07 and differs each time", () => {
+    const pws = Array.from({ length: 50 }, newInitialPassword);
+    for (const pw of pws) {
+      expect(pw).toMatch(/^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/);
+      expect(passwordRuleOk(pw)).toBe(true);
+    }
+    expect(new Set(pws).size).toBe(50);
   });
 });
 
