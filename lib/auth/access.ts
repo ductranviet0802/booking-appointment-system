@@ -48,7 +48,8 @@ export function internalPath(candidate: unknown): string | null {
   if (/[\\\u0000-\u001f]/.test(candidate)) return null;
   try {
     const url = new URL(candidate, "http://internal.invalid");
-    return url.origin === "http://internal.invalid" ? url.pathname + url.search : null;
+    // the normalised path may start with "//" again ("/a/../..//evil") → protocol-relative, refused
+    return url.origin === "http://internal.invalid" && !url.pathname.startsWith("//") ? url.pathname + url.search : null;
   } catch {
     return null;
   }
