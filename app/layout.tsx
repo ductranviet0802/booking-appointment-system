@@ -1,25 +1,27 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AppProviders } from "@/components/AppProviders";
+import { ToastProvider } from "@/components/ui/Toast";
+import { MaintenanceScreen } from "@/components/frame/Maintenance";
+import { getMaintenanceEnd, getViewer } from "@/lib/frame/data";
 
 export const metadata: Metadata = {
   title: "Web予約",
 };
 
-// The ver1 common frame (CF-01 … CF-03) and the language are added by the _common module.
-export default function RootLayout({
+// Language (F13-01) and ER-04: while the maintenance period is on, the page is replaced by the maintenance screen.
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { lang } = await getViewer();
+  const maintenanceEnd = await getMaintenanceEnd();
   return (
-    <html data-testid="app-html" lang="ja" className="h-full antialiased">
-      <body data-testid="app-body" suppressHydrationWarning className="min-h-full text-zinc-900">
-        <AppProviders>
-          <main data-testid="app-main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
-            {children}
-          </main>
-        </AppProviders>
+    <html lang={lang} className="h-full antialiased">
+      <body suppressHydrationWarning>
+        <ToastProvider lang={lang}>
+          {maintenanceEnd ? <MaintenanceScreen end={maintenanceEnd} lang={lang} /> : children}
+        </ToastProvider>
       </body>
     </html>
   );
