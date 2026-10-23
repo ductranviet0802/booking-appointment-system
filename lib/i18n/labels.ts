@@ -62,6 +62,95 @@ const L = {
   yes: { ja: "はい", en: "Yes", vi: "Có" }, // 07 §3
   no: { ja: "いいえ", en: "No", vi: "Không" }, // 07 §3
   cancel: { ja: "キャンセル", en: "キャンセル", vi: "キャンセル" }, // staff dialogs (ja only)
+  // P01 / P08 / P09 / P10 (public browsing). ja as drawn in the layouts; en / vi from 07 where it has the term, else drafts.
+  bookCta: { ja: "予約する", en: "Book an appointment", vi: "Đặt lịch" }, // draft en/vi
+  findDoctor: { ja: "医師を探す", en: "Find a doctor", vi: "Tìm bác sĩ" }, // en draft; vi spec item 6
+  detailMore: { ja: "詳しく", en: "Details", vi: "Chi tiết" }, // draft
+  clinicListHeading: { ja: "クリニック一覧", en: "Our clinics", vi: "Danh sách phòng khám" }, // draft
+  clinicDetail: { ja: "このクリニックの詳細", en: "Clinic details", vi: "Chi tiết phòng khám" }, // draft
+  todayPrefix: { ja: "本日", en: "Today", vi: "Hôm nay" }, // draft
+  todayClosed: { ja: "本日は休診日です", en: "Closed today", vi: "Hôm nay phòng khám nghỉ" }, // draft
+  catchCopy: { ja: "24時間いつでもWeb予約", en: "Book online, any time of day", vi: "Đặt lịch trực tuyến 24 giờ mỗi ngày" }, // draft
+  catchSub: {
+    ja: "診療科・担当医・日時を選んで、そのまま予約できます。",
+    en: "Choose a department, doctor and time, and book right away.",
+    vi: "Chọn khoa, bác sĩ và thời gian rồi đặt lịch ngay.",
+  }, // draft
+  kwPlaceholder: { ja: "医師名・ふりがな・診療科", en: "Doctor name, department", vi: "Tên bác sĩ, khoa" }, // draft
+  kwHelp: {
+    ja: "空欄のまま検索すると全医師を表示します。",
+    en: "Leave the box empty to list all doctors.",
+    vi: "Để trống ô tìm kiếm để xem tất cả bác sĩ.",
+  }, // draft
+  maintPrefix: { ja: "メンテナンスのお知らせ:", en: "Maintenance notice:", vi: "Thông báo bảo trì:" }, // draft
+  keyword: { ja: "キーワード", en: "Keyword", vi: "Từ khóa" }, // draft
+  clinicLabel: { ja: "クリニック", en: "Clinic", vi: "Phòng khám" }, // 07 §1 term
+  departmentLabel: { ja: "診療科", en: "Department", vi: "Khoa" }, // 07 §1 term
+  languageLabel: { ja: "対応言語", en: "Languages spoken", vi: "Ngôn ngữ hỗ trợ" }, // 07 §1 term (en draft)
+  allOption: { ja: "すべて", en: "All", vi: "Tất cả" }, // draft
+  searchBtn: { ja: "検索する", en: "Search", vi: "Tìm kiếm" }, // 07 §3
+  clearBtn: { ja: "条件をクリア", en: "Clear filters", vi: "Xóa bộ lọc" }, // 07 §3
+  filterBtn: { ja: "条件で絞り込む", en: "Filters", vi: "Bộ lọc" }, // draft
+  countText: { ja: "{total}件中 {from}〜{to}件を表示", en: "Showing {from}–{to} of {total}", vi: "Hiển thị {from}–{to} trên {total}" }, // draft
+  prevPage: { ja: "前へ", en: "Previous", vi: "Trước" }, // draft
+  nextPage: { ja: "次へ", en: "Next", vi: "Sau" }, // draft
+  pagerAria: { ja: "ページ送り", en: "Pagination", vi: "Phân trang" }, // draft
+  pageOf: { ja: "{page} / {pages}", en: "{page} / {pages}", vi: "{page} / {pages}" },
+  seeClinics: { ja: "クリニック案内を見る", en: "View clinic information", vi: "Xem thông tin phòng khám" }, // draft
+  doctorsHeading: { ja: "医師を探す", en: "Find a doctor", vi: "Tìm bác sĩ" }, // draft
+  titleDIRECTOR: { ja: "院長", en: "Director", vi: "Viện trưởng" }, // 07 §1
+  titleVICE_DIRECTOR: { ja: "副院長", en: "Vice-director", vi: "Phó viện trưởng" }, // 07 §1
+  titleDOCTOR: { ja: "医師", en: "Doctor", vi: "Bác sĩ" }, // 07 §1
+  titlePART_TIME: { ja: "非常勤医師", en: "Part-time doctor", vi: "Bác sĩ bán thời gian" }, // 07 §1
+  wd0: { ja: "日", en: "Sun", vi: "CN" }, // draft en/vi
+  wd1: { ja: "月", en: "Mon", vi: "Thứ Hai" },
+  wd2: { ja: "火", en: "Tue", vi: "Thứ Ba" },
+  wd3: { ja: "水", en: "Wed", vi: "Thứ Tư" },
+  wd4: { ja: "木", en: "Thu", vi: "Thứ Năm" },
+  wd5: { ja: "金", en: "Fri", vi: "Thứ Sáu" },
+  wd6: { ja: "土", en: "Sat", vi: "Thứ Bảy" },
+  sunHoliday: { ja: "日・祝", en: "Sun / Hol.", vi: "CN / Lễ" }, // draft
+  holidayMark: { ja: "祝", en: "Holiday", vi: "Lễ" }, // draft
+  bandAM: { ja: "午前", en: "Morning", vi: "Buổi sáng" }, // 07 §1
+  bandPM: { ja: "午後", en: "Afternoon", vi: "Buổi chiều" }, // 07 §1
+  openMark: { ja: "●", en: "●", vi: "●" },
+  closedMark: { ja: "休", en: "Closed", vi: "Nghỉ" }, // 07 §2 (休診 / Closed / Nghỉ)
+  openAria: { ja: "診療", en: "Open", vi: "Khám" }, // draft
+  // P10
+  clinicInfoHeading: { ja: "クリニック案内", en: "Clinic information", vi: "Thông tin phòng khám" }, // en draft; vi spec item 4
+  switchClinicAria: { ja: "クリニックの切り替え", en: "Switch clinic", vi: "Chuyển phòng khám" }, // draft
+  mapLink: { ja: "地図を見る", en: "View map", vi: "Xem bản đồ" }, // draft
+  phoneBtn: { ja: "電話", en: "Call", vi: "Gọi" }, // draft
+  accessLabel: { ja: "アクセス", en: "Access", vi: "Đường đi" }, // 07 §1
+  hoursHeading: { ja: "診療時間", en: "Business hours", vi: "Giờ khám" }, // 07 §1
+  receptionNote: {
+    ja: "受付は{bands}まで",
+    en: "Reception closes at {bands}",
+    vi: "Ngừng tiếp nhận lúc {bands}",
+  }, // draft; 07 §1 term for reception closing time
+  receptionBand: { ja: "{band} {time}", en: "{band} {time}", vi: "{band} {time}" },
+  receptionBefore: { ja: "（診療終了の{min}分前）", en: " ({min} min before closing)", vi: " ({min} phút trước giờ đóng cửa)" }, // draft
+  closuresHeading: { ja: "休診日・臨時診療", en: "Closed days and special openings", vi: "Ngày nghỉ và khám bổ sung" }, // 07 §1 terms
+  closuresCaption: { ja: "今後2か月", en: "Next 2 months", vi: "2 tháng tới" }, // draft
+  closuresEmpty: { ja: "予定されている休診日はありません", en: "No closed days are scheduled.", vi: "Không có ngày nghỉ nào được lên lịch." }, // draft en/vi
+  badgeClosed: { ja: "臨時休診", en: "Temporarily closed", vi: "Nghỉ đột xuất" }, // draft
+  badgeHoliday: { ja: "休診", en: "Closed", vi: "Nghỉ" }, // 07 §2
+  badgeAmOnly: { ja: "午前のみ", en: "Morning only", vi: "Chỉ buổi sáng" }, // draft
+  badgePmOnly: { ja: "午後のみ", en: "Afternoon only", vi: "Chỉ buổi chiều" }, // draft
+  badgeSpecial: { ja: "臨時診療", en: "Special opening", vi: "Khám bổ sung" }, // 07 §1 (en draft)
+  noteAmClosed: { ja: "午前休診", en: "Closed in the morning", vi: "Nghỉ buổi sáng" }, // draft
+  notePmClosed: { ja: "午後休診", en: "Closed in the afternoon", vi: "Nghỉ buổi chiều" }, // draft
+  deptDoctorsHeading: { ja: "診療科・医師", en: "Departments and doctors", vi: "Khoa và bác sĩ" }, // draft
+  bookAtClinic: { ja: "このクリニックで予約", en: "Book at this clinic", vi: "Đặt lịch tại phòng khám này" }, // draft
+  // P09
+  backToList: { ja: "医師一覧へ戻る", en: "Back to the doctor list", vi: "Quay lại danh sách bác sĩ" }, // draft
+  bookWithDoctor: { ja: "この医師で予約", en: "Book with this doctor", vi: "Đặt lịch với bác sĩ này" }, // draft
+  bookPair: { ja: "{clinic} {department}で予約", en: "Book: {clinic} – {department}", vi: "Đặt lịch: {clinic} – {department}" }, // draft en/vi
+  scheduleHeading: { ja: "診療スケジュール", en: "Schedule", vi: "Lịch khám" }, // draft
+  scheduleNote: { ja: "休診日・代診により変わることがあります", en: "May change on closed days or when a substitute doctor covers.", vi: "Có thể thay đổi vào ngày nghỉ hoặc khi có bác sĩ thay thế." }, // draft
+  profileHeading: { ja: "経歴", en: "Background", vi: "Quá trình công tác" }, // draft
+  qualificationsHeading: { ja: "資格・所属学会", en: "Qualifications and memberships", vi: "Chứng chỉ và hội chuyên môn" }, // draft
+  dash: { ja: "—", en: "—", vi: "—" },
 } satisfies Record<string, Row>;
 
 export type LabelKey = keyof typeof L;
