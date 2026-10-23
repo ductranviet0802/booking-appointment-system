@@ -12,6 +12,7 @@ export function ErrorBlock({
   message,
   children,
   testId,
+  inFrame = false,
 }: {
   icon: IconName;
   tone: keyof typeof TONE;
@@ -19,13 +20,16 @@ export function ErrorBlock({
   message: string;
   children?: ReactNode;
   testId: string;
+  /** inside a layout that already has <main> */
+  inFrame?: boolean;
 }) {
+  const Tag = inFrame ? "div" : "main";
   return (
-    <main className="eb" data-testid={testId}>
+    <Tag className="eb" data-testid={testId}>
       <div className={`eic ${TONE[tone]}`}><Icon name={icon} size={30} /></div>
       <h1>{title}</h1>
       <p>{message}</p>
       {children}
-    </main>
+    </Tag>
   );
 }

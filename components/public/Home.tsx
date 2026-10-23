@@ -25,9 +25,15 @@ export function HomeSkeleton() {
 export function Home({ data, lang }: { data: Data; lang: Lang }) {
   const { maintenance, notices, cards } = data;
   return (
-    <div className="flex flex-col gap-6" data-testid="p01">
+    // DOM = mobile order (main visual, notices, search, cards); desktop puts the notices first by `order`
+    <div className="grid gap-6 md:grid-cols-2" data-testid="p01">
+      <div className="flex flex-col gap-3 md:order-2">
+        <p className="m-0 text-2xl font-bold">{label("catchCopy", lang)}</p>
+        <p className="m-0 hidden md:block">{label("catchSub", lang)}</p>
+        <Link className="btn bp bw min-h-12" href="/booking/new"><Icon name="cal" />{label("bookCta", lang)}</Link>
+      </div>
       {(maintenance || notices.length > 0) && (
-        <section className="box" aria-label={label("detailMore", lang)} data-testid="p01-notices">
+        <section className="box md:order-1 md:col-span-2" aria-label={label("detailMore", lang)} data-testid="p01-notices">
           {maintenance && <MaintenanceNotice text={maintenance} lang={lang} />}
           {notices.map((n) => (
             <div key={n.code} className="flex items-start gap-2">
@@ -40,22 +46,17 @@ export function Home({ data, lang }: { data: Data; lang: Lang }) {
           ))}
         </section>
       )}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="flex flex-col gap-3">
-          <p className="m-0 hidden text-2xl font-bold md:block">{label("catchCopy", lang)}</p>
-          <p className="m-0 hidden md:block">{label("catchSub", lang)}</p>
-          <Link className="btn bp bw min-h-12" href="/booking/new">{label("bookCta", lang)}</Link>
-        </div>
+      <div className="md:order-3">
         <HomeSearch lang={lang} />
       </div>
-      <section className="flex flex-col gap-3" aria-label={label("clinicListHeading", lang)}>
+      <section className="flex flex-col gap-3 md:order-4 md:col-span-2" aria-label={label("clinicListHeading", lang)}>
         <h2 className="m-0 text-lg font-bold">{label("clinicListHeading", lang)}</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {cards.map((c) => (
             <article key={c.code} className="box" data-testid="p01-card">
               <h3 className="m-0 text-lg"><Link className="lnk" href={`/clinics/${c.code}`}>{c.name}</Link></h3>
               <p className="m-0 flex gap-2"><Icon name="pin" /><span>{c.address}</span></p>
-              <a className="lnk" href={telHref(c.phone)}>{formatPhone(c.phone)}</a>
+              <p className="m-0 flex gap-2"><Icon name="phone" /><a className="lnk" href={telHref(c.phone)}>{formatPhone(c.phone)}</a></p>
               {c.todayText ? (
                 <p className="m-0 flex gap-2"><Icon name="clock" /><span>{label("todayPrefix", lang)} {c.todayText}</span></p>
               ) : (
@@ -66,7 +67,9 @@ export function Home({ data, lang }: { data: Data; lang: Lang }) {
                   {c.departments.map((d) => <li key={d} className="rounded-full bg-[color:var(--pri-t)] px-3 py-1 text-sm">{d}</li>)}
                 </ul>
               )}
-              <Link className="btn bs bw" href={`/clinics/${c.code}`}>{label("clinicDetail", lang)}<Icon name="right" size={16} /></Link>
+              {/* item 12: a button on mobile, a text link with an arrow on desktop */}
+              <Link className="btn bs bw md:hidden" href={`/clinics/${c.code}`}>{label("clinicDetail", lang)}<Icon name="right" size={16} /></Link>
+              <Link className="lnk hidden items-center gap-1 self-start md:inline-flex" href={`/clinics/${c.code}`}>{label("clinicDetail", lang)}<Icon name="right" size={16} /></Link>
             </article>
           ))}
         </div>

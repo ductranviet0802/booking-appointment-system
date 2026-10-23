@@ -5,7 +5,7 @@
 // ⑥ SW070 / ⑦ own account / ⑧ viewer without all_clinics. The password of a new or reissued account is held only in the dialog.
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ConfirmDialog, trapTab } from "@/components/ui/ConfirmDialog";
 import { ErrorSummary, FieldError as FieldErrorText, RequiredMark } from "@/components/ui/FormParts";
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
@@ -225,12 +225,12 @@ export function StaffClient({ lists: initialLists, initial }: { lists: StaffList
           </select>
         ))}
         <div className={s.actions}>
+          {!ro && <Button busy={busy} onClick={() => void save()}>保存する</Button>}
+          <span className="sp" />
           {!ro && !isNew && !own && <Button variant="secondary" onClick={() => void act(URL.password, (j) => setPassword({ value: j.password!, message: "SI073" }))}><Icon name="lock" size={16} />パスワード発行</Button>}
           {!ro && !isNew && <Button variant="danger" onClick={() => (own ? void act(URL.disable, () => undefined) : setConfirmDisable(true))}>無効化する</Button>}
           {!isNew && d?.state === "disabled" && !d.locked8 && <Button onClick={() => void act(URL.enable, () => toast("SI071"))}>有効化する</Button>}
           {!isNew && d?.state === "locked" && !d.locked8 && <Button variant="secondary" onClick={() => void act(URL.unlock, () => toast("SI072"))}>ロック解除</Button>}
-          <span className="sp" />
-          {!ro && <Button busy={busy} onClick={() => void save()}>保存する</Button>}
         </div>
       </div>
     );
@@ -277,7 +277,7 @@ export function StaffClient({ lists: initialLists, initial }: { lists: StaffList
         {renderForm()}
       </div>
       {password && (
-        <div className="scrim-fixed">
+        <div className="scrim-fixed" onKeyDown={trapTab}>
           <div className="dlg" role="alertdialog" aria-modal="true" aria-labelledby="pw-title">
             <h3 id="pw-title">初期パスワードを発行しました</h3>
             <div className={s.pw} data-testid="initial-password">{password.value}</div>
@@ -285,7 +285,7 @@ export function StaffClient({ lists: initialLists, initial }: { lists: StaffList
             <div className="row" style={{ justifyContent: "space-between" }}>
               <Button variant="secondary" onClick={() => void navigator.clipboard?.writeText(password.value)}>コピー</Button>
               {/* the only way out: no ×, Esc and a click outside do nothing (Q2 b) */}
-              <Button onClick={() => setPassword(null)}>確認して閉じる</Button>
+              <Button autoFocus onClick={() => setPassword(null)}>確認して閉じる</Button>
             </div>
           </div>
         </div>

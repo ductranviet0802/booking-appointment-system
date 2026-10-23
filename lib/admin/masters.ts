@@ -114,7 +114,7 @@ export async function loadDetail(kind: Kind, id: string, clinicId: string): Prom
   };
 }
 
-// ── the audit column lists (更新7: INSERT and DELETE name every column of the row, UPDATE the changed ones) ──────────────
+// ── the audit column lists (更新7: INSERT and DELETE name every column of the row, UPDATE the changed ones; DELETE vs Q13 (a): 質疑 Q-014) ──
 
 const T = ["created_at", "updated_at"];
 const DOCTOR_COLS = [

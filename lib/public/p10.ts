@@ -9,7 +9,7 @@ import {
 import { buildHoursTable, joinBands } from "./hours";
 import { clinicAddress, doctorName, nameOf, pick, titleLabel } from "./text";
 
-/** item 13-2: only these titles are written in front of the departments (P10 Q5 — reading in the report) */
+/** item 13-2: only these titles are written in front of the departments (P10 Q5 unstated; 質疑 Q-015, reading 2) */
 const TITLES_SHOWN = new Set(["DIRECTOR", "VICE_DIRECTOR", "PART_TIME"]);
 
 /** `/clinics`: with one active clinic its page opens (1-3), with none ER-01 (Q9 b), else the cards of state ① */

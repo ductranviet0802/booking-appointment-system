@@ -287,12 +287,13 @@ export function MastersClient({ role, lists: initialLists, initial }: { role: Ro
         {tab === "department" && <DepartmentForm {...ctx} v={cur.vals as DepartmentValues} isNew={isNew} links={cur.extra.links ?? []} />}
         {tab === "visitType" && <VisitTypeForm {...ctx} v={cur.vals as VisitTypeValues} storedDepartmentId={cur.extra.departmentId ?? ""} />}
         {admin && (
-          <div className={s.actions}>
-            {!isNew && cur.isActive && <Button variant="danger" onClick={() => void askDelete()}>削除する</Button>}
-            {!isNew && cur.isActive && <Button variant="danger" onClick={() => setDlg("deactivate")}>無効化する</Button>}
-            {!isNew && !cur.isActive && <Button variant="secondary" onClick={() => void setActive(true)}>有効化する</Button>}
-            <span className="sp" />
+          // Tab order 33 保存 → 34 → 35 (Q16 c); row-reverse keeps 保存 drawn on the right
+          <div className={`${s.actions} flex-row-reverse`}>
             {cur.isActive && <Button busy={busy} onClick={() => void save()}>保存する</Button>}
+            <span className="sp" />
+            {!isNew && !cur.isActive && <Button variant="secondary" onClick={() => void setActive(true)}>有効化する</Button>}
+            {!isNew && cur.isActive && <Button variant="danger" onClick={() => setDlg("deactivate")}>無効化する</Button>}
+            {!isNew && cur.isActive && <Button variant="danger" onClick={() => void askDelete()}>削除する</Button>}
           </div>
         )}
       </div>

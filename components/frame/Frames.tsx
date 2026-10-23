@@ -11,10 +11,10 @@ export async function PatientFrameHeader({ anonymous = false, logoOnly = false }
   return <PatientHeader lang={lang} groupName={groupName} userName={patient?.account.displayName ?? null} clinicsHref={clinicsHref} logoOnly={logoOnly} />;
 }
 
-/** CF-03 for the staff session; without one the logo-only header (the page's own guard answers the request) */
+/** CF-03 for the staff session; without one the anonymous CF-01 (seen only under ER-01 / ER-05 in the staff group) */
 export async function StaffFrameHeader() {
   const { session, lang } = await getViewer();
-  if (!session || session.account.role === "PATIENT") return <PatientFrameHeader logoOnly />;
+  if (!session || session.account.role === "PATIENT") return <PatientFrameHeader anonymous />;
   return (
     <StaffHeader
       groupName={await getGroupName(lang)}
