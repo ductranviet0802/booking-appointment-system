@@ -24,6 +24,19 @@ export type ConfirmDialogProps = {
   onCancel: () => void;
 };
 
+/** Modal focus trap: Tab / Shift+Tab wrap inside the element that has this as onKeyDown (item 34, A05 ⑤) */
+export function trapTab(e: React.KeyboardEvent<HTMLElement>) {
+  if (e.key !== "Tab") return;
+  const f = e.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])");
+  if (!f.length) return;
+  const edge = e.shiftKey ? f[0] : f[f.length - 1];
+  const inside = e.currentTarget.contains(document.activeElement);
+  if (!inside || document.activeElement === edge) {
+    e.preventDefault();
+    (e.shiftKey ? f[f.length - 1] : f[0]).focus();
+  }
+}
+
 export function ConfirmDialog({ open, title, messageId, params, confirmLabel, destructive, onConfirm, onCancel }: ConfirmDialogProps) {
   const lang = useLang();
   const staff = messageId.startsWith("S");
@@ -47,7 +60,13 @@ export function ConfirmDialog({ open, title, messageId, params, confirmLabel, de
   }
 
   return (
-    <div className="scrim-fixed" onKeyDown={(e) => e.key === "Escape" && !busy && onCancel()}>
+    <div
+      className="scrim-fixed"
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !busy) onCancel();
+        trapTab(e);
+      }}
+    >
       <div className="dlg" role="alertdialog" aria-modal="true" aria-labelledby={titleId}>
         <h3 id={titleId}>{title}</h3>
         <p className="mut" style={{ margin: 0 }}>{t(messageId, lang, params)}</p>

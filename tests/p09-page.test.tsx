@@ -201,7 +201,7 @@ describe("buttons and schedule rules (抽出3, 抽出4)", () => {
     expect(data!.schedule[1].sunday).toBe(false);
     const html = renderToStaticMarkup(<DoctorDetail data={data!} backHref="/doctors" lang="ja" />);
     expect(html).toContain(">日</th>");
-    expect(html).toContain("<div class=\"whitespace-nowrap\">10:30〜12:00</div>");
+    expect(html).toContain("<div>10:30〜12:00</div>"); // cells wrap, no h-scroll (F13-07)
   });
   it("languages in own names, other codes upper-case; qualifications one bullet per non-empty line; a single button gets the sticky bar", async () => {
     await prisma.slot.deleteMany({ where: { doctorId, departmentId: ids.shonika } });

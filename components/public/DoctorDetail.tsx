@@ -17,7 +17,7 @@ function Schedule({ block, lang }: { block: Data["schedule"][number]; lang: Lang
   const td = "px-2 py-2 text-center text-sm border border-[color:var(--line)]";
   const cell = (wd: number, band: "AM" | "PM") => {
     const lines = block.cell(wd, band);
-    return <td key={`${wd}${band}`} className={td}>{lines.length ? lines.map((l) => <div key={l} className="whitespace-nowrap">{l}</div>) : label("dash", lang)}</td>;
+    return <td key={`${wd}${band}`} className={td}>{lines.length ? lines.map((l) => <div key={l}>{l}</div>) : label("dash", lang)}</td>;
   };
   const wdName = (wd: number) => label(`wd${wd}` as "wd1", lang);
   return (
@@ -54,12 +54,24 @@ export function DoctorDetail({ data, backHref, lang }: { data: Data; backHref: s
   const single = data.buttons.length === 1;
   const buttons = (cls = "") => (
     <div className={`flex flex-col gap-2 ${cls}`}>
-      {data.buttons.map((b) => <Link key={b.href} className="btn bp bw !h-auto whitespace-normal py-2" href={b.href}>{b.text}</Link>)}
+      {data.buttons.map((b) => (
+        <Link key={b.href} className="btn bp bw !h-auto whitespace-normal py-2" href={b.href}>
+          <Icon name="cal" />
+          <span className="flex-1">{b.text}</span>
+          <Icon name="right" />
+        </Link>
+      ))}
     </div>
   );
+  // Tab order 7 → 8 → 13: the sticky bar and the content come first in the DOM; the back link (13) is drawn first by `order-first`.
   return (
     <div className={`flex flex-col gap-5 ${single ? "pb-20 md:pb-0" : ""}`} data-testid="p09">
-      <Link className="lnk inline-flex items-center gap-1" href={backHref}>‹ {label("backToList", lang)}</Link>
+      {single && (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[color:var(--line)] bg-white p-3 md:hidden" data-testid="p09-sticky">
+          {buttons()}
+        </div>
+      )}
+      <Link className="lnk order-first inline-flex items-center gap-1 self-start" href={backHref}>‹ {label("backToList", lang)}</Link>
       {/* mobile order: profile head, booking, career, schedule (the wrappers dissolve and `order` sorts); desktop: two columns */}
       <div className="flex flex-col gap-5 md:grid md:grid-cols-[1fr_380px]">
         <div className="contents md:flex md:flex-col md:gap-5">
@@ -95,12 +107,10 @@ export function DoctorDetail({ data, backHref, lang }: { data: Data; backHref: s
           <p className="order-5 m-0 rounded-lg bg-[#eaf3fb] p-3 md:order-none" data-testid="p09-insurance">{t("PI033", lang)}</p>
         </div>
         <div className="contents md:flex md:flex-col md:gap-5">
-          <section className="box order-2 md:order-none" aria-label={label("bookWithDoctor", lang)}>
+          <section className={`box order-2 md:order-none ${single ? "hidden md:flex" : ""}`} aria-label={label("bookWithDoctor", lang)}>
             <h2 className="m-0 hidden text-lg font-bold md:block">{label("bookWithDoctor", lang)}</h2>
             {data.buttons.length === 0 ? (
               <p className="m-0 flex gap-2 rounded-lg bg-[#fff5e0] p-3" data-testid="p09-unavailable"><Icon name="alert" />{t("PI036", lang)}</p>
-            ) : single ? (
-              <div className="hidden md:block">{buttons()}</div>
             ) : (
               buttons()
             )}
@@ -113,11 +123,6 @@ export function DoctorDetail({ data, backHref, lang }: { data: Data; backHref: s
           )}
         </div>
       </div>
-      {single && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[color:var(--line)] bg-white p-3 md:hidden" data-testid="p09-sticky">
-          {buttons()}
-        </div>
-      )}
     </div>
   );
 }

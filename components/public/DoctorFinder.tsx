@@ -98,9 +98,9 @@ export function FinderShell({ lang, options, query, children }: { lang: Lang; op
             {select("p08-clinic", label("clinicLabel", lang), f.clinic, onClinic, options.clinics.map((c) => ({ value: c.code, text: c.name })))}
             {select("p08-department", label("departmentLabel", lang), f.department, pick("department"), departments.map((d) => ({ value: d.code, text: d.name })))}
             {select("p08-language", label("languageLabel", lang), f.language, pick("language"), options.languages.map((l) => ({ value: l, text: languageName(l) })))}
-            <div className="flex gap-2">
-              <button type="button" className="btn bs flex-1" onClick={clear}>{label("clearBtn", lang)}</button>
-              <button type="submit" className="btn bp flex-1"><Icon name="search" />{label("searchBtn", lang)}</button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className="btn bs flex-1 whitespace-normal px-3" onClick={clear}>{label("clearBtn", lang)}</button>
+              <button type="submit" className="btn bp flex-1 whitespace-normal px-3"><Icon name="search" />{label("searchBtn", lang)}</button>
             </div>
           </div>
         </form>

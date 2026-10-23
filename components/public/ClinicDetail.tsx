@@ -74,7 +74,8 @@ export function ClinicDetail({ data, lang }: { data: Data; lang: Lang }) {
   const reception = hours.reception;
   return (
     <div className="flex flex-col gap-5 pb-20 md:pb-0" data-testid="p10-clinic">
-      <h1 className="m-0 text-xl font-bold">{label("clinicInfoHeading", lang)}</h1>
+      {/* the image draws this heading in list state ① only; kept for the page outline (Q-E) */}
+      <h1 className="sr-only">{label("clinicInfoHeading", lang)}</h1>
       {tabs.length > 0 && (
         <nav aria-label={label("switchClinicAria", lang)} className="flex gap-2 overflow-x-auto" data-testid="p10-tabs">
           {tabs.map((t) => (
@@ -106,12 +107,17 @@ export function ClinicDetail({ data, lang }: { data: Data; lang: Lang }) {
                 <span className="sr-only">{label("newTab", lang)}</span>
               </a>
             )}
-            <a className="lnk" href={telHref(clinic.phone)}>{formatPhone(clinic.phone)}</a>
+            <p className="m-0 flex gap-2"><Icon name="phone" /><a className="lnk" href={telHref(clinic.phone)}>{formatPhone(clinic.phone)}</a></p>
             <div className="flex flex-col gap-1">
               <b>{label("accessLabel", lang)}</b>
               <p className="m-0 whitespace-pre-line">{clinic.access}</p>
             </div>
           </section>
+          {/* mobile sticky bar: 電話 (6-1) and このクリニックで予約 (12); here in the DOM so Tab runs 6 → 6-1 → 12 → 13-1 */}
+          <div className="fixed inset-x-0 bottom-0 z-20 flex gap-2 border-t border-[color:var(--line)] bg-white p-3 md:hidden">
+            <a className="btn bs" href={telHref(clinic.phone)}><Icon name="phone" />{label("phoneBtn", lang)}</a>
+            <Link className="btn bp flex-1" href={bookHref}><Icon name="cal" />{label("bookAtClinic", lang)}</Link>
+          </div>
           <section className="box" aria-label={label("hoursHeading", lang)}>
             <h2 className="m-0 flex items-center gap-2 text-lg font-bold"><Icon name="clock" />{label("hoursHeading", lang)}</h2>
             <HoursTables hours={hours} lang={lang} />
@@ -128,8 +134,7 @@ export function ClinicDetail({ data, lang }: { data: Data; lang: Lang }) {
           </section>
         </div>
         <div className="flex flex-col gap-5">
-          {/* wrapper: .btn is unlayered CSS and would beat a `hidden` utility on the same element */}
-          <div className="hidden md:block"><Link className="btn bp bw" href={bookHref}>{label("bookAtClinic", lang)}</Link></div>
+          <Link className="btn bp bw hidden md:flex" href={bookHref}><Icon name="cal" />{label("bookAtClinic", lang)}</Link>
           <section className="box" aria-label={label("closuresHeading", lang)}>
             <h2 className="m-0 flex flex-wrap items-baseline gap-2 text-lg font-bold">
               {label("closuresHeading", lang)}<small className="font-normal text-[color:var(--mut)]">{label("closuresCaption", lang)}</small>
@@ -169,11 +174,6 @@ export function ClinicDetail({ data, lang }: { data: Data; lang: Lang }) {
             </section>
           )}
         </div>
-      </div>
-      {/* mobile sticky bar: 電話 (6-1) and このクリニックで予約 (12) */}
-      <div className="fixed inset-x-0 bottom-0 z-20 flex gap-2 border-t border-[color:var(--line)] bg-white p-3 md:hidden">
-        <a className="btn bs" href={telHref(clinic.phone)}>{label("phoneBtn", lang)}</a>
-        <Link className="btn bp flex-1" href={bookHref}>{label("bookAtClinic", lang)}</Link>
       </div>
     </div>
   );

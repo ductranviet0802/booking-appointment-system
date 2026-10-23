@@ -18,6 +18,8 @@ const PATHS = {
   spin: <path d="M12 3a9 9 0 1 0 9 9" />,
   plus: <path d="M12 5v14M5 12h14" />,
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  cal: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
+  phone: <path d="M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2z" />,
 };
 
 export type IconName = keyof typeof PATHS;

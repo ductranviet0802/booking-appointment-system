@@ -27,8 +27,8 @@ function Row({ label, req, badge, f, ctx, children }: { label: string; req?: boo
     <div className={s.f}>
       <div className={s.lab}>
         <label htmlFor={f ? fid(f) : undefined}>{label}</label>
-        {req && <RequiredMark lang="ja" />}
-        {badge && <span className={s.badge}>{badge}</span>}
+        {/* a 必須 (JA) row shows that badge in place of 必須 */}
+        {badge ? <span className="req">{badge}</span> : req && <RequiredMark lang="ja" />}
       </div>
       <div>
         {children}
