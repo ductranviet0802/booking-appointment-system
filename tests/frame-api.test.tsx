@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { NextRequest } from "next/server";
 
 jest.mock("@/lib/auth/context", () => ({ getSession: jest.fn(), guardScreen: jest.fn() }));
-jest.mock("@/lib/prisma", () => ({ prisma: { account: { update: jest.fn() } } }));
+jest.mock("@/lib/prisma", () => ({ prisma: { account: { update: jest.fn() }, systemSetting: { findMany: jest.fn(async () => []) } } }));
 jest.mock("next/navigation", () => ({ usePathname: () => "/", useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }));
 jest.mock("next/link", () => ({ __esModule: true, default: (p: { href: string; children: React.ReactNode }) => <a href={p.href}>{p.children}</a> }));
 jest.mock("@/components/ui/Toast", () => ({ useToast: () => ({ toast: jest.fn() }), useLang: () => "ja" }));
@@ -16,7 +16,7 @@ import { StaffHeader } from "@/components/frame/StaffHeader";
 import { staffMenu } from "@/lib/frame/menu";
 
 const session = getSession as jest.Mock;
-const db = prisma as unknown as { account: { update: jest.Mock } };
+const db = prisma as unknown as { account: { update: jest.Mock }; systemSetting: { findMany: jest.Mock } };
 
 const req = (url: string, body: unknown) =>
   new NextRequest(`http://localhost${url}`, {
@@ -45,6 +45,16 @@ describe("POST /api/locale", () => {
     session.mockResolvedValue(null);
     const res = await postLocale(req("/api/locale", { language: "en" }));
     expect(res.status).toBe(200);
+    expect(db.account.update).not.toHaveBeenCalled();
+  });
+  it("during maintenance an API call answers 503 PI092 and runs nothing (event 14, F-05)", async () => {
+    session.mockResolvedValue(patient([]));
+    db.systemSetting.findMany.mockResolvedValueOnce([
+      { key: "maintenance_from", value: "2000-01-01 00:00" }, { key: "maintenance_to", value: "2999-01-01 00:00" },
+    ]);
+    const res = await postLocale(req("/api/locale", { language: "vi" }));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({ code: "PI092" });
     expect(db.account.update).not.toHaveBeenCalled();
   });
 });

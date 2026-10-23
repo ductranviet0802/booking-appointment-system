@@ -1,8 +1,10 @@
 import { ApiError } from "@/lib/errors";
 import { log } from "@/lib/logger";
 import { fail } from "@/lib/http";
+import { maintenanceEnd } from "@/lib/frame/settings";
+import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
 
 function getRequestId(request: NextRequest) {
@@ -25,6 +27,15 @@ function getMetricKey(path: string) {
   return "other";
 }
 
+/** _common event 14 / N-OPS-02 (judge F-05): an API request during maintenance → 503 PI092; health and the X1 webhook stay open */
+async function maintenanceAnswer(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if (path === "/api/health" || path.startsWith("/api/webhooks/")) return null;
+  const rows = await prisma.systemSetting.findMany({ where: { key: { in: ["maintenance_from", "maintenance_to"] } } });
+  const end = maintenanceEnd(Object.fromEntries(rows.map((r) => [r.key, r.value])));
+  return end ? NextResponse.json({ code: "PI092", params: { end: end.toISOString() } }, { status: 503 }) : null;
+}
+
 export async function withRouteHandler(
   request: NextRequest,
   handler: () => Promise<Response>,
@@ -35,7 +46,7 @@ export async function withRouteHandler(
   let status = 500;
 
   try {
-    response = await handler();
+    response = (await maintenanceAnswer(request)) ?? (await handler());
     status = response.status;
     return response;
   } catch (error) {

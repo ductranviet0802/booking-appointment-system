@@ -16,6 +16,8 @@ export function useApiFetch() {
       try {
         const res = await fetch(url, init);
         if (res.status === 429) toast("PE092");
+        // maintenance began meanwhile (event 14): the reload shows ER-04 in place of the screen
+        if (res.status === 503 && (await res.clone().json().catch(() => ({}))).code === "PI092") window.location.reload();
         return res;
       } catch {
         toast("PE093");
