@@ -1,129 +1,953 @@
+// ver1 data model — docs/03-tables.md of the release (2026-10-23_ver1). Table and column names follow 03 (§n = its
+// section). Constraints Prisma cannot express (CHECK, EXCLUDE, triggers) are in the migration SQL.
+// Dates are DATE and times TIME(0) in Asia/Tokyo (lib/jst.ts converts); instants are TIMESTAMPTZ.
+
 generator client {
-  provider = "prisma-client-js"
-  engineType = "binary"
+  provider        = "prisma-client-js"
+  engineType      = "binary"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
+// §2 Enums
+
+enum Role {
   PATIENT
-  DOCTOR
+  RECEPTION
   ADMIN
+  DOCTOR
+
+  @@map("role")
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  LOCKED
+  DISABLED
+  WITHDRAWN
+
+  @@map("account_status")
+}
+
+enum Language {
+  JA
+  EN
+  VI
+
+  @@map("language")
+}
+
+enum NotifyChannel {
+  MAIL
+  LINE
+  SMS
+
+  @@map("notify_channel")
+}
+
+enum NameType {
+  JP
+  ROMAJI
+
+  @@map("name_type")
+}
+
+// codes of the 保険証 / レセコン
+enum Sex {
+  MALE   @map("1")
+  FEMALE @map("2")
+
+  @@map("sex")
+}
+
+enum Relation {
+  SELF
+  CHILD
+  SPOUSE
+  PARENT
+  OTHER
+
+  @@map("relation")
+}
+
+enum Band {
+  AM
+  PM
+
+  @@map("band")
+}
+
+enum CalendarKind {
+  CLOSED
+  AM_CLOSED
+  PM_CLOSED
+  SPECIAL_OPEN
+
+  @@map("calendar_kind")
+}
+
+enum ShiftExceptionKind {
+  OFF
+  EXTRA
+  SUBSTITUTE
+
+  @@map("shift_exception_kind")
+}
+
+enum VisitCategory {
+  FIRST
+  REPEAT
+  SELF_PAY
+
+  @@map("visit_category")
+}
+
+enum DoctorTitle {
+  DIRECTOR
+  VICE_DIRECTOR
+  DOCTOR
+  PART_TIME
+
+  @@map("doctor_title")
+}
+
+enum SlotStatus {
+  OPEN
+  CLOSED
+
+  @@map("slot_status")
 }
 
 enum BookingStatus {
-  CONFIRMED
+  RESERVED
+  CHECKED_IN
+  NO_SHOW
   CANCELED
+
+  @@map("booking_status")
 }
 
-model User {
-  id        String    @id @default(uuid()) @db.Uuid
-  email     String    @unique @db.VarChar(255)
-  password  String    @db.VarChar(255)
-  name      String    @db.VarChar(255)
-  phone     String?   @db.VarChar(20)
-  role      UserRole  @default(PATIENT)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  bookings  Booking[]
+enum BookingChannel {
+  WEB
+  PHONE
+  COUNTER
 
-  @@index([email])
-  @@map("users")
+  @@map("booking_channel")
 }
 
-model Specialty {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @db.VarChar(255)
-  description String?
-  icon        String?  @db.VarChar(100)
+enum ActorKind {
+  PATIENT
+  STAFF
+  SYSTEM
+
+  @@map("actor_kind")
+}
+
+enum CancelReason {
+  RECOVERED
+  SCHEDULE
+  RESCHEDULE
+  CLINIC
+  OTHER
+
+  @@map("cancel_reason")
+}
+
+enum NotificationEvent {
+  NT01_BOOKED
+  NT02_REMIND
+  NT03_CHANGED
+  NT04_CANCELED
+  NT05_PW_RESET
+  NT06_VERIFY
+  NT07_ADJUST
+
+  @@map("notification_event")
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENDING
+  SENT
+  FAILED
+  BOUNCED
+  SKIPPED
+
+  @@map("notification_status")
+}
+
+enum BatchStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+
+  @@map("batch_status")
+}
+
+// §3.1
+model Clinic {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String   @unique @db.VarChar(20)
+  nameJa       String   @map("name_ja") @db.VarChar(100)
+  nameEn       String?  @map("name_en") @db.VarChar(100)
+  nameVi       String?  @map("name_vi") @db.VarChar(100)
+  nameKana     String   @map("name_kana") @db.VarChar(100)
+  postcode     String   @db.Char(7)
+  prefecture   String   @db.VarChar(10)
+  city         String   @db.VarChar(50)
+  addressLine  String   @map("address_line") @db.VarChar(200)
+  addressEn    String?  @map("address_en") @db.VarChar(300)
+  phone        String   @db.VarChar(11)
+  accessJa     String   @map("access_ja")
+  accessEn     String?  @map("access_en")
+  accessVi     String?  @map("access_vi")
+  mapUrl       String?  @map("map_url") @db.VarChar(500)
+  noticeJa     String?  @map("notice_ja")
+  noticeEn     String?  @map("notice_en")
+  noticeVi     String?  @map("notice_vi")
+  ipAllowlist  String?  @map("ip_allowlist")
+  displayOrder Int      @map("display_order") @db.SmallInt
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  businessHours         ClinicBusinessHour[]
+  calendarDays          ClinicCalendarDay[]
+  clinicDepartments     ClinicDepartment[]
+  primaryDoctors        Doctor[]
+  shiftPatterns         DoctorShiftPattern[]
+  shiftExceptions       DoctorShiftException[]
+  visitTypes            VisitType[]
+  bookingPolicy         BookingPolicy?
+  slots                 Slot[]
+  patientCards          PatientCard[]
+  staffClinics          StaffClinic[]
+  sessions              Session[]
+  bookings              Booking[]
+  notificationTemplates NotificationTemplate[]
+  exportFiles           ExportFile[]
+  batchRuns             BatchRun[]
+
+  @@map("clinics")
+}
+
+// §3.2 — a weekday × band without a row is closed
+model ClinicBusinessHour {
+  clinicId         String    @map("clinic_id") @db.Uuid
+  weekday          Int       @db.SmallInt
+  band             Band
+  openTime         DateTime  @map("open_time") @db.Time(0)
+  closeTime        DateTime  @map("close_time") @db.Time(0)
+  receptionEndTime DateTime? @map("reception_end_time") @db.Time(0)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@id([clinicId, weekday, band])
+  @@map("clinic_business_hours")
+}
+
+// §3.3
+model ClinicCalendarDay {
+  clinicId  String       @map("clinic_id") @db.Uuid
+  calDate   DateTime     @map("cal_date") @db.Date
+  kind      CalendarKind
+  amOpen    DateTime?    @map("am_open") @db.Time(0)
+  amClose   DateTime?    @map("am_close") @db.Time(0)
+  pmOpen    DateTime?    @map("pm_open") @db.Time(0)
+  pmClose   DateTime?    @map("pm_close") @db.Time(0)
+  noteJa    String?      @map("note_ja") @db.VarChar(200)
+  noteEn    String?      @map("note_en") @db.VarChar(200)
+  noteVi    String?      @map("note_vi") @db.VarChar(200)
+  createdBy String       @map("created_by") @db.Uuid
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id])
+  creator Account @relation("CalendarDayCreator", fields: [createdBy], references: [id])
+
+  @@id([clinicId, calDate])
+  @@map("clinic_calendar_days")
+}
+
+// §3.4 (X3, B3)
+model Holiday {
+  holidayDate DateTime @id @map("holiday_date") @db.Date
+  nameJa      String   @map("name_ja") @db.VarChar(50)
+  nameEn      String?  @map("name_en") @db.VarChar(100)
+  nameVi      String?  @map("name_vi") @db.VarChar(100)
+  isActive    Boolean  @default(true) @map("is_active")
+  lastRunId   String   @map("last_run_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  doctors     Doctor[]
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@map("specialties")
+  lastRun BatchRun @relation(fields: [lastRunId], references: [id])
+
+  @@map("holidays")
 }
 
-model Hospital {
-  id        String     @id @default(uuid()) @db.Uuid
-  name      String     @db.VarChar(255)
-  address   String?    @db.VarChar(500)
-  phone     String?    @db.VarChar(20)
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  locations Location[]
-  doctors   Doctor[]
+// §3.5 — code is immutable (trigger in the migration)
+model Department {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String   @unique @db.VarChar(20)
+  nameJa       String   @map("name_ja") @db.VarChar(50)
+  nameEn       String?  @map("name_en") @db.VarChar(50)
+  nameVi       String?  @map("name_vi") @db.VarChar(50)
+  nameKana     String   @map("name_kana") @db.VarChar(50)
+  displayOrder Int      @map("display_order") @db.SmallInt
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@map("hospitals")
+  clinicDepartments ClinicDepartment[]
+  doctorDepartments DoctorDepartment[]
+  shiftPatterns     DoctorShiftPattern[]
+  shiftExceptions   DoctorShiftException[]
+  visitTypes        VisitType[]
+  slots             Slot[]
+  bookings          Booking[]
+
+  @@map("departments")
 }
 
-model Location {
-  id         String   @id @default(uuid()) @db.Uuid
-  hospitalId String   @map("hospital_id") @db.Uuid
-  address    String   @db.VarChar(500)
-  city       String   @db.VarChar(100)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+// §3.6
+model ClinicDepartment {
+  clinicId     String   @map("clinic_id") @db.Uuid
+  departmentId String   @map("department_id") @db.Uuid
+  displayOrder Int      @map("display_order") @db.SmallInt
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  clinic     Clinic     @relation(fields: [clinicId], references: [id])
+  // F15-01: deleting a department deletes its clinic_departments, doctor_departments and visit_types rows
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
 
-  @@index([hospitalId, city], map: "locations_hospital_id_city_idx")
-  @@map("locations")
+  @@id([clinicId, departmentId])
+  @@map("clinic_departments")
 }
 
+// §3.7
 model Doctor {
-  id          String     @id @default(uuid()) @db.Uuid
-  specialtyId String     @map("specialty_id") @db.Uuid
-  hospitalId  String     @map("hospital_id") @db.Uuid
-  name        String     @db.VarChar(255)
-  experience  Int
-  rating      Decimal    @default(0.0) @db.Decimal(2, 1)
-  fee         Int
-  description String?
-  avatar      String?    @db.VarChar(500)
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String      @unique @db.VarChar(20)
+  familyName       String      @map("family_name") @db.VarChar(50)
+  givenName        String      @map("given_name") @db.VarChar(50)
+  familyNameKana   String      @map("family_name_kana") @db.VarChar(50)
+  givenNameKana    String      @map("given_name_kana") @db.VarChar(50)
+  nameRomaji       String      @map("name_romaji") @db.VarChar(100)
+  title            DoctorTitle
+  photoUrl         String?     @map("photo_url") @db.VarChar(500)
+  profileJa        String      @map("profile_ja")
+  profileEn        String?     @map("profile_en")
+  profileVi        String?     @map("profile_vi")
+  qualificationsJa String?     @map("qualifications_ja")
+  qualificationsEn String?     @map("qualifications_en")
+  qualificationsVi String?     @map("qualifications_vi")
+  languages        String[]    @default(["ja"]) @db.VarChar(10)
+  primaryClinicId  String      @map("primary_clinic_id") @db.Uuid
+  accountId        String?     @unique @map("account_id") @db.Uuid
+  displayOrder     Int         @map("display_order") @db.SmallInt
+  isActive         Boolean     @default(true) @map("is_active")
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  specialty Specialty    @relation(fields: [specialtyId], references: [id])
-  hospital  Hospital     @relation(fields: [hospitalId], references: [id])
-  slots     DoctorSlot[]
+  primaryClinic        Clinic                 @relation(fields: [primaryClinicId], references: [id])
+  account              Account?               @relation(fields: [accountId], references: [id])
+  departments          DoctorDepartment[]
+  shiftPatterns        DoctorShiftPattern[]
+  shiftExceptions      DoctorShiftException[] @relation("ExceptionDoctor")
+  substituteExceptions DoctorShiftException[] @relation("ExceptionSubstitute")
+  slots                Slot[]
+  bookings             Booking[]
 
-  @@index([specialtyId])
-  @@index([hospitalId])
-  @@index([rating])
-  @@index([fee])
   @@map("doctors")
 }
 
-model DoctorSlot {
-  id        String    @id @default(uuid()) @db.Uuid
-  doctorId  String    @map("doctor_id") @db.Uuid
-  date      DateTime  @db.Date
-  startTime DateTime  @map("start_time") @db.Time(0)
-  endTime   DateTime  @map("end_time") @db.Time(0)
-  isBooked  Boolean   @default(false) @map("is_booked")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+// §3.8
+model DoctorDepartment {
+  doctorId     String   @map("doctor_id") @db.Uuid
+  departmentId String   @map("department_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  doctor   Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  doctor     Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
 
-  @@index([doctorId, date], map: "doctor_slots_doctor_id_date_idx")
-  @@index([date, isBooked], map: "doctor_slots_date_is_booked_idx")
-  @@map("doctor_slots")
+  @@id([doctorId, departmentId])
+  @@map("doctor_departments")
 }
 
+// §3.9 — no overlap per doctor (EXCLUDE in the migration)
+model DoctorShiftPattern {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  doctorId     String    @map("doctor_id") @db.Uuid
+  clinicId     String    @map("clinic_id") @db.Uuid
+  departmentId String    @map("department_id") @db.Uuid
+  weekday      Int       @db.SmallInt
+  band         Band
+  startTime    DateTime  @map("start_time") @db.Time(0)
+  endTime      DateTime  @map("end_time") @db.Time(0)
+  validFrom    DateTime  @map("valid_from") @db.Date
+  validTo      DateTime? @map("valid_to") @db.Date
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  doctor     Doctor     @relation(fields: [doctorId], references: [id])
+  clinic     Clinic     @relation(fields: [clinicId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
+
+  @@index([clinicId, weekday])
+  @@index([doctorId])
+  @@map("doctor_shift_patterns")
+}
+
+// §3.10 — insert / delete only
+model DoctorShiftException {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  doctorId           String             @map("doctor_id") @db.Uuid
+  shiftDate          DateTime           @map("shift_date") @db.Date
+  kind               ShiftExceptionKind
+  clinicId           String?            @map("clinic_id") @db.Uuid
+  departmentId       String?            @map("department_id") @db.Uuid
+  band               Band?
+  startTime          DateTime?          @map("start_time") @db.Time(0)
+  endTime            DateTime?          @map("end_time") @db.Time(0)
+  substituteDoctorId String?            @map("substitute_doctor_id") @db.Uuid
+  note               String?            @db.VarChar(200)
+  createdBy          String             @map("created_by") @db.Uuid
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  doctor           Doctor      @relation("ExceptionDoctor", fields: [doctorId], references: [id])
+  clinic           Clinic?     @relation(fields: [clinicId], references: [id])
+  department       Department? @relation(fields: [departmentId], references: [id])
+  substituteDoctor Doctor?     @relation("ExceptionSubstitute", fields: [substituteDoctorId], references: [id])
+  creator          Account     @relation("ShiftExceptionCreator", fields: [createdBy], references: [id])
+
+  @@index([doctorId, shiftDate])
+  @@index([shiftDate])
+  @@map("doctor_shift_exceptions")
+}
+
+// §3.11
+model VisitType {
+  id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId              String        @map("clinic_id") @db.Uuid
+  departmentId          String        @map("department_id") @db.Uuid
+  code                  String        @db.VarChar(20)
+  category              VisitCategory
+  nameJa                String        @map("name_ja") @db.VarChar(50)
+  nameEn                String?       @map("name_en") @db.VarChar(50)
+  nameVi                String?       @map("name_vi") @db.VarChar(50)
+  durationFrames        Int           @map("duration_frames") @db.SmallInt
+  priceYen              Int?          @map("price_yen")
+  webBookable           Boolean       @default(true) @map("web_bookable")
+  questionnaireRequired Boolean       @map("questionnaire_required")
+  noticeJa              String?       @map("notice_ja")
+  noticeEn              String?       @map("notice_en")
+  noticeVi              String?       @map("notice_vi")
+  displayOrder          Int           @map("display_order") @db.SmallInt
+  isActive              Boolean       @default(true) @map("is_active")
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic     Clinic     @relation(fields: [clinicId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  bookings   Booking[]
+
+  @@unique([clinicId, code])
+  @@map("visit_types")
+}
+
+// §3.12 (A04) — one row per clinic
+model BookingPolicy {
+  clinicId              String    @id @map("clinic_id") @db.Uuid
+  frameMinutes          Int       @default(15) @map("frame_minutes") @db.SmallInt
+  frameCapacity         Int       @default(1) @map("frame_capacity") @db.SmallInt
+  bookingWindowDays     Int       @default(30) @map("booking_window_days") @db.SmallInt
+  sameDayCutoffMinutes  Int       @default(30) @map("same_day_cutoff_minutes") @db.SmallInt
+  cancelDeadlineType    String    @default("PREV_DAY_TIME") @map("cancel_deadline_type") @db.VarChar(16)
+  cancelDeadlineTime    DateTime? @default(dbgenerated("'23:59:00'::time without time zone")) @map("cancel_deadline_time") @db.Time(0)
+  cancelDeadlineHours   Int?      @map("cancel_deadline_hours") @db.SmallInt
+  perPersonDailyLimit   Int       @default(1) @map("per_person_daily_limit") @db.SmallInt
+  // Q-001: 03 says 18:00, 01 F6-04 / 06 B1 / A04 item 18 say 10:00 — 10:00 implemented
+  reminderTime          DateTime  @default(dbgenerated("'10:00:00'::time without time zone")) @map("reminder_time") @db.Time(0)
+  phoneMessageJa        String    @map("phone_message_ja") @db.VarChar(300)
+  phoneMessageEn        String?   @map("phone_message_en") @db.VarChar(300)
+  phoneMessageVi        String?   @map("phone_message_vi") @db.VarChar(300)
+  updatedBy             String    @map("updated_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id])
+  updater Account @relation("PolicyUpdater", fields: [updatedBy], references: [id])
+
+  @@map("booking_policies")
+}
+
+// §3.13 — UNIQUE (doctor, date, start) stops one doctor in two places; CHECK reserved_count ≤ capacity stops overbooking
+model Slot {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId       String     @map("clinic_id") @db.Uuid
+  departmentId   String     @map("department_id") @db.Uuid
+  doctorId       String     @map("doctor_id") @db.Uuid
+  slotDate       DateTime   @map("slot_date") @db.Date
+  startTime      DateTime   @map("start_time") @db.Time(0)
+  endTime        DateTime   @map("end_time") @db.Time(0)
+  capacity       Int        @db.SmallInt
+  reservedCount  Int        @default(0) @map("reserved_count") @db.SmallInt
+  status         SlotStatus
+  closedReason   String?    @map("closed_reason") @db.VarChar(20)
+  generatedRunId String     @map("generated_run_id") @db.Uuid
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  department   Department    @relation(fields: [departmentId], references: [id])
+  doctor       Doctor        @relation(fields: [doctorId], references: [id])
+  generatedRun BatchRun      @relation(fields: [generatedRunId], references: [id])
+  bookingSlots BookingSlot[]
+
+  @@unique([doctorId, slotDate, startTime])
+  @@index([clinicId, slotDate, status])
+  @@index([departmentId, slotDate])
+  @@map("slots")
+}
+
+// §3.14 — email unique among non-withdrawn accounts, stored lower-cased (CHECK in the migration)
+model Account {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String         @db.VarChar(254)
+  passwordHash       String         @map("password_hash") @db.VarChar(255)
+  role               Role
+  status             AccountStatus
+  language           Language       @default(JA)
+  displayName        String?        @map("display_name") @db.VarChar(50)
+  allClinics         Boolean        @default(false) @map("all_clinics")
+  notifyChannel      NotifyChannel? @default(MAIL) @map("notify_channel")
+  lineUserId         String?        @unique @map("line_user_id") @db.VarChar(64)
+  lineFriend         String?        @map("line_friend") @db.VarChar(12)
+  smsOptIn           Boolean        @default(false) @map("sms_opt_in")
+  emailVerifiedAt    DateTime?      @map("email_verified_at") @db.Timestamptz(6)
+  emailBouncedAt     DateTime?      @map("email_bounced_at") @db.Timestamptz(6)
+  pendingEmail       String?        @map("pending_email") @db.VarChar(254)
+  failedLoginCount   Int            @default(0) @map("failed_login_count") @db.SmallInt
+  lockedUntil        DateTime?      @map("locked_until") @db.Timestamptz(6)
+  mustChangePassword Boolean        @default(false) @map("must_change_password")
+  lastLoginAt        DateTime?      @map("last_login_at") @db.Timestamptz(6)
+  withdrawnAt        DateTime?      @map("withdrawn_at") @db.Timestamptz(6)
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  doctor              Doctor?
+  patients            Patient[]
+  staffClinics        StaffClinic[]
+  sessions            Session[]
+  authTokens          AuthToken[]
+  consents            Consent[]
+  bookedBookings      Booking[]              @relation("BookedBy")
+  canceledBookings    Booking[]              @relation("CanceledBy")
+  bookingEvents       BookingEvent[]
+  notifications       Notification[]
+  calendarDays        ClinicCalendarDay[]    @relation("CalendarDayCreator")
+  shiftExceptions     DoctorShiftException[] @relation("ShiftExceptionCreator")
+  policies            BookingPolicy[]        @relation("PolicyUpdater")
+  templates           NotificationTemplate[] @relation("TemplateUpdater")
+  exportFiles         ExportFile[]
+
+  @@unique([email], map: "accounts_email_active_key", where: raw("status <> 'WITHDRAWN'"))
+  @@map("accounts")
+}
+
+// §3.15
+model Patient {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId      String?   @map("account_id") @db.Uuid
+  relation       Relation?
+  nameType       NameType  @map("name_type")
+  familyName     String    @map("family_name") @db.VarChar(50)
+  givenName      String    @map("given_name") @db.VarChar(50)
+  familyNameKana String    @map("family_name_kana") @db.VarChar(50)
+  givenNameKana  String    @map("given_name_kana") @db.VarChar(50)
+  birthDate      DateTime  @map("birth_date") @db.Date
+  sex            Sex
+  postcode       String    @db.Char(7)
+  prefecture     String    @db.VarChar(10)
+  city           String    @db.VarChar(50)
+  town           String?   @db.VarChar(100)
+  addressLine    String    @map("address_line") @db.VarChar(200)
+  building       String?   @db.VarChar(100)
+  phone          String?   @db.VarChar(11)
+  smsOptIn       Boolean   @default(false) @map("sms_opt_in")
+  mergedIntoId   String?   @map("merged_into_id") @db.Uuid
+  createdByKind  ActorKind @map("created_by_kind")
+  anonymizedAt   DateTime? @map("anonymized_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account       Account?       @relation(fields: [accountId], references: [id])
+  mergedInto    Patient?       @relation("Merge", fields: [mergedIntoId], references: [id])
+  mergedFrom    Patient[]      @relation("Merge")
+  cards         PatientCard[]
+  bookings      Booking[]
+  notifications Notification[]
+  exportFiles   ExportFile[]
+
+  @@unique([accountId], map: "patients_one_self_per_account", where: raw("relation = 'SELF'"))
+  @@index([accountId])
+  @@index([familyNameKana, givenNameKana])
+  @@index([phone])
+  @@index([birthDate])
+  @@map("patients")
+}
+
+// §3.16 [OD-5]
+model PatientCard {
+  patientId     String    @map("patient_id") @db.Uuid
+  clinicId      String    @map("clinic_id") @db.Uuid
+  cardNo        String    @map("card_no") @db.VarChar(20)
+  enteredByKind ActorKind @map("entered_by_kind")
+  confirmedAt   DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  clinic  Clinic  @relation(fields: [clinicId], references: [id])
+
+  @@id([patientId, clinicId])
+  @@unique([clinicId, cardNo])
+  @@map("patient_cards")
+}
+
+// §3.17
+model StaffClinic {
+  accountId String   @map("account_id") @db.Uuid
+  clinicId  String   @map("clinic_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id])
+  clinic  Clinic  @relation(fields: [clinicId], references: [id])
+
+  @@id([accountId, clinicId])
+  @@map("staff_clinics")
+}
+
+// §3.18 (F9-05)
+model Session {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.Char(64)
+  accountId  String    @map("account_id") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  lastSeenAt DateTime  @map("last_seen_at") @db.Timestamptz(6)
+  clinicId   String?   @map("clinic_id") @db.Uuid
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  ip         String?   @db.VarChar(45)
+  userAgent  String?   @map("user_agent") @db.VarChar(300)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  clinic  Clinic? @relation(fields: [clinicId], references: [id])
+
+  @@index([accountId])
+  @@map("sessions")
+}
+
+// §3.19
+model AuthToken {
+  tokenHash String    @id @map("token_hash") @db.Char(64)
+  accountId String    @map("account_id") @db.Uuid
+  purpose   String    @db.VarChar(16)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, purpose])
+  @@map("auth_tokens")
+}
+
+// §3.20 — vendor-maintained
+model ConsentDocument {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind          String   @db.VarChar(10)
+  version       String   @db.VarChar(10)
+  language      Language
+  url           String   @db.VarChar(500)
+  effectiveFrom DateTime @map("effective_from") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([kind, version, language])
+  @@map("consent_documents")
+}
+
+// §3.21
+model Consent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  kind      String   @db.VarChar(10)
+  version   String   @db.VarChar(10)
+  agreedAt  DateTime @map("agreed_at") @db.Timestamptz(6)
+  ip        String?  @db.VarChar(45)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, kind])
+  @@map("consents")
+}
+
+// §3.22
 model Booking {
-  id        String        @id @default(uuid()) @db.Uuid
-  userId    String        @map("user_id") @db.Uuid
-  slotId    String        @map("slot_id") @db.Uuid
-  status    BookingStatus @default(CONFIRMED)
-  notes     String?
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingNo           String         @unique @map("booking_no") @db.Char(8)
+  clinicId            String         @map("clinic_id") @db.Uuid
+  departmentId        String         @map("department_id") @db.Uuid
+  visitTypeId         String         @map("visit_type_id") @db.Uuid
+  doctorId            String         @map("doctor_id") @db.Uuid
+  doctorRequested     Boolean        @map("doctor_requested")
+  patientId           String         @map("patient_id") @db.Uuid
+  bookedByAccountId   String?        @map("booked_by_account_id") @db.Uuid
+  channel             BookingChannel
+  slotDate            DateTime       @map("slot_date") @db.Date
+  startTime           DateTime       @map("start_time") @db.Time(0)
+  endTime             DateTime       @map("end_time") @db.Time(0)
+  status              BookingStatus  @default(RESERVED)
+  priceYen            Int?           @map("price_yen")
+  // Q-003: field-level encryption (N-PI-04) cannot fit VARCHAR(200); ciphertext, ≤ 200 characters checked on the plain text
+  notes               Bytes?
+  checkedInAt         DateTime?      @map("checked_in_at") @db.Timestamptz(6)
+  noShowCandidateAt   DateTime?      @map("no_show_candidate_at") @db.Timestamptz(6)
+  adjustRequiredAt    DateTime?      @map("adjust_required_at") @db.Timestamptz(6)
+  adjustNotifiedAt    DateTime?      @map("adjust_notified_at") @db.Timestamptz(6)
+  canceledAt          DateTime?      @map("canceled_at") @db.Timestamptz(6)
+  canceledByKind      ActorKind?     @map("canceled_by_kind")
+  canceledByAccountId String?        @map("canceled_by_account_id") @db.Uuid
+  cancelReasonCode    CancelReason?  @map("cancel_reason_code")
+  cancelReasonText    String?        @map("cancel_reason_text") @db.VarChar(200)
+  changeCount         Int            @default(0) @map("change_count") @db.SmallInt
+  version             Int            @default(0)
+  anonymizedAt        DateTime?      @map("anonymized_at") @db.Timestamptz(6)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  slot DoctorSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  clinic        Clinic         @relation(fields: [clinicId], references: [id])
+  department    Department     @relation(fields: [departmentId], references: [id])
+  visitType     VisitType      @relation(fields: [visitTypeId], references: [id])
+  doctor        Doctor         @relation(fields: [doctorId], references: [id])
+  patient       Patient        @relation(fields: [patientId], references: [id])
+  bookedBy      Account?       @relation("BookedBy", fields: [bookedByAccountId], references: [id])
+  canceledBy    Account?       @relation("CanceledBy", fields: [canceledByAccountId], references: [id])
+  bookingSlots  BookingSlot[]
+  events        BookingEvent[]
+  questionnaire Questionnaire?
+  notifications Notification[]
 
-  @@index([userId, status], map: "bookings_user_id_status_idx")
-  @@index([userId, createdAt], map: "bookings_user_id_created_at_idx")
-  @@index([slotId], map: "bookings_slot_id_idx")
+  @@index([clinicId, slotDate, status])
+  @@index([patientId, slotDate])
+  @@index([bookedByAccountId, status])
   @@map("bookings")
+}
+
+// §3.23
+model BookingSlot {
+  bookingId String   @map("booking_id") @db.Uuid
+  slotId    String   @map("slot_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  slot    Slot    @relation(fields: [slotId], references: [id])
+
+  @@id([bookingId, slotId])
+  @@index([slotId])
+  @@map("booking_slots")
+}
+
+// §3.24
+model BookingEvent {
+  id             BigInt          @id @default(autoincrement())
+  bookingId      String          @map("booking_id") @db.Uuid
+  event          String          @db.VarChar(24)
+  actorKind      ActorKind       @map("actor_kind")
+  actorAccountId String?         @map("actor_account_id") @db.Uuid
+  channel        BookingChannel?
+  before         Json?
+  after          Json?
+  at             DateTime        @db.Timestamptz(6)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  booking Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor   Account? @relation(fields: [actorAccountId], references: [id])
+
+  @@index([bookingId, at])
+  @@map("booking_events")
+}
+
+// §3.25 — answers: encrypted JSON (N-PI-04)
+model Questionnaire {
+  bookingId   String   @id @map("booking_id") @db.Uuid
+  formVersion String   @map("form_version") @db.VarChar(10)
+  language    Language
+  answers     Bytes
+  submittedAt DateTime @map("submitted_at") @db.Timestamptz(6)
+  purgeAfter  DateTime @map("purge_after") @db.Date
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("questionnaires")
+}
+
+// §3.26 (A04)
+model NotificationTemplate {
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId  String            @map("clinic_id") @db.Uuid
+  event     NotificationEvent
+  channel   NotifyChannel
+  language  Language
+  subject   String?           @db.VarChar(100)
+  body      String
+  updatedBy String            @map("updated_by") @db.Uuid
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id])
+  updater Account @relation("TemplateUpdater", fields: [updatedBy], references: [id])
+
+  @@unique([clinicId, event, channel, language])
+  @@map("notification_templates")
+}
+
+// §3.27 — outbox and send log; the partial unique key makes B1 idempotent
+model Notification {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event             NotificationEvent
+  channel           NotifyChannel
+  language          Language
+  accountId         String?            @map("account_id") @db.Uuid
+  patientId         String?            @map("patient_id") @db.Uuid
+  bookingId         String?            @map("booking_id") @db.Uuid
+  toAddress         String             @map("to_address") @db.VarChar(254)
+  status            NotificationStatus
+  attempts          Int                @default(0) @db.SmallInt
+  nextAttemptAt     DateTime?          @map("next_attempt_at") @db.Timestamptz(6)
+  providerMessageId String?            @map("provider_message_id") @db.VarChar(100)
+  lastError         String?            @map("last_error") @db.VarChar(500)
+  queuedAt          DateTime           @map("queued_at") @db.Timestamptz(6)
+  sentAt            DateTime?          @map("sent_at") @db.Timestamptz(6)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account Account? @relation(fields: [accountId], references: [id])
+  patient Patient? @relation(fields: [patientId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@unique([bookingId, channel], map: "notifications_remind_once", where: raw("event = 'NT02_REMIND'"))
+  @@index([status, nextAttemptAt])
+  @@index([accountId])
+  @@index([patientId])
+  @@map("notifications")
+}
+
+// §3.28 (X5)
+model ExportFile {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicId      String    @map("clinic_id") @db.Uuid
+  kind          String    @db.VarChar(10)
+  trigger       String    @db.VarChar(10)
+  status        String    @db.VarChar(10)
+  periodFrom    DateTime? @map("period_from") @db.Date
+  periodTo      DateTime? @map("period_to") @db.Date
+  changedSince  DateTime? @map("changed_since") @db.Timestamptz(6)
+  patientId     String?   @map("patient_id") @db.Uuid
+  fileName      String    @map("file_name") @db.VarChar(100)
+  storageKey    String?   @map("storage_key") @db.VarChar(300)
+  rowCount      Int?      @map("row_count")
+  warningCount  Int?      @map("warning_count")
+  sha256        String?   @db.Char(64)
+  runId         String?   @map("run_id") @db.Uuid
+  createdBy     String?   @map("created_by") @db.Uuid
+  downloadCount Int       @default(0) @map("download_count") @db.SmallInt
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic  Clinic    @relation(fields: [clinicId], references: [id])
+  patient Patient?  @relation(fields: [patientId], references: [id])
+  run     BatchRun? @relation(fields: [runId], references: [id])
+  creator Account?  @relation(fields: [createdBy], references: [id])
+
+  @@index([clinicId, kind, createdAt])
+  @@map("export_files")
+}
+
+// §3.29
+model BatchRun {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jobCode      String      @map("job_code") @db.VarChar(4)
+  trigger      String      @db.VarChar(10)
+  clinicId     String?     @map("clinic_id") @db.Uuid
+  params       Json?
+  startedAt    DateTime    @map("started_at") @db.Timestamptz(6)
+  endedAt      DateTime?   @map("ended_at") @db.Timestamptz(6)
+  status       BatchStatus
+  readCount    Int         @map("read_count")
+  writtenCount Int         @map("written_count")
+  errorCount   Int         @map("error_count")
+  message      String?
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  clinic      Clinic?      @relation(fields: [clinicId], references: [id])
+  slots       Slot[]
+  holidays    Holiday[]
+  exportFiles ExportFile[]
+
+  @@index([jobCode, startedAt])
+  @@map("batch_runs")
+}
+
+// §3.30 — append-only: UPDATE refused by trigger; DELETE kept for B5 (Q-002)
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  at         DateTime @db.Timestamptz(6)
+  accountId  String?  @map("account_id") @db.Uuid
+  role       Role?
+  action     String   @db.VarChar(40)
+  targetType String?  @map("target_type") @db.VarChar(30)
+  targetId   String?  @map("target_id") @db.Uuid
+  clinicId   String?  @map("clinic_id") @db.Uuid
+  ip         String?  @db.VarChar(45)
+  detail     Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([at])
+  @@index([accountId, at])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+// §3.31 — vendor-maintained
+model SystemSetting {
+  key       String   @id @db.VarChar(50)
+  value     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("system_settings")
 }

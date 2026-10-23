@@ -8,6 +8,5 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '^jose$': '<rootDir>/tests/mocks/jose.ts',
   },
 };
