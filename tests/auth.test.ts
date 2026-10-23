@@ -163,7 +163,9 @@ describe("every seeded account logs in with SEED_PASSWORD as SEED_ACCOUNTS says"
       expect(r.ok && r.body.destination).toBe("/mypage");
       expect(s.ctx.clinicId).toBeNull();
       const self = await prisma.patient.findFirstOrThrow({ where: { account: { email: a.email }, relation: "SELF" } });
-      expect(s.ctx.account.displayName).toBe(`${self.familyName} ${self.givenName}`);
+      // _common item 11: romaji names given-family in en / vi, else family-given
+      const expected = { "emily.smith@example.com": "Emily Smith", "nguyen.van.an@example.com": "Van An Nguyen" }[a.email];
+      expect(s.ctx.account.displayName).toBe(expected ?? `${self.familyName} ${self.givenName}`);
       return;
     }
     // staff: initial clinic per F17-02

@@ -75,6 +75,10 @@ describe("03 constraints", () => {
       FROM (SELECT id FROM bookings LIMIT 1) b, generate_series(1, 2)`)).toBe("notifications_remind_once");
   });
 
+  it("a doctor always has a language list (03 §3.7, default {ja})", async () => {
+    expect(await violation(`UPDATE doctors SET languages = NULL WHERE id = (SELECT id FROM doctors LIMIT 1)`)).toBe("doctors_languages_required");
+  });
+
   it("department codes are immutable and audit rows are never updated", async () => {
     expect(await violation(`UPDATE departments SET code = 'naika2' WHERE code = 'naika'`)).toMatch(/immutable/);
     expect(await violation(`

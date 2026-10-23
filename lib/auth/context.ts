@@ -47,9 +47,11 @@ export async function resolveSession(token: string | undefined, now = new Date()
   let displayName = account.displayName ?? "";
   if (account.role === "PATIENT") {
     const self = await prisma.patient.findFirst({
-      where: { accountId: account.id, relation: "SELF" }, select: { familyName: true, givenName: true },
+      where: { accountId: account.id, relation: "SELF" }, select: { familyName: true, givenName: true, nameType: true },
     });
-    displayName = self ? `${self.familyName} ${self.givenName}` : "";
+    // _common item 11 / 04 §6.1: romaji names in given-family order in en / vi (a patient's screen language = accounts.language)
+    const givenFirst = self?.nameType === "ROMAJI" && account.language !== "JA";
+    displayName = !self ? "" : givenFirst ? `${self.givenName} ${self.familyName}` : `${self.familyName} ${self.givenName}`;
   }
   return {
     state: "valid",
