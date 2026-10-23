@@ -6,6 +6,7 @@ import type { Band, Prisma } from "@prisma/client";
 import { pool, prisma } from "@/lib/prisma";
 import { addDays, dbDate, dbTime, todayJst, toHhmm, toIsoDate, weekdayOf } from "@/lib/datetime";
 import { fetchHolidayFile, parseHolidayCsv } from "@/lib/adapters/x3-holidays";
+import { defaultTemplateRows } from "@/lib/notify/templates-default";
 import { SEED_ACCOUNTS, SEED_PASSWORD } from "./seed-accounts";
 
 const today = todayJst();
@@ -293,6 +294,11 @@ async function main() {
       },
     });
   }
+
+  // notification templates: the 04 §6 defaults for every clinic (03 §3.26)
+  await prisma.notificationTemplate.createMany({
+    data: CLINICS.flatMap((c) => defaultTemplateRows().map((t) => ({ ...t, clinicId: clinicId[c.code], updatedBy: adminAll }))),
+  });
 
   // holidays from the X3 fixture, recorded as a B3 run
   const b3 = await prisma.batchRun.create({

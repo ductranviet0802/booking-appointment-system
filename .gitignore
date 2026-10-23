@@ -60,3 +60,5 @@ next-env.d.ts
 /scripts/
 /docs/
 .playwright-mcp/
+# local fakes of the external interfaces (outbox log, X5 files)
+/var/
