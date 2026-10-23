@@ -1,19 +1,14 @@
-import { cn } from "@/lib/cn";
-import type { HTMLAttributes } from "react";
+/** List skeleton (_common §3.1 Loading): grey shapes in place of content that is still loading */
+export function Skeleton({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={`sk ${className}`.trim()} style={style} aria-hidden="true" />;
+}
 
-type SkeletonProps = HTMLAttributes<HTMLDivElement> & {
-  "data-testid"?: string;
-};
-
-export function Skeleton({ className, "data-testid": dataTestId = "ui-skeleton", ...props }: SkeletonProps) {
+export function ListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div
-      data-testid={dataTestId}
-      className={cn(
-        "skeleton-shimmer animate-soft-pulse rounded-xl border border-zinc-100 bg-gradient-to-r from-zinc-100 via-zinc-50 to-zinc-100",
-        className,
-      )}
-      {...props}
-    />
+    <div className="box" role="status" aria-busy="true">
+      {Array.from({ length: rows }, (_, i) => (
+        <Skeleton key={i} style={{ height: 18, width: i === 0 ? "60%" : "100%" }} />
+      ))}
+    </div>
   );
 }

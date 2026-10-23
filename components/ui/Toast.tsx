@@ -1,72 +1,78 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+// spec-pattern: item 33 / 33-1 (toast). Top centre, role="status", takes no focus, closes after 4 s or by × (event 27;
+// error toasts too, _common Q7). PE / SE ids render red with an alert icon (state ⑮).
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { t } from "@/lib/i18n";
+import type { Lang, Params } from "@/lib/i18n";
+import { label } from "@/lib/i18n/labels";
+import { Icon } from "./Icon";
 
-type ToastTone = "success" | "error";
+export const TOAST_MS = 4000;
 
-type ToastItem = {
-  id: number;
-  message: string;
-  tone: ToastTone;
-};
+type ToastItem = { key: number; text: string; error: boolean };
+type ToastOptions = { params?: Params; lang?: Lang };
+type ToastApi = { toast: (id: string, options?: ToastOptions) => void };
 
-type ToastContextValue = {
-  pushToast: (message: string, tone?: ToastTone) => void;
-};
+const LangContext = createContext<Lang>("ja");
+const ToastContext = createContext<ToastApi | null>(null);
 
-const ToastContext = createContext<ToastContextValue | null>(null);
-
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<ToastItem[]>([]);
-
-  const pushToast = useCallback((message: string, tone: ToastTone = "success") => {
-    const id = Date.now() + Math.random();
-    setItems((prev) => [...prev, { id, message, tone }]);
-
-    setTimeout(() => {
-      setItems((prev) => prev.filter((item) => item.id !== id));
-    }, 2800);
-  }, []);
-
-  const value = useMemo(() => ({ pushToast }), [pushToast]);
-
-  return (
-    <ToastContext.Provider value={value}>
-      {children}
-      <div
-        data-testid="toast-container"
-        className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2 px-4 sm:px-0"
-      >
-        {items.map((item) => (
-          <div
-            key={item.id}
-            data-testid={`toast-item-${item.tone}`}
-            className={cn(
-              "animate-fade-up pointer-events-auto flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium text-white shadow-[0_16px_32px_-20px_rgba(15,23,42,0.85)] backdrop-blur",
-              item.tone === "success"
-                ? "border-emerald-400/40 bg-gradient-to-r from-emerald-500 to-teal-600"
-                : "border-rose-400/40 bg-gradient-to-r from-rose-500 to-rose-600",
-            )}
-          >
-            <span data-testid={`toast-icon-${item.tone}`} aria-hidden className="text-base leading-none">
-              {item.tone === "success" ? "✓" : "!"}
-            </span>
-            <span data-testid={`toast-message-${item.tone}`}>{item.message}</span>
-          </div>
-        ))}
-      </div>
-    </ToastContext.Provider>
-  );
+/** UI language of the current request (set by the root layout) */
+export function useLang() {
+  return useContext(LangContext);
 }
 
-export function useToast() {
-  const value = useContext(ToastContext);
+export function useToast(): ToastApi {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error("useToast needs <ToastProvider>");
+  return ctx;
+}
 
-  if (!value) {
-    throw new Error("useToast must be used inside ToastProvider");
-  }
+export function ToastProvider({ lang, children }: { lang: Lang; children: ReactNode }) {
+  const [items, setItems] = useState<ToastItem[]>([]);
+  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  const seq = useRef(0);
 
-  return value;
+  const close = useCallback((key: number) => {
+    clearTimeout(timers.current.get(key));
+    timers.current.delete(key);
+    setItems((prev) => prev.filter((i) => i.key !== key));
+  }, []);
+
+  const toast = useCallback(
+    (id: string, options: ToastOptions = {}) => {
+      const key = ++seq.current;
+      const text = t(id, options.lang ?? lang, options.params);
+      setItems((prev) => [...prev, { key, text, error: /^[PS]E/.test(id) }]);
+      timers.current.set(key, setTimeout(() => close(key), TOAST_MS));
+    },
+    [lang, close],
+  );
+
+  useEffect(() => {
+    const pending = timers.current;
+    return () => pending.forEach(clearTimeout);
+  }, []);
+
+  const api = useMemo(() => ({ toast }), [toast]);
+
+  return (
+    <LangContext.Provider value={lang}>
+      <ToastContext.Provider value={api}>
+        {children}
+        <div className="toast-area">
+          {items.map((item) => (
+            <div key={item.key} role="status" className={`toast ${item.error ? "toast-err" : ""}`}>
+              <Icon name={item.error ? "alert" : "check"} />
+              <span>{item.text}</span>
+              <button type="button" aria-label={label("close", lang)} onClick={() => close(item.key)}>
+                <Icon name="close" size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </ToastContext.Provider>
+    </LangContext.Provider>
+  );
 }

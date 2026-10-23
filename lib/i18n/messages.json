@@ -1,0 +1,709 @@
+{
+ "messages": {
+  "PE001": {
+   "ja": "{項目}を入力してください。",
+   "en": "Please enter {field}.",
+   "vi": "Vui lòng nhập {field}."
+  },
+  "PE002": {
+   "ja": "{項目}の形式が正しくありません。",
+   "en": "{field} is not in a valid format.",
+   "vi": "{field} không đúng định dạng."
+  },
+  "PE003": {
+   "ja": "{項目}は{n}文字以内で入力してください。",
+   "en": "{field} must be {n} characters or fewer.",
+   "vi": "{field} không được vượt quá {n} ký tự."
+  },
+  "PE004": {
+   "ja": "確認用リンクの有効期限が切れているか、既に使用されています。もう一度メールを送信してください。",
+   "en": "This confirmation link has expired or has already been used. Please send the e-mail again.",
+   "vi": "Liên kết xác nhận đã hết hạn hoặc đã được sử dụng. Vui lòng gửi lại email."
+  },
+  "PE005": {
+   "ja": "このメールアドレスは既に登録されています。ログインまたはパスワード再設定をご利用ください。",
+   "en": "This e-mail address is already registered. Please log in or reset your password.",
+   "vi": "Địa chỉ email này đã được đăng ký. Vui lòng đăng nhập hoặc đặt lại mật khẩu."
+  },
+  "PE006": {
+   "ja": "パスワードは8〜20文字で、英字と数字をそれぞれ1文字以上含めてください。",
+   "en": "Your password must be 8–64 characters and contain at least one letter and one number.",
+   "vi": "Mật khẩu phải dài 8–64 ký tự và có ít nhất một chữ cái và một chữ số."
+  },
+  "PE007": {
+   "ja": "パスワード（確認）が一致しません。",
+   "en": "The passwords do not match.",
+   "vi": "Mật khẩu xác nhận không khớp."
+  },
+  "PE008": {
+   "ja": "ご利用には利用規約とプライバシーポリシーへの同意が必要です。",
+   "en": "You must agree to the Terms of Use and the Privacy Policy to continue.",
+   "vi": "Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật để tiếp tục."
+  },
+  "PE009": {
+   "ja": "フリガナは全角カタカナで入力してください。",
+   "en": "Please enter the reading (furigana) in full-width katakana.",
+   "vi": "Vui lòng nhập cách đọc (furigana) bằng chữ katakana toàn độ rộng."
+  },
+  "PE010": {
+   "ja": "メールアドレスまたはパスワードが正しくありません。",
+   "en": "The e-mail address or password is incorrect.",
+   "vi": "Email hoặc mật khẩu không đúng."
+  },
+  "PE011": {
+   "ja": "ログインに続けて失敗したため、一時的にログインできません。{n}分後にもう一度お試しください。",
+   "en": "Too many failed login attempts. Please try again in {n} minutes.",
+   "vi": "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau {n} phút."
+  },
+  "PE012": {
+   "ja": "郵便番号に該当する住所が見つかりません。住所を直接入力してください。",
+   "en": "No address was found for this postcode. Please enter the address manually.",
+   "vi": "Không tìm thấy địa chỉ cho mã bưu chính này. Vui lòng nhập địa chỉ thủ công."
+  },
+  "PE013": {
+   "ja": "現在、住所の自動入力をご利用いただけません。住所を直接入力してください。",
+   "en": "Address auto-fill is currently unavailable. Please enter the address manually.",
+   "vi": "Hiện không thể tự động điền địa chỉ. Vui lòng nhập địa chỉ thủ công."
+  },
+  "PE014": {
+   "ja": "生年月日が正しくありません。",
+   "en": "The date of birth is not valid.",
+   "vi": "Ngày sinh không hợp lệ."
+  },
+  "PE015": {
+   "ja": "電話番号は10桁または11桁の数字で入力してください。",
+   "en": "Please enter a 10- or 11-digit phone number.",
+   "vi": "Vui lòng nhập số điện thoại gồm 10 hoặc 11 chữ số."
+  },
+  "PE016": {
+   "ja": "氏名（ローマ字）は半角英字で入力してください。",
+   "en": "Please enter the name in Latin letters (A–Z).",
+   "vi": "Vui lòng nhập họ tên bằng chữ cái Latinh (A–Z)."
+  },
+  "PE017": {
+   "ja": "メールアドレスの確認が完了していません。確認メールのリンクを開いてください。",
+   "en": "Your e-mail address has not been confirmed yet. Please open the link in the confirmation e-mail.",
+   "vi": "Địa chỉ email của bạn chưa được xác nhận. Vui lòng mở liên kết trong email xác nhận."
+  },
+  "PE018": {
+   "ja": "現在のパスワードが正しくありません。",
+   "en": "Your current password is incorrect.",
+   "vi": "Mật khẩu hiện tại không đúng."
+  },
+  "PE021": {
+   "ja": "このリンクは無効か、有効期限が切れています。もう一度パスワード再設定をお申し込みください。",
+   "en": "This link is invalid or has expired. Please request a new password reset.",
+   "vi": "Liên kết này không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu một lần nữa."
+  },
+  "PE022": {
+   "ja": "初期パスワードとは異なるパスワードを設定してください。",
+   "en": "Please choose a password different from your initial password.",
+   "vi": "Vui lòng đặt mật khẩu khác với mật khẩu ban đầu."
+  },
+  "PE030": {
+   "ja": "選択された日時は、ほかの方の予約が入ったため選択できなくなりました。別の日時をお選びください。",
+   "en": "Sorry, the time you selected has just been booked by someone else. Please choose another time.",
+   "vi": "Rất tiếc, khung giờ bạn chọn vừa được người khác đặt. Vui lòng chọn khung giờ khác."
+  },
+  "PE031": {
+   "ja": "予約できるのは本日から{n}日後までです。",
+   "en": "Bookings can be made up to {n} days ahead.",
+   "vi": "Chỉ có thể đặt lịch trước tối đa {n} ngày."
+  },
+  "PE032": {
+   "ja": "本日のWeb予約の受付時間を過ぎました。お電話でお問い合わせください。",
+   "en": "Online booking for today has closed. Please call the clinic.",
+   "vi": "Đã hết thời gian đặt lịch trực tuyến cho hôm nay. Vui lòng gọi điện cho phòng khám."
+  },
+  "PE033": {
+   "ja": "{氏名}様は同じ日にこのクリニックのご予約が既にあります。ご予約の変更は予約一覧から行えます。",
+   "en": "{name} already has a booking at this clinic on this date. You can change it from My bookings.",
+   "vi": "{name} đã có lịch hẹn tại phòng khám này vào ngày này. Bạn có thể thay đổi lịch hẹn trong mục Lịch hẹn của tôi."
+  },
+  "PE034": {
+   "ja": "{氏名}様は同じ時間帯に別のご予約があります。",
+   "en": "{name} already has another booking at this time.",
+   "vi": "{name} đã có một lịch hẹn khác vào khung giờ này."
+  },
+  "PE035": {
+   "ja": "選択された日時は休診のため予約できません。別の日時をお選びください。",
+   "en": "The clinic is closed at the selected time. Please choose another time.",
+   "vi": "Phòng khám không làm việc vào thời gian đã chọn. Vui lòng chọn thời gian khác."
+  },
+  "PE036": {
+   "ja": "一定時間操作がなかったため、予約内容をもう一度お選びください。",
+   "en": "Your session timed out. Please select your booking again.",
+   "vi": "Phiên làm việc đã hết thời gian. Vui lòng chọn lại lịch hẹn."
+  },
+  "PE037": {
+   "ja": "予約日時を選択してください。",
+   "en": "Please select a date and time.",
+   "vi": "Vui lòng chọn ngày và giờ."
+  },
+  "PE038": {
+   "ja": "{項目}は{最小}〜{最大}の範囲で入力してください。",
+   "en": "Please enter {field} between {min} and {max}.",
+   "vi": "Vui lòng nhập {field} trong khoảng từ {min} đến {max}."
+  },
+  "PE041": {
+   "ja": "Webでの変更・キャンセルの受付期限を過ぎています。お手数ですがクリニックへお電話ください。",
+   "en": "The deadline for online changes and cancellations has passed. Please call the clinic.",
+   "vi": "Đã quá hạn thay đổi hoặc hủy lịch trực tuyến. Vui lòng gọi điện cho phòng khám."
+  },
+  "PE042": {
+   "ja": "今後のご予約があるため退会できません。ご家族の分も含め、ご予約をキャンセルしてから退会してください。",
+   "en": "You cannot close your account while you or your family members have upcoming bookings. Please cancel them first.",
+   "vi": "Bạn không thể xóa tài khoản khi bạn hoặc thành viên gia đình còn lịch hẹn sắp tới. Vui lòng hủy các lịch hẹn trước."
+  },
+  "PE043": {
+   "ja": "今後のご予約があるため、このご家族は削除できません。",
+   "en": "This family member has upcoming bookings and cannot be removed.",
+   "vi": "Không thể xóa thành viên gia đình này vì còn lịch hẹn sắp tới."
+  },
+  "PE044": {
+   "ja": "このご予約は既にキャンセルされています。",
+   "en": "This booking has already been cancelled.",
+   "vi": "Lịch hẹn này đã được hủy trước đó."
+  },
+  "PE045": {
+   "ja": "このご予約は変更・キャンセルできません。",
+   "en": "This booking can no longer be changed or cancelled.",
+   "vi": "Lịch hẹn này không thể thay đổi hoặc hủy."
+  },
+  "PE046": {
+   "ja": "登録できるご家族は{n}人までです。",
+   "en": "You can register up to {n} family members.",
+   "vi": "Bạn có thể đăng ký tối đa {n} thành viên gia đình."
+  },
+  "PE047": {
+   "ja": "予約内容が更新されました。内容をご確認のうえ、もう一度操作してください。",
+   "en": "This booking has been updated. Please check the details and try again.",
+   "vi": "Lịch hẹn đã được cập nhật. Vui lòng kiểm tra lại thông tin và thử lại."
+  },
+  "PE050": {
+   "ja": "LINE連携が完了していないため、LINEを通知先に選べません。",
+   "en": "LINE is not linked yet, so it cannot be selected for notifications.",
+   "vi": "Chưa liên kết LINE nên không thể chọn LINE để nhận thông báo."
+  },
+  "PE051": {
+   "ja": "SMSを通知先にするには、SMS受信への同意が必要です。",
+   "en": "To receive notifications by SMS, please agree to receive SMS.",
+   "vi": "Để nhận thông báo qua SMS, vui lòng đồng ý nhận SMS."
+  },
+  "PE052": {
+   "ja": "LINE連携ができませんでした。もう一度お試しください。",
+   "en": "LINE could not be linked. Please try again.",
+   "vi": "Không thể liên kết LINE. Vui lòng thử lại."
+  },
+  "PE053": {
+   "ja": "この診察券番号は登録できません。番号をご確認ください。",
+   "en": "This patient card number cannot be registered. Please check the number.",
+   "vi": "Không thể đăng ký số thẻ khám bệnh này. Vui lòng kiểm tra lại số."
+  },
+  "PE090": {
+   "ja": "申し訳ございません。システムエラーが発生しました。しばらくしてからもう一度お試しください。",
+   "en": "Sorry, a system error occurred. Please try again later.",
+   "vi": "Rất tiếc, đã xảy ra lỗi hệ thống. Vui lòng thử lại sau."
+  },
+  "PE091": {
+   "ja": "お探しのページが見つかりません。",
+   "en": "The page you are looking for could not be found.",
+   "vi": "Không tìm thấy trang bạn yêu cầu."
+  },
+  "PE092": {
+   "ja": "アクセスが集中しています。しばらくしてからもう一度お試しください。",
+   "en": "Too many requests. Please try again in a moment.",
+   "vi": "Có quá nhiều yêu cầu. Vui lòng thử lại sau giây lát."
+  },
+  "PE093": {
+   "ja": "通信エラーが発生しました。通信環境をご確認のうえ、もう一度お試しください。",
+   "en": "A network error occurred. Please check your connection and try again.",
+   "vi": "Đã xảy ra lỗi kết nối. Vui lòng kiểm tra kết nối mạng và thử lại."
+  },
+  "PW001": {
+   "ja": "このご予約をキャンセルします。よろしいですか。",
+   "en": "Cancel this booking?",
+   "vi": "Bạn có chắc muốn hủy lịch hẹn này không?"
+  },
+  "PW002": {
+   "ja": "ご予約を以下の内容に変更します。よろしいですか。",
+   "en": "Change your booking to the details below?",
+   "vi": "Bạn có muốn thay đổi lịch hẹn theo nội dung dưới đây không?"
+  },
+  "PW003": {
+   "ja": "退会すると、ログイン情報とご登録内容が削除され、元に戻せません。退会しますか。",
+   "en": "Closing your account deletes your login and profile and cannot be undone. Close your account?",
+   "vi": "Khi xóa tài khoản, thông tin đăng nhập và hồ sơ sẽ bị xóa và không thể khôi phục. Bạn có muốn xóa tài khoản không?"
+  },
+  "PW004": {
+   "ja": "{氏名}様をご家族から削除します。よろしいですか。",
+   "en": "Remove {name} from your family members?",
+   "vi": "Bạn có muốn xóa {name} khỏi danh sách gia đình không?"
+  },
+  "PW005": {
+   "ja": "入力中の予約内容は破棄されます。よろしいですか。",
+   "en": "The booking details you entered will be discarded. Continue?",
+   "vi": "Thông tin đặt lịch bạn đã nhập sẽ bị hủy. Bạn có muốn tiếp tục không?"
+  },
+  "PW006": {
+   "ja": "利用規約・プライバシーポリシーが改定されました。内容をご確認のうえ、同意してください。",
+   "en": "Our Terms of Use and Privacy Policy have been updated. Please review and agree to continue.",
+   "vi": "Điều khoản sử dụng và Chính sách bảo mật đã được cập nhật. Vui lòng xem lại và đồng ý để tiếp tục."
+  },
+  "PI001": {
+   "ja": "確認メールを{メールアドレス}に送信しました。メール内のリンクを24時間以内に開いて登録を完了してください。",
+   "en": "We have sent a confirmation e-mail to {email}. Please open the link in it within 24 hours to complete registration.",
+   "vi": "Chúng tôi đã gửi email xác nhận đến {email}. Vui lòng mở liên kết trong email trong vòng 24 giờ để hoàn tất đăng ký."
+  },
+  "PI002": {
+   "ja": "会員登録が完了しました。",
+   "en": "Your registration is complete.",
+   "vi": "Đăng ký thành công."
+  },
+  "PI010": {
+   "ja": "この画面をご利用いただくにはログインが必要です。",
+   "en": "Please log in to continue.",
+   "vi": "Vui lòng đăng nhập để tiếp tục."
+  },
+  "PI011": {
+   "ja": "ログアウトしました。",
+   "en": "You have been logged out.",
+   "vi": "Bạn đã đăng xuất."
+  },
+  "PI012": {
+   "ja": "ログインしました。",
+   "en": "You are now logged in.",
+   "vi": "Đăng nhập thành công."
+  },
+  "PI013": {
+   "ja": "ログインの有効期限が切れたか、ログアウトされました。再度ログインしてください。",
+   "en": "Your login has expired or you have been logged out. Please log in again.",
+   "vi": "Phiên đăng nhập đã hết hạn hoặc bạn đã bị đăng xuất. Vui lòng đăng nhập lại."
+  },
+  "PI014": {
+   "ja": "予約を続けるにはログインしてください。選択した内容はログイン後に引き継がれます。",
+   "en": "Please log in to continue your booking. Your selections will be kept.",
+   "vi": "Vui lòng đăng nhập để tiếp tục đặt lịch. Các lựa chọn của bạn sẽ được giữ lại."
+  },
+  "PI020": {
+   "ja": "ご入力のメールアドレスが登録されている場合、パスワード再設定のご案内をお送りしました。リンクの有効期限は30分です。メールが届かない場合は迷惑メールフォルダもご確認ください。",
+   "en": "If this e-mail address is registered, we have sent instructions to reset your password. The link is valid for 30 minutes. If you do not receive the e-mail, please check your spam folder.",
+   "vi": "Nếu địa chỉ email này đã được đăng ký, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu. Liên kết có hiệu lực trong 30 phút. Nếu không nhận được email, vui lòng kiểm tra thư mục thư rác."
+  },
+  "PI021": {
+   "ja": "パスワードを変更しました。新しいパスワードでログインしてください。",
+   "en": "Your password has been changed. Please log in with your new password.",
+   "vi": "Mật khẩu đã được thay đổi. Vui lòng đăng nhập bằng mật khẩu mới."
+  },
+  "PI022": {
+   "ja": "初回ログインのため、パスワードを変更してください。",
+   "en": "This is your first login. Please change your password.",
+   "vi": "Đây là lần đăng nhập đầu tiên. Vui lòng đổi mật khẩu."
+  },
+  "PI030": {
+   "ja": "選択された日は空きがありません。次の空きは{日付}です。",
+   "en": "There are no free times on this date. The next available date is {date}.",
+   "vi": "Ngày này không còn khung giờ trống. Ngày trống gần nhất là {date}."
+  },
+  "PI031": {
+   "ja": "条件に合う医師が見つかりませんでした。条件を変えてお探しください。",
+   "en": "No doctors match your search. Please change the conditions.",
+   "vi": "Không tìm thấy bác sĩ phù hợp. Vui lòng thay đổi điều kiện tìm kiếm."
+  },
+  "PI032": {
+   "ja": "現在、Webで予約できる日時がありません。お電話でお問い合わせください。",
+   "en": "There are currently no times available online. Please call the clinic.",
+   "vi": "Hiện không có thời gian trống để đặt trực tuyến. Vui lòng gọi điện cho phòng khám."
+  },
+  "PI033": {
+   "ja": "保険診療の自己負担額は、診療内容と保険の種類により異なります。",
+   "en": "The co-payment for insured care depends on the treatment and your insurance.",
+   "vi": "Số tiền đồng chi trả khi khám bảo hiểm tùy thuộc vào nội dung khám và loại bảo hiểm."
+  },
+  "PI034": {
+   "ja": "担当医は「指名なし」で予約され、当日の担当医が診察します。空いている時間が多く表示されます。",
+   "en": "With \"No preference\", a doctor on duty that day will see you. More free times are shown.",
+   "vi": "Với lựa chọn \"Không chỉ định\", bác sĩ trực hôm đó sẽ khám cho bạn. Sẽ có nhiều khung giờ trống hơn."
+  },
+  "PI035": {
+   "ja": "問診の内容は診察の参考にのみ使用し、受診するクリニックのスタッフだけが確認します。",
+   "en": "Your answers are used only to prepare your consultation and are seen only by staff of the clinic you visit.",
+   "vi": "Câu trả lời chỉ được dùng để chuẩn bị cho buổi khám và chỉ nhân viên của phòng khám bạn đến khám mới xem được."
+  },
+  "PI036": {
+   "ja": "現在、この医師のWeb予約可能な日はありません。",
+   "en": "There are currently no dates available for online booking with this doctor.",
+   "vi": "Hiện không có ngày nào có thể đặt lịch trực tuyến với bác sĩ này."
+  },
+  "PI040": {
+   "ja": "登録内容を保存しました。",
+   "en": "Your details have been saved.",
+   "vi": "Đã lưu thông tin."
+  },
+  "PI041": {
+   "ja": "退会手続きが完了しました。ご利用ありがとうございました。",
+   "en": "Your account has been closed. Thank you for using our service.",
+   "vi": "Tài khoản của bạn đã được xóa. Cảm ơn bạn đã sử dụng dịch vụ."
+  },
+  "PI042": {
+   "ja": "ご家族の情報を保存しました。",
+   "en": "Family member saved.",
+   "vi": "Đã lưu thông tin thành viên gia đình."
+  },
+  "PI043": {
+   "ja": "LINE連携が完了しました。",
+   "en": "Your LINE account has been linked.",
+   "vi": "Đã liên kết tài khoản LINE."
+  },
+  "PI044": {
+   "ja": "表示言語を変更しました。",
+   "en": "Display language changed.",
+   "vi": "Đã thay đổi ngôn ngữ hiển thị."
+  },
+  "PI045": {
+   "ja": "該当するご予約はありません。",
+   "en": "You have no bookings here.",
+   "vi": "Không có lịch hẹn nào."
+  },
+  "PI046": {
+   "ja": "ご家族は登録されていません。お子さまなどのご予約もこのアカウントから行えます。",
+   "en": "No family members registered yet. You can also book for your children and others from this account.",
+   "vi": "Chưa có thành viên gia đình nào. Bạn cũng có thể đặt lịch cho con cái hoặc người thân từ tài khoản này."
+  },
+  "PI047": {
+   "ja": "ご家族を削除しました。",
+   "en": "Family member removed.",
+   "vi": "Đã xóa thành viên gia đình."
+  },
+  "PI048": {
+   "ja": "確認メールを{メールアドレス}に送信しました。リンクを開くとメールアドレスが変更されます。",
+   "en": "We have sent a confirmation e-mail to {email}. Your e-mail address will change when you open the link.",
+   "vi": "Chúng tôi đã gửi email xác nhận đến {email}. Địa chỉ email sẽ được thay đổi khi bạn mở liên kết."
+  },
+  "PI049": {
+   "ja": "パスワードを変更しました。他の端末からはログアウトしました。",
+   "en": "Your password has been changed. You have been logged out on your other devices.",
+   "vi": "Đã đổi mật khẩu. Bạn đã được đăng xuất trên các thiết bị khác."
+  },
+  "PI050": {
+   "ja": "ご予約をキャンセルしました。",
+   "en": "Your booking has been cancelled.",
+   "vi": "Đã hủy lịch hẹn."
+  },
+  "PI051": {
+   "ja": "{電話案内文}（{クリニック名} {電話番号}） — default 電話案内文: Webでの変更・キャンセルは受付期限を過ぎました。お手数ですがお電話でご連絡ください。",
+   "en": "{phone message} ({clinic} {phone}) — default: Online changes and cancellations are closed for this booking. Please call us.",
+   "vi": "{phone message} ({clinic} {phone}) — mặc định: Đã hết hạn thay đổi hoặc hủy trực tuyến cho lịch hẹn này. Vui lòng gọi điện cho chúng tôi."
+  },
+  "PI052": {
+   "ja": "ご予約が確定しました。",
+   "en": "Your booking is confirmed.",
+   "vi": "Lịch hẹn đã được xác nhận."
+  },
+  "PI053": {
+   "ja": "ご予約を変更しました。",
+   "en": "Your booking has been changed.",
+   "vi": "Lịch hẹn đã được thay đổi."
+  },
+  "PI054": {
+   "ja": "予約内容を{通知先}にお送りしました。",
+   "en": "We have sent the booking details to {destination}.",
+   "vi": "Chúng tôi đã gửi thông tin lịch hẹn đến {destination}."
+  },
+  "PI055": {
+   "ja": "受診結果の確認中です。",
+   "en": "Visit status being confirmed by the clinic.",
+   "vi": "Phòng khám đang xác nhận tình trạng khám."
+  },
+  "PI056": {
+   "ja": "Webでの変更・キャンセルは{期限}まで可能です。",
+   "en": "Online changes and cancellations are possible until {deadline}.",
+   "vi": "Có thể thay đổi hoặc hủy trực tuyến đến {deadline}."
+  },
+  "PI057": {
+   "ja": "当院の都合により、このご予約の日時を変更していただく必要があります。日時の変更またはクリニックへのお電話をお願いいたします。",
+   "en": "For reasons on our side, the date and time of this booking need to be changed. Please choose a new time or call the clinic.",
+   "vi": "Vì lý do từ phía phòng khám, cần thay đổi ngày giờ của lịch hẹn này. Vui lòng chọn thời gian mới hoặc gọi điện cho phòng khám."
+  },
+  "PI058": {
+   "ja": "LINE連携を解除しました。通知はメールでお送りします。",
+   "en": "LINE has been unlinked. Notifications will be sent by e-mail.",
+   "vi": "Đã hủy liên kết LINE. Thông báo sẽ được gửi qua email."
+  },
+  "PI059": {
+   "ja": "メールが届いていません。メールアドレスをご確認ください。",
+   "en": "Our e-mails are not reaching you. Please check your e-mail address.",
+   "vi": "Email của chúng tôi không đến được bạn. Vui lòng kiểm tra địa chỉ email."
+  },
+  "PI060": {
+   "ja": "LINEの友だち登録が解除されているため、通知はメールでお送りしています。",
+   "en": "You are no longer friends with our LINE account, so notifications are sent by e-mail.",
+   "vi": "Bạn đã hủy kết bạn với tài khoản LINE của chúng tôi nên thông báo đang được gửi qua email."
+  },
+  "PI061": {
+   "ja": "メールアドレスを変更しました。",
+   "en": "Your e-mail address has been changed.",
+   "vi": "Đã thay đổi địa chỉ email."
+  },
+  "PI092": {
+   "ja": "ただいまメンテナンス中です。{終了時刻}頃に再開予定です。",
+   "en": "We are under maintenance. Service will resume around {time}.",
+   "vi": "Hệ thống đang bảo trì. Dự kiến hoạt động lại vào khoảng {time}."
+  },
+  "PI093": {
+   "ja": "{開始日時}〜{終了日時}はメンテナンスのためご利用いただけません。",
+   "en": "The service will be unavailable for maintenance from {start} to {end}.",
+   "vi": "Hệ thống sẽ tạm ngừng để bảo trì từ {start} đến {end}."
+  },
+  "SE001": {
+   "ja": "{項目}を入力してください。"
+  },
+  "SE002": {
+   "ja": "{項目}の形式が正しくありません。"
+  },
+  "SE003": {
+   "ja": "{項目}は{n}文字以内で入力してください。"
+  },
+  "SE010": {
+   "ja": "他の担当者が先に更新しました。画面を再表示してから操作してください。"
+  },
+  "SE011": {
+   "ja": "この予約は受付できる状態ではありません（状態: {状態}）。"
+  },
+  "SE012": {
+   "ja": "郵便番号に該当する住所がありません。直接入力してください。"
+  },
+  "SE013": {
+   "ja": "住所の自動入力を利用できません。直接入力してください。"
+  },
+  "SE020": {
+   "ja": "選択した枠は既に埋まっています。別の枠を選択してください。"
+  },
+  "SE021": {
+   "ja": "この患者は同じ時間帯に別の予約があります。"
+  },
+  "SE022": {
+   "ja": "予約可能期間（本日から{n}日後まで）を超えています。"
+  },
+  "SE023": {
+   "ja": "選択した日時は休診です。"
+  },
+  "SE030": {
+   "ja": "この診察券番号は同じクリニックの別の患者に登録されています。"
+  },
+  "SE031": {
+   "ja": "統合済みの患者は編集できません。統合先の患者を開いてください。"
+  },
+  "SE032": {
+   "ja": "両方の患者に同じクリニックの別の診察券番号があるため統合できません。"
+  },
+  "SE033": {
+   "ja": "両方の患者にWebアカウントがあるため統合できません。"
+  },
+  "SE040": {
+   "ja": "同じ医師のシフトが{日時}に重複しています（{クリニック名}）。"
+  },
+  "SE041": {
+   "ja": "祝日データの取込に失敗しました（{理由}）。前回取込済みのデータは変更されていません。"
+  },
+  "SE042": {
+   "ja": "シフトがクリニックの診療時間外です（{時間帯}の診療時間: {診療時間}）。"
+  },
+  "SE043": {
+   "ja": "過去の日付は変更できません。"
+  },
+  "SE044": {
+   "ja": "予約枠の生成に失敗しました。時間をおいてもう一度保存してください。"
+  },
+  "SE050": {
+   "ja": "予約・シフト・枠で使用されているため削除できません。無効化してください。"
+  },
+  "SE051": {
+   "ja": "このコードは既に使用されています。"
+  },
+  "SE052": {
+   "ja": "自費の診療区分には料金（税込）を入力してください。初診・再診には料金を設定できません。"
+  },
+  "SE053": {
+   "ja": "画像はJPEGまたはPNG形式、2MB以内のファイルを選択してください。"
+  },
+  "SE054": {
+   "ja": "シフトで使用されているため、この診療科（クリニック）の割当は外せません。"
+  },
+  "SE060": {
+   "ja": "テンプレートに使用できない差込項目があります: {項目}。"
+  },
+  "SE070": {
+   "ja": "このメールアドレスは既に使用されています。"
+  },
+  "SE071": {
+   "ja": "ご自身のアカウントは無効化できません。"
+  },
+  "SE080": {
+   "ja": "出力期間は31日以内で指定してください。"
+  },
+  "SE082": {
+   "ja": "前回の夜間CSV出力が失敗しています（{日時}）。再出力してください。"
+  },
+  "SE083": {
+   "ja": "開示用データの作成に失敗しました（{日時}）。患者検索・詳細画面から再度出力してください。"
+  },
+  "SE084": {
+   "ja": "ほかのCSV出力を実行中です。しばらくしてから再度出力してください。"
+  },
+  "SE090": {
+   "ja": "システムエラーが発生しました。時間をおいて再度お試しください。解決しない場合は管理者に連絡してください。"
+  },
+  "SE091": {
+   "ja": "この画面またはクリニックを表示する権限がありません。"
+  },
+  "SW010": {
+   "ja": "この予約を取り消します。患者に取消の通知が送信されます。よろしいですか。"
+  },
+  "SW011": {
+   "ja": "この予約を無断キャンセルとして確定します。よろしいですか。"
+  },
+  "SW012": {
+   "ja": "選択した{n}件の要調整予約の患者に調整依頼を送信します。よろしいですか。"
+  },
+  "SW020": {
+   "ja": "この患者は同日に既に予約があります（{予約番号}）。重ねて予約しますか。"
+  },
+  "SW021": {
+   "ja": "通知先が登録されていないため、患者に通知は送信されません。予約内容を口頭でお伝えください。よろしいですか。"
+  },
+  "SW030": {
+   "ja": "{統合元}を{統合先}に統合します。予約・診察券番号・通知履歴は統合先に移ります（統合元だけにWebアカウントがある場合はアカウントも移ります）。元に戻せません。よろしいですか。"
+  },
+  "SW031": {
+   "ja": "この患者の保有データをすべて出力します。出力は監査ログに記録されます。よろしいですか。"
+  },
+  "SW040": {
+   "ja": "保存すると、予約のある枠{n}件が休診となり「要調整」になります。保存しますか。"
+  },
+  "SW041": {
+   "ja": "保存すると、予約のある枠{n}件がなくなります。代診医に移せない予約は「要調整」になります。保存しますか。"
+  },
+  "SW050": {
+   "ja": "無効化すると、今後この{項目}でWeb予約できなくなります。既存の予約はそのまま残ります。よろしいですか。"
+  },
+  "SW052": {
+   "ja": "この{項目}を削除します。よろしいですか。"
+  },
+  "SW061": {
+   "ja": "SMS本文が70文字を超えています（{n}文字）。分割送信となり料金が増えます。保存しますか。"
+  },
+  "SW062": {
+   "ja": "枠の長さの変更は{日付}以降の予約枠から適用されます。保存しますか。"
+  },
+  "SW070": {
+   "ja": "このアカウントを無効化します。ログイン中のセッションも終了します。よろしいですか。"
+  },
+  "SI010": {
+   "ja": "受付しました（{氏名}様）。"
+  },
+  "SI011": {
+   "ja": "受付を取り消しました。"
+  },
+  "SI012": {
+   "ja": "無断キャンセルとして確定しました。"
+  },
+  "SI013": {
+   "ja": "無断キャンセル候補が{n}件あります（うち7日以上未確定 {m}件）。"
+  },
+  "SI014": {
+   "ja": "要調整の予約が{n}件あります。患者へ連絡してください。"
+  },
+  "SI015": {
+   "ja": "この日の予約はありません。"
+  },
+  "SI016": {
+   "ja": "調整依頼を送信しました（{n}件、通知先なし {m}件）。"
+  },
+  "SI017": {
+   "ja": "来院に訂正しました。"
+  },
+  "SI018": {
+   "ja": "該当する予約が見つかりません。"
+  },
+  "SI020": {
+   "ja": "予約を登録しました（予約番号 {予約番号}）。"
+  },
+  "SI021": {
+   "ja": "予約を変更しました。"
+  },
+  "SI022": {
+   "ja": "予約を取り消しました。"
+  },
+  "SI030": {
+   "ja": "患者情報を保存しました。"
+  },
+  "SI031": {
+   "ja": "患者を統合しました。"
+  },
+  "SI032": {
+   "ja": "開示用データの作成を受け付けました。作成が完了すると、CSV出力画面からダウンロードできます。"
+  },
+  "SI033": {
+   "ja": "該当する患者が見つかりません。"
+  },
+  "SI034": {
+   "ja": "検索結果が100件を超えました。条件を追加してください。"
+  },
+  "SI035": {
+   "ja": "該当する患者が見つかりません。新しい患者を登録してください。"
+  },
+  "SI040": {
+   "ja": "保存しました。予約枠を再生成しました（要調整 {n}件）。"
+  },
+  "SI041": {
+   "ja": "祝日を取り込みました（追加 {a}件・変更 {b}件・削除 {c}件）。"
+  },
+  "SI042": {
+   "ja": "クリニック情報を保存しました。"
+  },
+  "SI050": {
+   "ja": "マスタを保存しました。"
+  },
+  "SI060": {
+   "ja": "保存しました。"
+  },
+  "SI070": {
+   "ja": "アカウントを作成しました。初期パスワード: {パスワード}（この表示を閉じると再表示できません。初回ログイン時に変更が必要です）。"
+  },
+  "SI071": {
+   "ja": "アカウントを有効化しました。"
+  },
+  "SI072": {
+   "ja": "ロックを解除しました。"
+  },
+  "SI073": {
+   "ja": "初期パスワードを再発行しました: {パスワード}（この表示を閉じると再表示できません。次回ログイン時に変更が必要です）。"
+  },
+  "SI074": {
+   "ja": "アカウントを保存しました。"
+  },
+  "SI080": {
+   "ja": "CSVファイルを作成しました（{件数}）。"
+  },
+  "SI081": {
+   "ja": "該当データが0件のため、見出し行のみのファイルを作成しました。"
+  }
+ },
+ "aliases": {
+  "項目": "field",
+  "氏名": "name",
+  "最小": "min",
+  "最大": "max",
+  "メールアドレス": "email",
+  "日付": "date",
+  "電話案内文": "phone message",
+  "クリニック名": "clinic",
+  "電話番号": "phone",
+  "通知先": "destination",
+  "期限": "deadline",
+  "終了時刻": "time",
+  "開始日時": "start",
+  "終了日時": "end"
+ }
+}
