@@ -26,7 +26,7 @@ export function Home({ data, lang }: { data: Data; lang: Lang }) {
   const { maintenance, notices, cards } = data;
   return (
     // DOM = mobile order (main visual, notices, search, cards); desktop puts the notices first by `order`
-    <div className="grid gap-6 md:grid-cols-2" data-testid="p01">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2" data-testid="p01">
       <div className="flex flex-col gap-3 md:order-2">
         <p className="m-0 text-2xl font-bold">{label("catchCopy", lang)}</p>
         <p className="m-0 hidden md:block">{label("catchSub", lang)}</p>

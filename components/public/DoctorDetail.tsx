@@ -13,8 +13,9 @@ const wdColor = (wd: number) => (wd === 6 ? "text-[color:var(--sat)]" : wd === 0
 
 function Schedule({ block, lang }: { block: Data["schedule"][number]; lang: Lang }) {
   const days = block.sunday ? [...WEEKDAYS, 0] : [...WEEKDAYS];
-  const th = "px-2 py-2 font-bold bg-[color:var(--pri-t)] border border-[color:var(--line)]";
-  const td = "px-2 py-2 text-center text-sm border border-[color:var(--line)]";
+  // font size comes from the table: seven columns fit the 380 px card only at text-xs with 4 px padding (F13-07, no h-scroll)
+  const th = "px-1 py-2 font-bold bg-[color:var(--pri-t)] border border-[color:var(--line)]";
+  const td = "px-1 py-2 text-center border border-[color:var(--line)]";
   const cell = (wd: number, band: "AM" | "PM") => {
     const lines = block.cell(wd, band);
     return <td key={`${wd}${band}`} className={td}>{lines.length ? lines.map((l) => <div key={l}>{l}</div>) : label("dash", lang)}</td>;
@@ -24,7 +25,7 @@ function Schedule({ block, lang }: { block: Data["schedule"][number]; lang: Lang
     <div className="flex flex-col gap-2" data-testid="p09-schedule">
       <h3 className="m-0 text-base font-bold"><Link className="lnk" href={`/clinics/${block.clinicCode}`}>{block.clinicName}</Link></h3>
       {/* desktop: weekdays as columns, 午前 / 午後 as rows */}
-      <table className="hidden w-full border-collapse md:table">
+      <table className="hidden w-full border-collapse text-xs md:table">
         <thead>
           <tr><td className={th} />{days.map((wd) => <th key={wd} scope="col" className={`${th} ${wdColor(wd)}`}>{wdName(wd)}</th>)}</tr>
         </thead>
@@ -35,7 +36,7 @@ function Schedule({ block, lang }: { block: Data["schedule"][number]; lang: Lang
         </tbody>
       </table>
       {/* mobile: weekdays as rows */}
-      <table className="w-full border-collapse md:hidden">
+      <table className="w-full border-collapse text-sm md:hidden">
         <thead>
           <tr><td className={th} /><th scope="col" className={th}>{label("bandAM", lang)}</th><th scope="col" className={th}>{label("bandPM", lang)}</th></tr>
         </thead>
