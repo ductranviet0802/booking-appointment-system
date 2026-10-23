@@ -10,8 +10,9 @@ import { activeClinics } from "./clinics";
 
 export const PAGE_SIZE = 12;
 
-export type DoctorQuery = { keyword: string; clinic: string; department: string; language: string; page: number };
-export const EMPTY_QUERY: DoctorQuery = { keyword: "", clinic: "", department: "", language: "", page: 1 };
+import type { DoctorQuery } from "./query";
+// the pure parts live in query.ts so that client components do not pull the database client in
+export { EMPTY_QUERY, departmentsFor, doctorQueryString, type DoctorQuery } from "./query";
 
 type Raw = Record<string, string | string[] | undefined>;
 export type Options = Awaited<ReturnType<typeof loadOptions>>;
@@ -42,14 +43,6 @@ export async function loadOptions(lang: Lang) {
   };
 }
 
-/** The departments the select offers for a clinic (all when none; event 3, Q13 order) */
-export function departmentsFor(options: Options, clinic: string) {
-  if (!clinic) return options.departments;
-  return options.departments
-    .filter((d) => clinic in d.clinicOrder)
-    .sort((a, b) => a.clinicOrder[clinic] - b.clinicOrder[clinic]);
-}
-
 /**
  * The server re-check of 4.2 rows 3–5: null = ER-02 (keyword over 50 characters, a code that is no option, `page` not a positive integer,
  * a parameter given twice). A department that is active but not offered by the chosen clinic is accepted (it only narrows the result; Q-014).
@@ -70,17 +63,6 @@ export function parseDoctorQuery(raw: Raw, options: Options): DoctorQuery | null
   const p = str("page");
   if (p !== undefined && !/^[1-9]\d{0,8}$/.test(p)) return null;
   return { keyword, clinic, department, language, page: p === undefined ? 1 : Number(p) };
-}
-
-/** query string of a state: parameters left out when empty / すべて / page 1 (event 2 table) */
-export function doctorQueryString(q: Partial<DoctorQuery>) {
-  const sp = new URLSearchParams();
-  if (q.keyword) sp.set("keyword", q.keyword);
-  if (q.clinic) sp.set("clinic", q.clinic);
-  if (q.department) sp.set("department", q.department);
-  if (q.language) sp.set("language", q.language);
-  if (q.page && q.page > 1) sp.set("page", String(q.page));
-  return sp.toString();
 }
 
 /** 抽出1. A page beyond the last page shows the last page (Q5 reading A, 質疑 Q-012). */
