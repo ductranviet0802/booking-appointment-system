@@ -21,7 +21,8 @@ const connectionString = needsSsl
   ? rawConnectionString.replace(/[?&]sslmode=require/g, (m) => m.startsWith("?") ? "?" : "").replace(/\?&/, "?").replace(/\?$/, "")
   : rawConnectionString;
 
-const pool =
+// exported so scripts and tests can end it (prisma.$disconnect leaves an external pool open)
+export const pool =
   globalForPool.prismaPool ??
   new Pool({
     connectionString,
