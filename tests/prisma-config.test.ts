@@ -1,3 +1,5 @@
+import { testDbUrl } from "./test-db";
+
 const load = async () => {
   let url: string | undefined;
   await jest.isolateModulesAsync(async () => {
@@ -22,5 +24,13 @@ describe("prisma.config datasource (CLI / migrate)", () => {
     process.env.DATABASE_URL = "postgresql://pooled";
     delete process.env.POSTGRES_URL_NON_POOLING;
     expect(await load()).toBe("postgresql://pooled");
+  });
+});
+
+describe("test database", () => {
+  it("is the service database + _test, once", () => {
+    const url = "postgresql://u:p@db:5432/booking_w1?schema=public";
+    expect(testDbUrl(url)).toBe("postgresql://u:p@db:5432/booking_w1_test?schema=public");
+    expect(testDbUrl(testDbUrl(url))).toBe(testDbUrl(url));
   });
 });
