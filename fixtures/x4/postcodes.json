@@ -1,0 +1,10 @@
+{
+  "1000000": [{ "prefecture": "東京都", "city": "千代田区", "town": "以下に掲載がない場合", "prefectureKana": "トウキョウト", "cityKana": "チヨダク", "townKana": "" }],
+  "1000005": [{ "prefecture": "東京都", "city": "千代田区", "town": "丸の内（次のビルを除く）", "prefectureKana": "トウキョウト", "cityKana": "チヨダク", "townKana": "マルノウチ" }],
+  "1600022": [{ "prefecture": "東京都", "city": "新宿区", "town": "新宿", "prefectureKana": "トウキョウト", "cityKana": "シンジュクク", "townKana": "シンジュク" }],
+  "1710021": [{ "prefecture": "東京都", "city": "豊島区", "town": "西池袋", "prefectureKana": "トウキョウト", "cityKana": "トシマク", "townKana": "ニシイケブクロ" }],
+  "0790177": [
+    { "prefecture": "北海道", "city": "美唄市", "town": "上美唄町協和", "prefectureKana": "ホッカイドウ", "cityKana": "ビバイシ", "townKana": "カミビバイチョウキョウワ" },
+    { "prefecture": "北海道", "city": "美唄市", "town": "上美唄町南", "prefectureKana": "ホッカイドウ", "cityKana": "ビバイシ", "townKana": "カミビバイチョウミナミ" }
+  ]
+}
