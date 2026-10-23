@@ -39,16 +39,24 @@ export const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code 
  * role not ADMIN or must-change-password or a session clinic outside the CF-03 choices → 403 SE091 (nothing runs),
  * an unexpected error → 500 SE090 (ER-02).
  */
-export function adminRoute(req: NextRequest, fn: (actor: Actor, body: Record<string, unknown>) => Promise<Result>) {
+export function adminRoute(
+  req: NextRequest,
+  fn: (actor: Actor, body: Record<string, unknown>) => Promise<Result>,
+  opts: { raw?: boolean; roles?: Role[] } = {},
+) {
+  const raw = opts.raw ?? false;
+  const roles = opts.roles ?? ["ADMIN"];
   return withRouteHandler(req, async () => {
-    try {
-      enforceSameOriginMutation(req);
-    } catch {
-      return NextResponse.json({ code: "SE090", params: {} }, { status: 400 });
+    if (req.method !== "GET") {
+      try {
+        enforceSameOriginMutation(req);
+      } catch {
+        return NextResponse.json({ code: "SE090", params: {} }, { status: 400 });
+      }
     }
     const s = await getSession();
     if (!s) return NextResponse.json({ code: "PI013", params: {} }, { status: 401 });
-    if (s.account.role !== "ADMIN" || s.account.mustChangePassword || !s.clinicId || !s.clinics.some((c) => c.id === s.clinicId)) {
+    if (!roles.includes(s.account.role) || s.account.mustChangePassword || !s.clinicId || !s.clinics.some((c) => c.id === s.clinicId)) {
       return NextResponse.json({ code: "SE091", params: {} }, { status: 403 });
     }
     const actor: Actor = {
@@ -56,7 +64,7 @@ export function adminRoute(req: NextRequest, fn: (actor: Actor, body: Record<str
       sessionId: s.sessionId, ip: clientOf(req).ip, now: new Date(),
     };
     try {
-      return answer(await fn(actor, await jsonBody(req)));
+      return answer(await fn(actor, raw || req.method === "GET" ? {} : await jsonBody(req)));
     } catch (error) {
       log("error", "admin route failed", { path: req.nextUrl.pathname, error: error instanceof Error ? error.message : String(error) });
       return NextResponse.json({ code: "SE090", params: {} }, { status: 500 });

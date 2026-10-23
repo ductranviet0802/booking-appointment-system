@@ -1,0 +1,32 @@
+.h1 { margin: 0 0 12px; font-size: 22px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.tab { background: none; border: 0; padding: 10px 16px; font: inherit; font-weight: 700; color: var(--mut); border-bottom: 3px solid transparent; cursor: pointer; }
+.tabOn { color: var(--pri-d); border-bottom-color: var(--pri); }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.list { background: #fff; border: 1px solid var(--line); border-radius: 8px; max-height: 520px; overflow-y: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { text-align: left; padding: 8px; color: var(--mut); font-weight: 700; border-bottom: 1px solid var(--line); }
+.table td { padding: 8px; border-bottom: 1px solid #eef2f3; }
+.table tr[data-row] { cursor: pointer; }
+.sel { background: var(--pri-t); font-weight: 700; }
+.off { color: #8a979b; }
+.foot { text-align: center; color: var(--mut); font-size: 12px; padding: 6px; }
+.form { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.head { display: flex; justify-content: space-between; align-items: baseline; }
+.head h2 { margin: 0; font-size: 18px; }
+.f { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px; align-items: start; }
+.f > .lab { font-size: 14px; font-weight: 700; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding-top: 10px; }
+.cols { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.two { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.checks { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding-top: 8px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; }
+.small { width: 90px; }
+.badge { font-size: 11px; font-weight: 700; color: var(--mut); }
+.photo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.round { width: 64px; height: 64px; border-radius: 32px; background: #dfe7e8; color: #8a979b; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.round img { width: 100%; height: 100%; object-fit: cover; }
+.actions { display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+.actions .sp { flex: 1; }
+.note { font-size: 12px; color: var(--mut); }
+.clinicRow { display: inline-flex; gap: 6px; align-items: center; margin-right: 12px; }
