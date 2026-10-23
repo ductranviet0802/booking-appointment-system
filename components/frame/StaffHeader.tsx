@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
 import { STAFF } from "@/lib/i18n/labels";
-import { postJson, useApiFetch } from "@/lib/client/api";
+import { openStaffErrorScreen, postJson, useApiFetch } from "@/lib/client/api";
 import { staffMenu } from "@/lib/frame/menu";
 import type { Role } from "@prisma/client";
 
@@ -35,8 +35,8 @@ export function StaffHeader({ groupName, role, displayName, clinics, clinicId }:
 
   async function changeClinic(id: string) {
     const res = await apiFetch(...postJson("/api/session/clinic", { clinicId: id }));
-    // 403 SE091: nothing was stored; the reload lets the screen guard show ER-03 (event 9, 9-2)
-    if (res) router.refresh();
+    // 403 SE091: nothing was stored → ER-03 (event 9-2, T096; judge F-03); 401 → ER-05
+    if (res && !(await openStaffErrorScreen(res))) router.refresh();
   }
 
   async function logout() {

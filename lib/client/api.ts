@@ -26,6 +26,17 @@ export function useApiFetch() {
   );
 }
 
+/**
+ * Staff screens: an API answer that leaves the screen (401 → ER-05, 403 → ER-03 SE091, SE090 or 5xx → ER-02) opens that
+ * error screen and returns true; any other answer (field errors, SE0xx banners) stays with the caller.
+ */
+export async function openStaffErrorScreen(res: Response): Promise<boolean> {
+  const code = res.status >= 400 ? ((await res.clone().json().catch(() => ({}))) as { code?: string }).code : undefined;
+  const kind = res.status === 401 ? "expired" : res.status === 403 ? "forbidden" : res.status >= 500 || code === "SE090" ? "error" : null;
+  if (kind) window.location.assign(`/staff/error/${kind}`);
+  return kind !== null;
+}
+
 export function postJson(url: string, body: unknown): [string, RequestInit] {
   return [url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }];
 }
