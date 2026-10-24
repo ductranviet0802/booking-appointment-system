@@ -125,6 +125,28 @@ const cases: Case[] = [
     await book(p.id, "10:15");
     return { inp: input(p.id, { startTime: "10:30" }), actor: staff() };
   }],
+  ["Q-046: a CHECKED_IN booking the same day at the clinic counts for the limit (patient: PE033)", ["LIMIT"], async () => {
+    const p = await person();
+    await frames(0, ["16:00", "16:15"]);
+    const b = await book(p.id, "16:00");
+    await prisma.booking.update({ where: { id: b.bookingId }, data: { status: "CHECKED_IN", checkedInAt: new Date() } });
+    return { inp: input(p.id, { startTime: "16:15" }), actor: patientActor() };
+  }],
+  ["Q-046: a NO_SHOW booking the same day does not count", [], async () => {
+    const p = await person();
+    await frames(0, ["16:30", "16:45"]);
+    const b = await book(p.id, "16:30");
+    await prisma.booking.update({ where: { id: b.bookingId }, data: { status: "NO_SHOW" } });
+    return { inp: input(p.id, { startTime: "16:45" }), actor: patientActor() };
+  }],
+  ["Q-046 change mode: the booking being changed is not counted, a CHECKED_IN sibling is", ["LIMIT"], async () => {
+    const p = await person();
+    await frames(0, ["17:00", "17:15", "17:30"]);
+    const done = await book(p.id, "17:00");
+    await prisma.booking.update({ where: { id: done.bookingId }, data: { status: "CHECKED_IN", checkedInAt: new Date() } });
+    const b = await book(p.id, "17:15");
+    return { inp: input(p.id, { startTime: "17:30" }), actor: patientActor(), change: { bookingId: b.bookingId, version: 0 } };
+  }],
   ["overlap with the person's own booking (limit overridden) → OVERLAP", ["OVERLAP"], async () => {
     const p = await person();
     await frames(0, ["10:45"]);

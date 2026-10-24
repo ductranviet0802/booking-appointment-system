@@ -289,10 +289,11 @@ async function rulesOf(tx: Tx, input: BookingInput, actor: Actor, opts: Options,
   const notSelf = changing ? { id: { not: changing.bookingId } } : {};
   const sameDay = await tx.booking.findMany({
     where: { patientId: input.patientId, slotDate: dbDate(input.slotDate), status: { in: ["RESERVED", "CHECKED_IN"] }, ...notSelf },
-    select: { clinicId: true, status: true, bookingNo: true, startTime: true, endTime: true },
+    select: { clinicId: true, bookingNo: true, startTime: true, endTime: true },
     orderBy: { startTime: "asc" },
   });
-  const limitRows = sameDay.filter((b) => b.clinicId === input.clinicId && b.status === "RESERVED");
+  // per person × clinic × date: RESERVED and CHECKED_IN count (F4-06, P11 Q29 A, 質疑 Q-046 answered)
+  const limitRows = sameDay.filter((b) => b.clinicId === input.clinicId);
   if (!opts.overrideLimit && limitRows.length >= policy.perPersonDailyLimit) failed.add("LIMIT");
   const endIso = run ? run[run.length - 1].end : addMinutes(startIso, n * policy.frameMinutes);
   if (sameDay.some((b) => toHhmm(b.startTime) < endIso && toHhmm(b.endTime) > startIso)) failed.add("OVERLAP");
