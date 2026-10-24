@@ -9,19 +9,22 @@ function key() {
   return createHash("sha256").update(secret).digest();
 }
 
-export function encryptText(plain: string): Uint8Array<ArrayBuffer> {
+export function encryptBytes(plain: Uint8Array): Uint8Array<ArrayBuffer> {
   const iv = randomBytes(12);
   const c = createCipheriv("aes-256-gcm", key(), iv);
-  const body = Buffer.concat([c.update(plain, "utf8"), c.final()]);
+  const body = Buffer.concat([c.update(plain), c.final()]);
   return new Uint8Array(Buffer.concat([iv, c.getAuthTag(), body]));
 }
 
-export function decryptText(stored: Uint8Array): string {
+export function decryptBytes(stored: Uint8Array): Buffer {
   const b = Buffer.from(stored);
   const d = createDecipheriv("aes-256-gcm", key(), b.subarray(0, 12));
   d.setAuthTag(b.subarray(12, 28));
-  return Buffer.concat([d.update(b.subarray(28)), d.final()]).toString("utf8");
+  return Buffer.concat([d.update(b.subarray(28)), d.final()]);
 }
+
+export const encryptText = (plain: string) => encryptBytes(Buffer.from(plain, "utf8"));
+export const decryptText = (stored: Uint8Array) => decryptBytes(stored).toString("utf8");
 
 export const encryptJson = (value: unknown) => encryptText(JSON.stringify(value));
 export const decryptJson = <T = unknown>(stored: Uint8Array) => JSON.parse(decryptText(stored)) as T;
