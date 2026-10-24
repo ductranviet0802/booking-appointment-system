@@ -5,7 +5,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   return (
     <div className="page">
       <StaffFrameHeader />
-      <main className="main">{children}</main>
+      <main className="main main-staff">{children}</main>
     </div>
   );
 }

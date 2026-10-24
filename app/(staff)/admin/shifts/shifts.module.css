@@ -15,7 +15,9 @@
 .doc small { display: block; color: var(--mut); font-size: 12px; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table th { text-align: left; padding: 6px; color: var(--mut); font-weight: 700; background: #f1f4f5; white-space: nowrap; }
-.table td { padding: 6px; border-bottom: 1px solid #eef2f3; vertical-align: top; }
+.table td { padding: 6px; border-bottom: 1px solid #eef2f3; vertical-align: middle; }
+.tw { overflow-x: auto; } /* B19/B20: wide tables scroll inside the panel */
+.tw > .table { min-width: 720px; }
 .grey td { color: #8a979b; background: #f6f8f8; }
 .hatch td { background: repeating-linear-gradient(135deg, #f6f8f8, #f6f8f8 6px, #eceff0 6px, #eceff0 12px); }
 .time { width: 64px; }
@@ -23,12 +25,14 @@
 .note { font-size: 12px; color: var(--mut); }
 .nsv { font-size: 11px; color: #7a5200; }
 .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.radios { display: inline-flex; gap: 6px; }
-.radios label { display: inline-flex; gap: 4px; align-items: center; }
-.del { color: #c0392b; background: none; border: 0; cursor: pointer; font: inherit; }
+.radios { display: inline-flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.radios label, .form .radios label { display: inline-flex; gap: 4px; align-items: center; font-size: 14px; font-weight: 400; margin: 0; white-space: nowrap; }
+.panel h2 { flex-wrap: wrap; }
+.panel h2 .row { flex-wrap: nowrap; white-space: nowrap; }
+.del { white-space: nowrap; color: #c0392b; background: none; border: 0; cursor: pointer; font: inherit; }
 .form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; align-items: start; }
 .form label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 2px; }
-.badge { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 3px; padding: 0 6px; background: #e8eced; }
+.badge { white-space: nowrap; display: inline-block; font-size: 11px; font-weight: 700; border-radius: 3px; padding: 0 6px; background: #e8eced; }
 .bOff { background: #fde8e6; color: #a32c20; }
 .bExtra { background: #d8f0ea; color: #0f6b57; }
 .bSub { background: #fff0cc; color: #7a5200; }
@@ -36,3 +40,11 @@
 .sat { color: #1f5fbf; }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
 .cell { white-space: nowrap; }
+@media (max-width: 799px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 479px) {
+  .form { grid-template-columns: minmax(0, 1fr); }
+  .bar { flex-wrap: wrap; }
+}

@@ -18,9 +18,9 @@
 .totals .sum { margin-left: auto; font-size: 13px; color: var(--mut); }
 .heading { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; font-weight: 700; }
 .wrap { background: #fff; border: 1px solid var(--line); border-radius: 8px; overflow: auto; max-height: 640px; }
-.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 14px; } /* B2: .wrap scrolls below this */
 .table th { position: sticky; top: 0; background: #f4f7f8; text-align: left; padding: 8px; font-size: 13px; color: var(--mut); white-space: nowrap; z-index: 1; }
-.table td { padding: 6px 8px; border-top: 1px solid #eef2f3; height: 38px; vertical-align: middle; }
+.table td { padding: 6px 8px; border-top: 1px solid #eef2f3; height: 38px; vertical-align: middle; white-space: nowrap; }
 .hl td { background: #fffbe6; }
 .grey td { color: #8a979b; background: #f7f8f8; }
 .no { font-family: ui-monospace, monospace; font-size: 13px; }
@@ -33,12 +33,12 @@
 .s_NO_SHOW { background: #fde7e5; color: #8a1f12; }
 .s_CANCELED { background: #eef2f3; color: var(--mut); }
 .mini { min-height: 32px; border: 1px solid var(--line2); background: #fff; border-radius: 6px; padding: 0 8px; font: inherit; font-size: 13px; cursor: pointer; }
-.menu { min-height: 32px; border: 1px solid var(--line2); border-radius: 6px; font: inherit; font-size: 13px; background: #fff; }
+.menu { width: 128px; min-height: 32px; border: 1px solid var(--line2); border-radius: 6px; font: inherit; font-size: 13px; background: #fff; }
 .foot { text-align: center; color: var(--mut); font-size: 12px; padding: 8px; }
 .empty { text-align: center; padding: 24px; }
 .dlgForm { display: flex; flex-direction: column; gap: 10px; min-width: 340px; }
 .dlgForm select, .dlgForm input[type="text"] { min-height: 40px; border: 1px solid var(--line2); border-radius: 6px; padding: 0 8px; font: inherit; }
-.radios { display: flex; gap: 16px; }
+.radios { display: flex; flex-wrap: wrap; gap: 16px; }
 .answers { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; font-size: 14px; }
 .answers dt { color: var(--mut); }
 .answers dd { margin: 0; }
