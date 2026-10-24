@@ -88,6 +88,16 @@ export type BookingRow = {
 };
 export type NoticeRow = { id: string; event: string; channel: string; status: string; queued: string; sent: string; attempts: number; error: string };
 
+// cap: S03 booking / notification history rows shown (質疑 pending) — Q19 a settles "all rows"; newest first, the rest not shown
+export const DETAIL_ROWS_MAX = 500;
+
+/** Q19 b: slot_date from today minus 6 calendar months */
+function sixMonthsBefore(today: string) {
+  const d = new Date(`${today}T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() - 6);
+  return toIsoDate(d);
+}
+
 const staffOf = async (a: { accountId: string }) => {
   const acc = await prisma.account.findUniqueOrThrow({ where: { id: a.accountId }, select: { id: true, role: true, allClinics: true } });
   return staffClinics(acc);
@@ -112,11 +122,16 @@ export async function loadDetail(patientId: string, viewer: { accountId: string 
     prisma.patientCard.findMany({ where: { patientId } }),
     prisma.clinic.findMany({ orderBy: { displayOrder: "asc" }, select: { id: true, nameJa: true, isActive: true } }),
     prisma.booking.findMany({
-      where: { patientId }, orderBy: [{ slotDate: "desc" }, { startTime: "desc" }],
+      where: { patientId }, orderBy: [{ slotDate: "desc" }, { startTime: "desc" }], take: DETAIL_ROWS_MAX,
       select: { id: true, slotDate: true, startTime: true, bookingNo: true, clinicId: true, status: true, channel: true, cancelReasonCode: true, questionnaire: { select: { bookingId: true } } },
     }),
     // Q13: rows of the patient, or of a booking of the patient
-    prisma.notification.findMany({ where: { OR: [{ patientId }, { booking: { patientId } }] }, orderBy: { queuedAt: "desc" } }),
+    prisma.notification.findMany({ where: { OR: [{ patientId }, { booking: { patientId } }] }, orderBy: { queuedAt: "desc" }, take: DETAIL_ROWS_MAX }),
+  ]);
+  const noShowWhere = { patientId, status: "NO_SHOW" as const };
+  const [noShowTotal, noShowRecent] = await Promise.all([
+    prisma.booking.count({ where: noShowWhere }),
+    prisma.booking.count({ where: { ...noShowWhere, slotDate: { gte: dbDate(sixMonthsBefore(todayJst(now))) } } }),
   ]);
   const cardRows: CardRow[] = clinics.flatMap((c) => {
     const card = cards.find((x) => x.clinicId === c.id);
@@ -128,12 +143,6 @@ export async function loadDetail(patientId: string, viewer: { accountId: string 
     }];
   });
   const clinicName = new Map(clinics.map((c) => [c.id, c.nameJa]));
-  const sixMonths = (() => {
-    const d = new Date(`${today}T00:00:00Z`);
-    d.setUTCMonth(d.getUTCMonth() - 6);
-    return toIsoDate(d);
-  })();
-  const noShow = bookings.filter((b) => b.status === "NO_SHOW");
   const gaiji = [p.familyName, p.givenName, p.familyNameKana, p.givenNameKana, p.prefecture, p.city, p.town ?? "", p.addressLine, p.building ?? ""].some((t) => toCp932Safe(t).replaced);
   const a = p.account;
   const profile: ProfileValues = {
@@ -166,7 +175,7 @@ export async function loadDetail(patientId: string, viewer: { accountId: string 
       clinicName: clinicName.get(b.clinicId) ?? "", status: b.status, channel: b.channel, reason: b.status === "CANCELED" ? b.cancelReasonCode : null,
       questionnaire: !!b.questionnaire, mine: mineIds.has(b.clinicId), date: toIsoDate(b.slotDate), clinicId: b.clinicId,
     })),
-    noShow: { total: noShow.length, recent: noShow.filter((b) => toIsoDate(b.slotDate) >= sixMonths).length },
+    noShow: { total: noShowTotal, recent: noShowRecent },
     notifications: notices.map((n): NoticeRow => ({
       id: n.id, event: n.event, channel: n.channel, status: n.status, queued: shortStamp(n.queuedAt), sent: shortStamp(n.sentAt), attempts: n.attempts, error: n.lastError ?? "",
     })),
