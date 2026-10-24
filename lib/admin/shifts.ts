@@ -31,7 +31,7 @@ export type ShiftDetail = {
   doctorName: string;
   patterns: PatternRow[];
   exceptions: ExceptionRow[];
-  choices: { clinicName: string; departments: Array<{ id: string; name: string }>; substitutes: Array<{ id: string; name: string }>; hours: Array<{ weekday: number; band: "AM" | "PM"; open: string; close: string }> };
+  choices: { clinicId: string; clinicName: string; departments: Array<{ id: string; name: string }>; substitutes: Array<{ id: string; name: string }>; hours: Array<{ weekday: number; band: "AM" | "PM"; open: string; close: string }> };
 };
 export type WeekView = { start: string; days: string[]; rows: Array<{ doctorId: string; name: string; cells: string[] }> };
 
@@ -66,7 +66,7 @@ export async function resolveDoctor(a: Actor, doctorId: unknown): Promise<{ doct
 }
 
 /** 抽出3-6 for one doctor */
-export async function loadDetail(a: Actor, doctor: DoctorItem): Promise<ShiftDetail> {
+export async function loadDetail(a: Pick<Actor, "clinicId" | "now">, doctor: DoctorItem): Promise<ShiftDetail> {
   const today = todayJst(a.now);
   const [patterns, exceptions, clinic, hours, offered, doctorDepts, subs] = await Promise.all([
     prisma.doctorShiftPattern.findMany({ where: { doctorId: doctor.id }, include: { clinic: true, department: true } }),
@@ -104,6 +104,7 @@ export async function loadDetail(a: Actor, doctor: DoctorItem): Promise<ShiftDet
       start: x.startTime ? toHhmm(x.startTime) : null, end: x.endTime ? toHhmm(x.endTime) : null, substituteName: x.substituteDoctor ? fullName(x.substituteDoctor) : null, note: x.note,
     })),
     choices: {
+      clinicId: a.clinicId,
       clinicName: clinic.nameJa,
       departments: offered.filter((o) => mine.has(o.departmentId)).map((o) => ({ id: o.departmentId, name: o.department.nameJa })),
       substitutes: subs.map((d) => ({ id: d.id, name: fullName(d) })),
@@ -113,7 +114,7 @@ export async function loadDetail(a: Actor, doctor: DoctorItem): Promise<ShiftDet
 }
 
 /** 抽出7: the saved frames of the displayed week as the cell texts of item 18 (Q7) */
-export async function loadWeek(a: Actor, doctors: DoctorItem[], start: string): Promise<WeekView> {
+export async function loadWeek(a: Pick<Actor, "clinicId">, doctors: DoctorItem[], start: string): Promise<WeekView> {
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
   const dbDays = days.map(dbDate);
   const ids = doctors.map((d) => d.id);
@@ -160,13 +161,31 @@ export async function loadWeek(a: Actor, doctors: DoctorItem[], start: string): 
   };
 }
 
+/** events 2 / 12 and the refresh after a save: the answers of the read routes (DOCTOR: own data only, another doctor → 403 SE091) */
+export async function readDetail(a: Actor, doctorId: unknown): Promise<Result> {
+  const d = await resolveDoctor(a, doctorId);
+  if ("result" in d) return d.result;
+  return done({ detail: await loadDetail(a, d.doctor) });
+}
+export async function readWeek(a: Actor, start: unknown): Promise<Result> {
+  if (typeof start !== "string" || !isoDateOk(start)) return bad();
+  const doctors = await listDoctors(a.clinicId, a.role, a.accountId);
+  return done({ week: await loadWeek(a, doctors, mondayOf(start)), adjustCount: a.role === "DOCTOR" ? 0 : await adjustRequiredCount(prisma, a.clinicId) });
+}
+/** 抽出5 for the hold check of an exception (event 10): the open bands of a date at the session clinic */
+export async function readHours(a: Actor, date: unknown): Promise<Result> {
+  if (typeof date !== "string" || !isoDateOk(date)) return bad();
+  const bands = await openBandsForDate(prisma, a.clinicId, date);
+  return done({ bands: bands.map((b) => ({ band: b.band, open: b.open, close: b.close })) });
+}
+
 // ── reading the request ────────────────────────────────────────────────────────────────────────────────────────────
 
 /** a value the UI cannot produce → ER-02 (SE090), nothing written */
 class Tampered extends Error {}
-const must = (ok: boolean) => {
+function must(ok: boolean): asserts ok {
   if (!ok) throw new Tampered();
-};
+}
 const str = (v: unknown, max = 400) => {
   must(typeof v === "string" && v.length <= max);
   return v as string;
