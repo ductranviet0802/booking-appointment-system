@@ -95,7 +95,7 @@ export async function loadDoctorPage(id: string, lang: Lang, now = new Date()) {
       .filter((d) => d.isActive)
       .sort((a, b) => a.displayOrder - b.displayOrder || (a.code < b.code ? -1 : 1))
       .map((d) => nameOf(d, lang)),
-    languages: doctor.languages.map(languageName).join("・"),
+    languages: doctor.languages.map(languageName).join(lang === "ja" ? "・" : ", "),
     buttons: pairs.map((s) => ({
       text: label("bookPair", lang, { clinic: nameOf(s.clinic, lang), department: nameOf(s.department, lang) }),
       href: `/booking/new?${new URLSearchParams({ clinic: s.clinic.code, department: s.department.code, doctor: doctor.id }).toString()}`,

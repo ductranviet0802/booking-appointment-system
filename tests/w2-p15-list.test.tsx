@@ -59,7 +59,7 @@ describe("P15 tabs (抽出1 / 抽出2)", () => {
     expect((await listBookings(h.acc.id, "canceled", 0, "ja")).rows.map((r) => r.id)).toEqual([gone.id]);
     expect(up.counts).toEqual({ upcoming: 2, past: 3, canceled: 1 });
     expect(up.rows[0].dateText).toMatch(/^\d{4}年\d{1,2}月\d{1,2}日\(.\) 9:00〜$/); // Q7 A: start + 〜
-    expect((await listBookings(h.acc.id, "upcoming", 0, "en")).rows[0].dateText).toMatch(/ 9:00–$/);
+    expect((await listBookings(h.acc.id, "upcoming", 0, "en")).rows[0].dateText).toMatch(/ 9:00$/); // en / vi: start time, no trailing dash (demo polish)
   });
 
   it("boundary: a booking today at 10:00 is 予約中 until 09:59:59 JST and 受診履歴 (確認中) from 10:00:00", async () => {

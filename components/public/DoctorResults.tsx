@@ -44,7 +44,7 @@ export function DoctorResults({ query, result, lang }: { query: DoctorQuery; res
               </ul>
               <span className="flex items-center gap-1 text-sm"><Icon name="pin" size={14} />{d.clinic}</span>
               <span className="flex gap-1 text-xs font-bold text-[color:var(--mut)]">
-                {d.languages.map((l) => <span key={l} title={languageName(l)}>{l.toUpperCase()}</span>)}
+                {d.languages.map((l) => <span key={l} className="badge" title={languageName(l)}>{l.toUpperCase()}</span>)}
               </span>
             </div>
           </li>

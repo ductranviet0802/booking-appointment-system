@@ -12,7 +12,7 @@
 .items dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
 .when { order: -1; }
 .when dd { font-size: 18px; font-weight: 700; }
-.no { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: 1px; }
+.no { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace; letter-spacing: 1px; }
 .notes { white-space: pre-wrap; }
 .side { gap: 12px; }
 .scrim { position: fixed; inset: 0; z-index: 30; background: rgba(16, 34, 42, 0.45); display: flex; align-items: flex-end; justify-content: center; }

@@ -102,7 +102,7 @@ describe("P10 clinic page", () => {
     expect(html).toContain('href="tel:0312345678"');
     expect(html).toContain('target="_blank"');
     expect(html).toContain("受付は午前 11:30、午後 17:30 まで（診療終了の30分前）");
-    expect(html).toContain("午前 9:00〜12:00");
+    expect(html.replace(/<[^>]+>/g, "")).toContain("午前 9:00〜12:00");
     expect(html).toContain('href="/booking/new?clinic=honin"');
     expect(html).toContain("田中 誠");
     expect(html).toContain("院長・内科");

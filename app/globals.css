@@ -55,7 +55,7 @@ a { color: inherit; }
 .mut { color: var(--mut); } .sm { font-size: 13px; } .xs { font-size: 12px; }
 .sp { flex: 1; }
 .page { min-height: 100vh; display: flex; flex-direction: column; }
-.main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 20px 16px 32px; }
+.main { flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 20px 16px 32px; }
 @media (min-width: 768px) { .main { padding: 32px 24px 48px; } }
 
 /* controls */
@@ -121,7 +121,8 @@ a { color: inherit; }
 .nav { display: none; }
 .acc { display: none; }
 .lang-box { position: relative; }
-.lang { display: flex; align-items: center; gap: 4px; min-height: 44px; min-width: 44px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.lang { display: flex; align-items: center; gap: 4px; min-height: 44px; min-width: 44px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; }
+@media (max-width: 767px) { .logo-name { font-size: 13px; line-height: 1.25; } }
 .lang-full, .lang-caret { display: none; }
 .dd { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(16, 34, 42, 0.14); padding: 6px; display: flex; flex-direction: column; width: 200px; z-index: 50; }
 .dd button { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
@@ -160,6 +161,15 @@ a { color: inherit; }
   .acc-name { font-weight: 700; }
   .burger { display: none; }
   .drawer, .drawer-scrim { display: none !important; }
+  /* header and footer content on the edges of the .main column (1280 px, 24 px padding) */
+  .hd, .hd-bare { padding-inline: max(32px, calc((100% - 1280px) / 2 + 24px)); }
+  .hd { gap: 16px; }
+  .nav a { padding: 0 10px; }
+}
+/* tablet and small laptop: the menu takes a second header row instead of pushing Log out past the edge (vi is longest) */
+@media (min-width: 768px) and (max-width: 1365px) {
+  .hd:not(.hd-bare) { height: auto; flex-wrap: wrap; row-gap: 0; gap: 0 16px; padding-top: 8px; }
+  .hd .nav { order: 2; width: 100%; margin: 0 -12px; padding-bottom: 4px; }
 }
 
 /* CF-02 patient footer */
@@ -171,7 +181,7 @@ a { color: inherit; }
 .ft nav a, .ft nav span { display: flex; align-items: center; gap: 8px; min-height: 44px; color: var(--ink); border-bottom: 1px solid #eef2f3; }
 .ft .gn { order: 1; margin-bottom: 8px; }
 @media (min-width: 768px) {
-  .ft { flex-direction: row; align-items: center; gap: 32px; padding: 28px 32px; }
+  .ft { flex-direction: row; align-items: center; gap: 32px; padding: 28px max(32px, calc((100% - 1280px) / 2 + 24px)); }
   .ft > div { display: flex; flex-direction: column; gap: 4px; }
   .ft .copy { order: 0; margin-top: 0; }
   .ft .gn { order: 0; margin: 0; }
@@ -289,7 +299,7 @@ a { color: inherit; }
   .frm { padding: 24px; }
   .fld { display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: start; }
   .fld > .lbl { padding-top: 12px; }
-  .pair .fld { display: flex; }
+  .pair .fld { display: flex; align-items: stretch; }
   .login-cards { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 284px); justify-content: center; align-items: start; }
   .login-cards .fld, .acct-narrow .fld { display: flex; align-items: stretch; }
   .login-cards .fld > .lbl, .acct-narrow .fld > .lbl { padding-top: 0; }
@@ -319,4 +329,29 @@ a { color: inherit; }
   .w1-bar { position: static; border: 0; background: transparent; padding: 0; margin: 0; flex-direction: row; align-items: center; justify-content: flex-end; gap: 16px; }
   .w1-bar.back-first { flex-direction: row-reverse; justify-content: flex-start; }
 }
+
+/* demo polish (Brief 0059): narrow forms, P01 hero, P10 hours table, the map add-on */
+@media (max-width: 479px) {
+  .pair { grid-template-columns: 1fr; }
+  .dob { grid-template-columns: 1fr 1fr; }
+  .dob > :first-child { grid-column: 1 / -1; }
+  .w1-steps { flex-wrap: nowrap; gap: 4px; font-size: 12px; }
+  .w1-steps li + li::before { width: 6px; }
+}
+html:lang(vi) body { font-family: "Noto Sans", "Segoe UI", Roboto, "Helvetica Neue", Arial, var(--font-app-sans); }
+/* P01 main visual (mock P01 .hero / .dhero): tinted band, the illustration on the right */
+.p01-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #e7f4f3 0%, #d3ecea 100%); border: 1px solid #bfe1dd; border-radius: 12px; padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+.p01-catch { font-size: 22px; font-weight: 700; line-height: 1.4; color: var(--pri-d); max-width: calc(100% - 96px); }
+.p01-book { min-height: 52px; font-size: 17px; position: relative; }
+.p01-hero-art { position: absolute; right: -8px; top: 6px; width: 104px; height: auto; }
+@media (min-width: 768px) {
+  .p01-hero { padding: 40px; justify-content: center; gap: 20px; min-height: 260px; }
+  .p01-catch { font-size: 30px; max-width: calc(100% - 200px); }
+  .p01-hero > .p01-book { width: auto; min-width: 280px; align-self: flex-start; }
+  .p01-hero > p:not(.p01-catch) { max-width: calc(100% - 200px); }
+  .p01-hero-art { right: 24px; top: 50%; transform: translateY(-50%); width: 200px; }
+}
+/* demo add-on: map, not in ver1 spec — grey box when the tiles cannot load (offline) */
+.clinic-map { width: 100%; height: 320px; border-radius: 12px; border: 1px solid var(--line); background: #e3e9ea; z-index: 0; }
+.clinic-map-sm { height: 220px; }
 }

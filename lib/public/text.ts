@@ -9,7 +9,9 @@ export function pick(lang: Lang, ja: string, en: string | null | undefined, vi: 
 }
 
 type Named = { nameJa: string; nameEn: string | null; nameVi: string | null };
-export const nameOf = (m: Named, lang: Lang) => pick(lang, m.nameJa, m.nameEn, m.nameVi);
+/** the joiner drawn as 「・」 in ja; en / vi use a spaced middle dot (no full-width punctuation outside ja) */
+export const dot = (lang: Lang) => (lang === "ja" ? "・" : " · ");
+export const nameOf =(m: Named, lang: Lang) => pick(lang, m.nameJa, m.nameEn, m.nameVi);
 
 /** ja 「姓 名」, en / vi name_romaji; no title and no 様 (EV-55) */
 export function doctorName(d: { familyName: string; givenName: string; nameRomaji: string }, lang: Lang) {
