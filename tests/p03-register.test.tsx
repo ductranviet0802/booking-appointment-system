@@ -30,7 +30,8 @@ describe("S-02 rules (P03 §4.1 / §4.2, shared by P06 / P07)", () => {
   });
   it("katakana reading: full-width katakana, ー, full- or half-width space only", () => {
     for (const ok of ["ヤマダ", "ヴァン　アン", "ジョン スミス", "ヨーコ", "ヶ"]) expect(katakanaOk(ok)).toBe(true);
-    for (const bad of ["やまだ", "ﾔﾏﾀﾞ", "山田", "Yamada", "ヤマダ1", "マリア・テレサ"]) expect(katakanaOk(bad)).toBe(false);
+    for (const bad of ["やまだ", "ﾔﾏﾀﾞ", "山田", "Yamada", "ヤマダ1"]) expect(katakanaOk(bad)).toBe(false);
+    expect(katakanaOk("マリア・テレサ")).toBe(true); // Q-021 answer: ・ allowed
   });
   it("birth date: a real date 1900-01-01 … today JST", () => {
     expect(birthDateOk("1900-01-01", NOW)).toBe(true);

@@ -17,7 +17,7 @@ export const SEARCH_MAX = 100; // 4.1 item 8: max 100 rows; the 101st decides SI
 // cap: S03 氏名 / フリガナ search text length (質疑 pending) — Q1 settles "桁数: none"
 export const SEARCH_TEXT_MAX = 100;
 
-const KANA_INPUT = /^[ぁ-ゖァ-ヺー\s　]+$/;
+const KANA_INPUT = /^[ぁ-ゖァ-ヺー・\s　]+$/;
 const CARD = /^[0-9A-Za-z-]+$/;
 const BOOKING_NO = /^[A-HJ-NP-Z]{4}[0-9]{4}$/;
 const words = (s: string) => s.trim().split(/[\s　]+/).filter(Boolean);

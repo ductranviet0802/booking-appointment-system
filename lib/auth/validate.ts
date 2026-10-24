@@ -48,8 +48,11 @@ export const digitsOnly = (v: unknown) =>
 // S-02: the person rules of P03 §4.1 / §4.2 (03 §3.15), one function per rule; P03, P06 and P07 share them.
 /** ローマ字氏名 items 8 / 9: A–Z, a–z, space, hyphen, apostrophe (PE016) */
 export const romajiNameOk = (v: string) => /^[A-Za-z' -]+$/.test(v);
-/** 日本語氏名 items 10 / 11: full-width katakana (ァ…ヺ), ー, full- or half-width space (PE009) */
-export const katakanaOk = (v: string) => /^[ァ-ヺー　 ]+$/.test(v);
+/** one katakana set for patients and clinics (Q-021): ァ…ヺ, ー, ・, full- or half-width space (PE009) */
+export const KATAKANA = /^[ァ-ヺー・　 ]+$/;
+export const katakanaOk = (v: string) => KATAKANA.test(v);
+/** half-width spaces are stored as full-width (Q-021); apply on save */
+export const fullWidthSpaces = (v: string) => v.replace(/ /g, "　");
 /** a calendar date "YYYY-MM-DD" from 1900-01-01 to today JST (PE014) */
 export function birthDateOk(iso: string, now = new Date()) {
   const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T00:00:00Z`) : null;
@@ -113,8 +116,12 @@ export function checkPerson(body: Record<string, unknown>, now = new Date(), pho
   const kana: [(v: string) => boolean, string] | undefined = nameType === "JP" ? [katakanaOk, "PE009"] : undefined;
   const familyName = textField(body, errors, "familyName", 50, true, name);
   const givenName = textField(body, errors, "givenName", 50, true, name);
-  const familyNameKana = textField(body, errors, "familyNameKana", 50, true, kana);
-  const givenNameKana = textField(body, errors, "givenNameKana", 50, true, kana);
+  const kanaValue = (field: string) => {
+    const v = textField(body, errors, field, 50, true, kana);
+    return nameType === "JP" ? fullWidthSpaces(v) : v;
+  };
+  const familyNameKana = kanaValue("familyNameKana");
+  const givenNameKana = kanaValue("givenNameKana");
 
   const birthDate = str(body.birthDate);
   if (blank(birthDate)) errors.push({ field: "birthDate", code: "PE001" });

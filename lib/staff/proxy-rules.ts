@@ -1,6 +1,6 @@
 // spec-screen: S02
 // 4.2 single-item checks of 代理予約 (shared by the client's inline checks and the server's re-check, SE001 / SE002 / SE003).
-import { birthDateOk, digitsOnly, katakanaOk, PREFECTURES, romajiNameOk } from "@/lib/auth/validate";
+import { birthDateOk, digitsOnly, fullWidthSpaces, katakanaOk, PREFECTURES, romajiNameOk } from "@/lib/auth/validate";
 import { BOOKING_NO, normalizeBookingNo } from "./ledger-rules";
 
 export type FErr = { field: string; code: string; params?: Record<string, string | number> };
@@ -31,7 +31,7 @@ export function checkSearch(body: Record<string, unknown>): { errors: FErr[]; in
   if ([kanaRaw, phoneRaw, card, noRaw].every((v) => blank(v))) return { errors: [e1("search", "検索条件")], input };
   if (!blank(kanaRaw)) {
     if (kanaRaw.length > KANA_MAX) errors.push(e3("kana", "フリガナ", KANA_MAX));
-    else if (!/^[ぁ-ゖァ-ヺー\s　]+$/.test(kanaRaw)) errors.push(e2("kana", "フリガナ"));
+    else if (!/^[ぁ-ゖァ-ヺー・\s　]+$/.test(kanaRaw)) errors.push(e2("kana", "フリガナ"));
     else input.kana = toKatakana(kanaRaw).split(/[\s　]+/).filter(Boolean);
   }
   if (!blank(phoneRaw)) {
@@ -91,8 +91,8 @@ export function checkNewPatient(v: Record<string, unknown>, now = new Date(), on
   const familyName = req("familyName", "姓", 50, romaji ? romajiNameOk : undefined);
   const givenName = req("givenName", "名", 50, romaji ? romajiNameOk : undefined);
   const kana = nameType === "JP" ? katakanaOk : undefined;
-  const familyNameKana = req("familyNameKana", "セイ", 50, kana);
-  const givenNameKana = req("givenNameKana", "メイ", 50, kana);
+  const familyNameKana = romaji ? req("familyNameKana", "セイ", 50, kana) : fullWidthSpaces(req("familyNameKana", "セイ", 50, kana));
+  const givenNameKana = romaji ? req("givenNameKana", "メイ", 50, kana) : fullWidthSpaces(req("givenNameKana", "メイ", 50, kana));
   const birthDate = isoOf(v.birthDate);
   if (blank(v.birthDate)) push(e1("birthDate", "生年月日"));
   else if (!birthDateOk(birthDate, now)) push(e2("birthDate", "生年月日"));

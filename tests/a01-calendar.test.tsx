@@ -326,7 +326,7 @@ describe("clinic profile (event 8)", () => {
     for (const tamper of [{ ...values, code: "x" }, { ...values, phone: 123 }, { ...values, extra: "y" }]) {
       expect((await send(postClinic, "/api/admin/calendar/clinic", tamper)).body.code).toBe("SE090");
     }
-    expect((await loadClinic(f.clinic.id))!.nameKana).toBe("シンメイショウ クリニック");
+    expect((await loadClinic(f.clinic.id))!.nameKana).toBe("シンメイショウ　クリニック"); // Q-021: stored with a full-width space
   });
 });
 

@@ -8,6 +8,7 @@ import {
   type BandCode, type ClinicValues, type DayKind, type DayValues, type HoursCellValues,
 } from "@/lib/admin/calendar-rules";
 import type { Result } from "@/lib/auth/service";
+import { fullWidthSpaces } from "@/lib/auth/validate";
 import { adjustRequiredCount, dailyRange, daysBetween, generateClinic } from "@/lib/batch/b2-frames";
 import { runJob } from "@/lib/batch/runner";
 import { dbDate, dbTime, todayJst, toHhmm, toIsoDate, weekdayOf } from "@/lib/datetime";
@@ -319,7 +320,7 @@ export async function saveClinic(a: Actor, body: Record<string, unknown>): Promi
   const errors = validateClinic(v);
   if (errors.length > 0) return fieldFail(errors);
   const data = {
-    nameJa: v.nameJa.trim(), nameEn: nullIfBlank(v.nameEn), nameVi: nullIfBlank(v.nameVi), nameKana: v.nameKana.trim(), postcode: v.postcode.trim(),
+    nameJa: v.nameJa.trim(), nameEn: nullIfBlank(v.nameEn), nameVi: nullIfBlank(v.nameVi), nameKana: fullWidthSpaces(v.nameKana.trim()), postcode: v.postcode.trim(),
     prefecture: v.prefecture.trim(), city: v.city.trim(), addressLine: v.addressLine.trim(), addressEn: nullIfBlank(v.addressEn), phone: v.phone.trim(),
     accessJa: v.accessJa.trim(), accessEn: nullIfBlank(v.accessEn), accessVi: nullIfBlank(v.accessVi), mapUrl: nullIfBlank(v.mapUrl),
     noticeJa: nullIfBlank(v.noticeJa), noticeEn: nullIfBlank(v.noticeEn), noticeVi: nullIfBlank(v.noticeVi),

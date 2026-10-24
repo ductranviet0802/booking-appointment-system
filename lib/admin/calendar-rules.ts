@@ -1,7 +1,7 @@
 // spec-screen: A01
 // A01 §4.2 input checks (rows 1-27): one pure module for the blur / press checks of the page and the server re-check of
 // events 4, 5 and 8. Times are strict HH:MM (Q11 a); order errors are SE002 with the item name (Q11 b).
-import type { FieldError } from "@/lib/auth/validate";
+import { KATAKANA, type FieldError } from "@/lib/auth/validate";
 
 export type BandCode = "AM" | "PM";
 export const BANDS: BandCode[] = ["AM", "PM"];
@@ -34,7 +34,6 @@ export const blank = (v: string) => v.replace(/[\s　]/g, "") === "";
 export const timeOk = (v: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 export const isoDateOk = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v;
 /** full-width katakana, ー and space (Q11 d, S-02) */
-export const KATAKANA = /^[ァ-ヶー　 ]+$/;
 
 export function addDaysIso(isoDate: string, days: number) {
   const d = new Date(`${isoDate}T00:00:00Z`);

@@ -7,7 +7,7 @@ import { bad, done, fail, fieldFail, isUniqueViolation, isUuid, type Actor, type
 import { toCp932Safe } from "@/lib/adapters/x5-csv";
 import { audit, type Result } from "@/lib/auth/service";
 import { staffClinics } from "@/lib/auth/scope";
-import { digitsOnly } from "@/lib/auth/validate";
+import { digitsOnly, fullWidthSpaces } from "@/lib/auth/validate";
 import { lockBooking, lockPerson } from "@/lib/booking/core";
 import { decryptJson } from "@/lib/crypto/field";
 import { dbDate, todayJst, toHhmm, toIsoDate } from "@/lib/datetime";
@@ -249,9 +249,10 @@ export async function saveProfile(a: Actor, b: Record<string, unknown>): Promise
     const errors = [...checkProfile(v, { phoneRequired: before.relation === "SELF" || !before.accountId, now: a.now }), ...checkCards(cards)];
     if (errors.length) return fieldFail(errors);
 
+    const kanaOf = (s: string) => (v.nameType === "JP" ? fullWidthSpaces(s.trim()) : s.trim()); // Q-021
     const data = {
-      nameType: v.nameType as "JP" | "ROMAJI", familyName: v.familyName.trim(), givenName: v.givenName.trim(), familyNameKana: v.familyNameKana.trim(),
-      givenNameKana: v.givenNameKana.trim(), birthDate: dbDate(slashDate(v.birthDate)!), sex: (v.sex === "2" ? "FEMALE" : "MALE") as "FEMALE" | "MALE",
+      nameType: v.nameType as "JP" | "ROMAJI", familyName: v.familyName.trim(), givenName: v.givenName.trim(), familyNameKana: kanaOf(v.familyNameKana),
+      givenNameKana: kanaOf(v.givenNameKana), birthDate: dbDate(slashDate(v.birthDate)!), sex: (v.sex === "2" ? "FEMALE" : "MALE") as "FEMALE" | "MALE",
       postcode: digitsOnly(v.postcode), prefecture: v.prefecture, city: v.city.trim(), town: v.town.trim() || null, addressLine: v.addressLine.trim(),
       building: v.building.trim() || null, phone: digitsOnly(v.phone) || null, smsOptIn: v.smsOptIn,
     };
