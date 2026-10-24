@@ -120,6 +120,17 @@ describe("B1 selection, dry run, idempotency", () => {
     for (const b of bs) expect(await reminders(b.id)).toHaveLength(1);
   });
 
+  it("Q-033: targets read in chunks, every chunk sent in the same run (chunk 2, 5 new targets → 5 reminders, ≥ 3 reads)", async () => {
+    const bs = await Promise.all([1, 2, 3, 4, 5].map(async () => booking((await person()).id, { start: "11:30" })));
+    const reads = jest.spyOn(prisma.booking, "findMany");
+    const c = await remindClinic(f.clinic.id, tomorrow, noon, false, 2);
+    expect(reads.mock.calls.length).toBeGreaterThanOrEqual(3);
+    reads.mockRestore();
+    expect(c.queued).toBe(5);
+    for (const b of bs) expect(await reminders(b.id)).toHaveLength(1);
+    expect(await remindClinic(f.clinic.id, tomorrow, noon, false, 2)).toMatchObject({ queued: 0 }); // re-run: only the unsent
+  });
+
   it("two B1 jobs at once through the runner: one is skipped 「実行中のため省略」", async () => {
     const [x, y] = await Promise.all([runJob("B1", { trigger: "MANUAL", clinicId: f.clinic.id }), runJob("B1", { trigger: "MANUAL", clinicId: f.clinic.id })]);
     expect([x, y].filter((r) => r.result.message === "実行中のため省略")).toHaveLength(1);
