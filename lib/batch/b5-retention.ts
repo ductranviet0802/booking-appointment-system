@@ -264,8 +264,7 @@ export const b5Job: Job = async (ctx) => {
         if (!found.length) continue;
         const work = async (tx: Tx) => {
           await c.lock?.(tx, found);
-          let live = await pick(tx, c, cut, { only: found }); // re-check under the locks
-          if (c.filter) live = await c.filter(live);
+          let live = await pick(tx, c, cut, { only: found }); // re-check under the locks          if (c.filter) live = await c.filter(live);
           return live.length ? c.act(tx, live, now) : {};
         };
         add(c.noTx ? await work(prisma) : await prisma.$transaction(work, { timeout: 120_000, maxWait: 20_000 }));
