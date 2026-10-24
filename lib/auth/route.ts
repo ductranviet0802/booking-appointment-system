@@ -4,11 +4,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Result } from "@/lib/auth/service";
 import { FLASH_COOKIE, GUARD_COOKIE, LANG_COOKIE, LANG_COOKIE_MAX_AGE, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
 import { log } from "@/lib/logger";
-import { enforceSameOriginMutation } from "@/lib/request-security";
+import { clientIp, enforceSameOriginMutation } from "@/lib/request-security";
 import { withRouteHandler } from "@/lib/route-handler";
 
 export const clientOf = (req: NextRequest) => ({
-  ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null,
+  ip: clientIp(req.headers), // X-Forwarded-For only behind TRUSTED_PROXY_HOPS proxies (lib/request-security)
   userAgent: req.headers.get("user-agent"),
 });
 

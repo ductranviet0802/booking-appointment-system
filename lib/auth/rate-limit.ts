@@ -29,7 +29,8 @@ function bump(key: string, windowMs: number, now: number) {
 export function overAuthLimit(action: AuthAction, address: string, ip: string | null, now = Date.now()) {
   const l = AUTH_LIMITS[action];
   const byAddress = address ? bump(`${action}:a:${address}`, l.windowMs, now) > l.perAddress : false;
-  const byIp = bump(`${action}:i:${ip ?? "unknown"}`, l.windowMs, now) > l.perIp;
+  // no usable address (lib/request-security clientIp): no per-IP bucket — a shared one could be filled by one client for all
+  const byIp = ip ? bump(`${action}:i:${ip}`, l.windowMs, now) > l.perIp : false;
   return byAddress || byIp;
 }
 

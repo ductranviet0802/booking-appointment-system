@@ -30,6 +30,15 @@ Biến môi trường khuyến nghị (CORS):
 
 - `CORS_ALLOWED_ORIGINS` (danh sách origin ngăn cách bởi dấu phẩy, dùng cho production nếu gọi API khác origin)
 
+Client address behind a reverse proxy (rate limits N-SEC-03, `audit_logs.ip`):
+
+- `TRUSTED_PROXY_HOPS` — the number of proxies in front of the app that append to `X-Forwarded-For` (Caddy alone: `1`).
+  Default `0`: `X-Forwarded-For` is not trusted. With N the N-th address from the right is the client. Set it to the real
+  number of hops: a higher value lets a client choose its own address.
+- No usable address (default `0`, or a header shorter than N): the per-IP limits are skipped for that request (the
+  per-address limits of login / register / resend / reset still apply) and `audit_logs.ip` stays empty — requests without
+  an address never share one bucket that a single client could fill for everyone.
+
 Lưu ý TLS cho PostgreSQL hosted:
 
 - Nếu bạn dùng URL có `sslmode=require`, `pg` sẽ cảnh báo về thay đổi semantics ở version lớn tiếp theo.
