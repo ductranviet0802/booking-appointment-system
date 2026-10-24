@@ -62,6 +62,10 @@ export function BookingEntry(p: EntryProps) {
   async function get<T>(params: Record<string, string>): Promise<T | null> {
     const res = await apiFetch(`/api/booking/options?${new URLSearchParams(params)}`);
     if (!res) return null;
+    if (res.status === 404) {
+      const body = await res.json().catch(() => ({}));
+      if (body.to) return window.location.assign(body.to), null; // A-1: another account's person / booking → ER-01
+    }
     if (!res.ok) return fatal(), null;
     return res.json();
   }

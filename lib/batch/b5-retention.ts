@@ -4,12 +4,10 @@
 // batch rolls back and the job goes on with the next class → PARTIAL; the next run picks up the rest. Keys are walked
 // in order (keyset), so a row that fails or no longer qualifies is never picked twice in a run — a run always ends.
 // Booking data is written under lockPerson → lockBooking in patient-id order (the core's order, lib/booking/core).
-import { stat } from "node:fs/promises";
-import path from "node:path";
 import { Prisma } from "@prisma/client";
 import { lockBooking, lockPerson } from "@/lib/booking/core";
 import { addDays, todayJst } from "@/lib/datetime";
-import { deleteExportFile } from "@/lib/export/store";
+import { deleteExportFile, exportFileExists as fileExists } from "@/lib/export/store";
 import { prisma } from "@/lib/prisma";
 import type { Job, JobResult } from "@/lib/batch/runner";
 
@@ -80,10 +78,6 @@ async function anonymise(tx: Tx, patientIds: string[], now: Date) {
     WHERE patient_id = ANY(${patientIds}::uuid[])`;
   return patients;
 }
-
-const exportDir = () => process.env.EXPORT_DIR ?? "var/export";
-// shortcut: mirrors lib/export/store.ts dir(); replace by a store-side exists() once the lead adds one (core request)
-const fileExists = (key: string) => stat(path.join(exportDir(), key)).then(() => true, () => false);
 
 const ids = (rows: { id: string }[]) => rows.map((r) => r.id);
 
