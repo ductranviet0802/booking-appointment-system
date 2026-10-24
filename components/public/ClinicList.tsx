@@ -2,6 +2,7 @@
 // Clinic-list state ①: one card per active clinic; the whole card is the link (item 3-1).
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
+import { ClinicMap } from "./ClinicMap";
 import type { Lang } from "@/lib/i18n";
 import { label } from "@/lib/i18n/labels";
 import { formatPhone } from "@/lib/public/phone";
@@ -25,10 +26,13 @@ export function ClinicList({ cards, lang }: { cards: Cards; lang: Lang }) {
               ) : (
                 <span className="flex gap-2 font-bold text-[color:var(--dan)]"><Icon name="clock" /><span>{label("todayClosed", lang)}</span></span>
               )}
+              {/* the whole card is the link (3-1); this only shows it is one */}
+              <span className="lnk mt-auto inline-flex items-center gap-1 self-start" aria-hidden="true">{label("clinicDetail", lang)}<Icon name="right" size={16} /></span>
             </Link>
           </li>
         ))}
       </ul>
+      <ClinicMap pins={cards.flatMap((c) => (c.pin ? [{ code: c.code, name: c.name, ...c.pin, href: `/clinics/${c.code}` }] : []))} lang={lang} />
     </div>
   );
 }

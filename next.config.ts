@@ -7,7 +7,8 @@ const contentSecurityPolicy = [
   // Next.js cần 'unsafe-inline' cho một số style runtime; dev cần 'unsafe-eval' cho HMR
   `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // demo add-on: map, not in ver1 spec — OpenStreetMap tiles only (no key, no cookies)
+  "img-src 'self' data: blob: https://tile.openstreetmap.org",
   "font-src 'self' data:",
   "connect-src 'self'",
   "object-src 'none'",

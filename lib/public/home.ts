@@ -5,7 +5,7 @@ import { getSettings } from "@/lib/frame/data";
 import { parseJstSetting } from "@/lib/frame/settings";
 import { t, type Lang } from "@/lib/i18n";
 import { formatDateTime } from "@/lib/i18n/format";
-import { activeClinics, departmentsByClinic, todayBands } from "./clinics";
+import { activeClinics, departmentsByClinic, pinOf, todayBands } from "./clinics";
 import { joinBands } from "./hours";
 import { clinicAddress, nameOf, pick } from "./text";
 
@@ -42,6 +42,7 @@ export async function loadHome(lang: Lang, now = new Date()) {
         phone: c.phone,
         todayText: open.length ? joinBands(open, lang) : null,
         departments: (depts.get(c.id) ?? []).map((d) => nameOf(d, lang)),
+        pin: pinOf(c),
       };
     }),
   };

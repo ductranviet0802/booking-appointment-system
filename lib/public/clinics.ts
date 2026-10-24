@@ -11,6 +11,10 @@ export function activeClinics() {
   return prisma.clinic.findMany({ where: { isActive: true }, orderBy: [{ displayOrder: "asc" }, { code: "asc" }] });
 }
 
+/** demo add-on: map, not in ver1 spec — the pin of a clinic, null without coordinates (no map, the map link stays) */
+export const pinOf = (c: { latitude: number | null; longitude: number | null }) =>
+  c.latitude != null && c.longitude != null ? { lat: c.latitude, lng: c.longitude } : null;
+
 /** P10 抽出1; null for an unknown, inactive or malformed code (event 1-4) */
 export async function activeClinicByCode(code: string) {
   if (!/^[a-z0-9-]+$/.test(code)) return null;

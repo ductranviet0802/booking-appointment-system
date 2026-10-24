@@ -8,6 +8,7 @@ import { decryptText } from "@/lib/crypto/field";
 import { addDays, jstInstant, todayJst, toHhmm, toIsoDate } from "@/lib/datetime";
 import type { Lang } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
+import { pinOf } from "@/lib/public/clinics";
 import { doctorName, nameOf, pick, titleLabel } from "@/lib/public/text";
 
 type NameRow = { familyName: string; givenName: string; nameType: "JP" | "ROMAJI" };
@@ -40,7 +41,7 @@ export const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 /** 抽出2 */
 export async function clinicsOf(lang: Lang) {
   const rows = await prisma.clinic.findMany({ where: { isActive: true }, orderBy: { displayOrder: "asc" } });
-  return rows.map((c) => ({ id: c.id, code: c.code, name: nameOf(c, lang), phone: c.phone }));
+  return rows.map((c) => ({ id: c.id, code: c.code, name: nameOf(c, lang), phone: c.phone, pin: pinOf(c) }));
 }
 
 /** 抽出3 */

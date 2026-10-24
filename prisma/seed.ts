@@ -28,16 +28,17 @@ const CLINICS: ClinicSeed[] = [
   {
     code: "honin",
     data: {
-      nameJa: "○○クリニック 本院", nameEn: "○○ Clinic Main", nameVi: "Phòng khám ○○ Cơ sở chính",
-      nameKana: "マルマルクリニック ホンイン", postcode: "1000005", prefecture: "東京都", city: "千代田区",
-      addressLine: "丸の内1-2-3 ○○ビル2階", addressEn: "2F ○○ Bldg., 1-2-3 Marunouchi, Chiyoda-ku, Tokyo",
-      phone: "0312345678",
+      nameJa: "たなか内科クリニック 本院", nameEn: "Tanaka Clinic Main", nameVi: "Phòng khám Tanaka Cơ sở chính",
+      nameKana: "タナカナイカクリニック ホンイン", postcode: "1000005", prefecture: "東京都", city: "千代田区",
+      addressLine: "丸の内1-2-3 丸の内中央ビル2階", addressEn: "2F Marunouchi Chuo Bldg., 1-2-3 Marunouchi, Chiyoda-ku, Tokyo",
+      phone: "0312345678", latitude: 35.6825, longitude: 139.764, // demo add-on: map (approximate)
       accessJa: "JR東京駅 丸の内北口 徒歩3分。駐車場はありません（近隣のコインパーキングをご利用ください）。",
       accessEn: "3 min walk from JR Tokyo Station, Marunouchi North Exit. No parking (please use a nearby coin parking).",
       accessVi: "Đi bộ 3 phút từ cửa Bắc Marunouchi, ga JR Tokyo. Không có bãi đỗ xe.",
       mapUrl: "https://maps.google.com/?q=%E6%9D%B1%E4%BA%AC%E9%83%BD%E5%8D%83%E4%BB%A3%E7%94%B0%E5%8C%BA%E4%B8%B8%E3%81%AE%E5%86%851-2-3",
       noticeJa: "院内研修のため臨時休診日があります。休診日・臨時診療の一覧をご確認ください。",
       noticeEn: "The clinic is closed on some days for staff training. Please check the list of closed days.",
+      noticeVi: "Phòng khám nghỉ một số ngày để đào tạo nhân viên. Vui lòng xem danh sách ngày nghỉ.",
     },
     bands: { AM: { open: "09:00", close: "12:00", reception: "11:30" }, PM: { open: "15:00", close: "18:00", reception: "17:30" } },
     open: { 1: ["AM", "PM"], 2: ["AM", "PM"], 3: ["AM"], 4: ["AM", "PM"], 5: ["AM", "PM"], 6: ["AM"] },
@@ -46,12 +47,13 @@ const CLINICS: ClinicSeed[] = [
   {
     code: "ekimae",
     data: {
-      nameJa: "○○クリニック 駅前院", nameEn: "○○ Clinic Ekimae", nameVi: "Phòng khám ○○ Cơ sở Ekimae",
-      nameKana: "マルマルクリニック エキマエイン", postcode: "1600022", prefecture: "東京都", city: "新宿区",
+      nameJa: "たなか内科クリニック 駅前院", nameEn: "Tanaka Clinic Ekimae", nameVi: "Phòng khám Tanaka Cơ sở Ekimae",
+      nameKana: "タナカナイカクリニック エキマエイン", postcode: "1600022", prefecture: "東京都", city: "新宿区",
       addressLine: "新宿3-4-5 駅前ビル5階", addressEn: "5F Ekimae Bldg., 3-4-5 Shinjuku, Shinjuku-ku, Tokyo",
-      phone: "0323456789",
+      phone: "0323456789", latitude: 35.6912, longitude: 139.7044,
       accessJa: "JR新宿駅 東口 徒歩2分。提携駐車場はありません。",
       accessEn: "2 min walk from JR Shinjuku Station, East Exit. No partner parking.",
+      accessVi: "Đi bộ 2 phút từ cửa Đông, ga JR Shinjuku. Không có bãi đỗ xe liên kết.",
     },
     bands: { AM: { open: "09:30", close: "12:30", reception: "12:00" }, PM: { open: "14:30", close: "18:30", reception: "18:00" } },
     open: { 1: ["AM", "PM"], 2: ["AM", "PM"], 3: ["AM", "PM"], 4: ["AM"], 5: ["AM", "PM"], 6: ["AM"] },
@@ -60,12 +62,13 @@ const CLINICS: ClinicSeed[] = [
   {
     code: "nishiguchi",
     data: {
-      nameJa: "○○クリニック 西口院", nameEn: "○○ Clinic Nishiguchi", nameVi: "Phòng khám ○○ Cơ sở Nishiguchi",
-      nameKana: "マルマルクリニック ニシグチイン", postcode: "1710021", prefecture: "東京都", city: "豊島区",
+      nameJa: "たなか内科クリニック 西口院", nameEn: "Tanaka Clinic Nishiguchi", nameVi: "Phòng khám Tanaka Cơ sở Nishiguchi",
+      nameKana: "タナカナイカクリニック ニシグチイン", postcode: "1710021", prefecture: "東京都", city: "豊島区",
       addressLine: "西池袋1-6-7", addressEn: "1-6-7 Nishi-Ikebukuro, Toshima-ku, Tokyo",
-      phone: "0334567890",
+      phone: "0334567890", latitude: 35.7303, longitude: 139.7085,
       accessJa: "池袋駅 西口 徒歩5分。駐車場2台あり。",
       accessEn: "5 min walk from Ikebukuro Station, West Exit. Parking for 2 cars.",
+      accessVi: "Đi bộ 5 phút từ cửa Tây, ga Ikebukuro. Có chỗ đỗ cho 2 xe.",
     },
     bands: { AM: { open: "09:00", close: "12:00", reception: "11:30" }, PM: { open: "15:00", close: "18:00", reception: "17:30" } },
     open: { 1: ["AM", "PM"], 2: ["AM", "PM"], 3: ["AM"], 4: ["AM", "PM"], 5: ["AM", "PM"], 6: ["AM"] },
@@ -91,13 +94,16 @@ const DOCTORS: Array<Omit<Prisma.DoctorCreateManyInput, "primaryClinicId" | "dis
     code: "D001", familyName: "田中", givenName: "誠", familyNameKana: "タナカ", givenNameKana: "マコト", nameRomaji: "Makoto Tanaka",
     title: "DIRECTOR", languages: ["ja", "en"], primary: "honin", depts: ["naika"],
     profileJa: "大学病院 消化器内科を経て、2018年より当院院長。", profileEn: "Director since 2018, after the gastroenterology department of a university hospital.",
-    qualificationsJa: "日本内科学会 総合内科専門医",
+    profileVi: "Giám đốc phòng khám từ năm 2018, sau thời gian công tác tại khoa tiêu hóa của một bệnh viện đại học.",
+    qualificationsJa: "日本内科学会 総合内科専門医", qualificationsEn: "Fellow of the Japanese Society of Internal Medicine (general internal medicine)",
+    qualificationsVi: "Bác sĩ chuyên khoa nội tổng quát, Hội Nội khoa Nhật Bản",
     shifts: [{ clinic: "honin", dept: "naika", weekdays: [1, 2, 4, 5], bands: ["AM", "PM"] }, { clinic: "honin", dept: "naika", weekdays: [6], bands: ["AM"] }],
   },
   {
     code: "D002", familyName: "高橋", givenName: "由美", familyNameKana: "タカハシ", givenNameKana: "ユミ", nameRomaji: "Yumi Takahashi",
     title: "DOCTOR", languages: ["ja"], primary: "honin", depts: ["naika"],
-    profileJa: "総合病院 内科勤務を経て、2020年より当院勤務。",
+    profileJa: "総合病院 内科勤務を経て、2020年より当院勤務。", profileEn: "At the clinic since 2020, after internal medicine at a general hospital.",
+    profileVi: "Làm việc tại phòng khám từ năm 2020, sau thời gian công tác tại khoa nội của một bệnh viện đa khoa.",
     shifts: [
       { clinic: "honin", dept: "naika", weekdays: [1, 3], bands: ["AM"] },
       { clinic: "ekimae", dept: "naika", weekdays: [2, 4], bands: ["AM"] },
@@ -108,12 +114,16 @@ const DOCTORS: Array<Omit<Prisma.DoctorCreateManyInput, "primaryClinicId" | "dis
     code: "D003", familyName: "佐藤", givenName: "健一", familyNameKana: "サトウ", givenNameKana: "ケンイチ", nameRomaji: "Kenichi Sato",
     title: "VICE_DIRECTOR", languages: ["ja"], primary: "honin", depts: ["shonika"],
     profileJa: "小児科専門医。こども病院勤務を経て、2019年より副院長。", qualificationsJa: "日本小児科学会 小児科専門医",
+    profileEn: "Board-certified pediatrician. Vice director since 2019, after a children's hospital.",
+    profileVi: "Bác sĩ chuyên khoa nhi. Phó giám đốc từ năm 2019, sau thời gian công tác tại một bệnh viện nhi.",
+    qualificationsEn: "Board-certified pediatrician, Japan Pediatric Society", qualificationsVi: "Bác sĩ chuyên khoa nhi, Hội Nhi khoa Nhật Bản",
     shifts: [{ clinic: "honin", dept: "shonika", weekdays: [1, 2, 4, 5], bands: ["AM", "PM"] }],
   },
   {
     code: "D004", familyName: "松本", givenName: "亮", familyNameKana: "マツモト", givenNameKana: "リョウ", nameRomaji: "Ryo Matsumoto",
     title: "DOCTOR", languages: ["ja"], primary: "nishiguchi", depts: ["shonika"],
-    profileJa: "小児科医。地域の小児医療に携わる。",
+    profileJa: "小児科医。地域の小児医療に携わる。", profileEn: "Pediatrician working in community child health.",
+    profileVi: "Bác sĩ nhi khoa, tham gia chăm sóc sức khỏe trẻ em tại địa phương.",
     shifts: [
       { clinic: "honin", dept: "shonika", weekdays: [3, 6], bands: ["AM"] },
       { clinic: "nishiguchi", dept: "shonika", weekdays: [1, 2], bands: ["AM", "PM"] },
@@ -123,6 +133,8 @@ const DOCTORS: Array<Omit<Prisma.DoctorCreateManyInput, "primaryClinicId" | "dis
     code: "D005", familyName: "渡辺", givenName: "隆", familyNameKana: "ワタナベ", givenNameKana: "タカシ", nameRomaji: "Takashi Watanabe",
     title: "DOCTOR", languages: ["ja", "en"], primary: "ekimae", depts: ["hifuka"],
     profileJa: "皮膚科専門医。アトピー性皮膚炎の診療に従事。", qualificationsJa: "日本皮膚科学会 皮膚科専門医",
+    profileEn: "Board-certified dermatologist treating atopic dermatitis.", profileVi: "Bác sĩ chuyên khoa da liễu, điều trị viêm da cơ địa.",
+    qualificationsEn: "Board-certified dermatologist, Japanese Dermatological Association", qualificationsVi: "Bác sĩ chuyên khoa da liễu, Hội Da liễu Nhật Bản",
     shifts: [
       { clinic: "ekimae", dept: "hifuka", weekdays: [1, 3], bands: ["AM", "PM"] },
       { clinic: "ekimae", dept: "hifuka", weekdays: [5], bands: ["AM"] },
@@ -132,6 +144,7 @@ const DOCTORS: Array<Omit<Prisma.DoctorCreateManyInput, "primaryClinicId" | "dis
     code: "D006", familyName: "伊藤", givenName: "真理", familyNameKana: "イトウ", givenNameKana: "マリ", nameRomaji: "Mari Ito",
     title: "PART_TIME", languages: ["ja", "vi"], primary: "nishiguchi", depts: ["hifuka"],
     profileJa: "非常勤の皮膚科医。ベトナム語で診療できます。", profileVi: "Bác sĩ da liễu bán thời gian. Có thể khám bằng tiếng Việt.",
+    profileEn: "Part-time dermatologist. Consultations in Vietnamese are available.",
     shifts: [
       { clinic: "nishiguchi", dept: "hifuka", weekdays: [4], bands: ["AM", "PM"] },
       { clinic: "nishiguchi", dept: "hifuka", weekdays: [5], bands: ["AM"] },
@@ -141,7 +154,8 @@ const DOCTORS: Array<Omit<Prisma.DoctorCreateManyInput, "primaryClinicId" | "dis
   {
     code: "D007", familyName: "小林", givenName: "直樹", familyNameKana: "コバヤシ", givenNameKana: "ナオキ", nameRomaji: "Naoki Kobayashi",
     title: "DOCTOR", languages: ["ja", "en"], primary: "nishiguchi", depts: ["naika"],
-    profileJa: "内科医。生活習慣病の診療に従事。",
+    profileJa: "内科医。生活習慣病の診療に従事。", profileEn: "Internist treating lifestyle-related diseases.",
+    profileVi: "Bác sĩ nội khoa, điều trị các bệnh liên quan đến lối sống.",
     shifts: [
       { clinic: "nishiguchi", dept: "naika", weekdays: [1, 2, 3, 4, 5], bands: ["AM"] },
       { clinic: "ekimae", dept: "naika", weekdays: [1], bands: ["PM"] },
@@ -181,7 +195,7 @@ async function main() {
 
   await prisma.systemSetting.createMany({
     data: Object.entries({
-      group_name_ja: "医療法人○○会", group_name_en: "○○ Medical Corporation", group_name_vi: "Pháp nhân Y tế ○○",
+      group_name_ja: "医療法人社団 誠和会", group_name_en: "Seiwa Medical Corporation", group_name_vi: "Pháp nhân Y tế Seiwa",
       mail_from: "no-reply@example.jp", line_channel_id: "", holiday_source_url: "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv",
       maintenance_from: "", maintenance_to: "", family_member_max: "9",
       // 06 §5 [OD-8]
@@ -311,16 +325,18 @@ async function main() {
   // clinic calendar exceptions (A01): two closed days and a half day at 本院, a closed day at 駅前院,
   // and 臨時診療 at 本院 on the first holiday in the window
   const special = holidays.find((h) => h.date > today && h.date <= addDays(today, 30))?.date;
+  const TRAINING_NOTE = { noteJa: "院内研修のため休診", noteEn: "Closed for staff training", noteVi: "Nghỉ để đào tạo nhân viên" };
+  const SPECIAL_NOTE = { noteJa: "臨時診療（午前のみ）", noteEn: "Special opening (morning only)", noteVi: "Mở cửa đặc biệt (chỉ buổi sáng)" };
   const calendar: Prisma.ClinicCalendarDayCreateManyInput[] = [
-    { clinicId: clinicId.honin, calDate: dbDate(addDays(today, 8)), kind: "CLOSED", noteJa: "院内研修のため休診", noteEn: "Closed for staff training", createdBy: adminHonin },
-    { clinicId: clinicId.honin, calDate: dbDate(addDays(today, 9)), kind: "CLOSED", noteJa: "院内研修のため休診", noteEn: "Closed for staff training", createdBy: adminHonin },
-    { clinicId: clinicId.honin, calDate: dbDate(addDays(today, 20)), kind: "PM_CLOSED", noteJa: "午後休診", createdBy: adminHonin },
-    { clinicId: clinicId.ekimae, calDate: dbDate(addDays(today, 14)), kind: "CLOSED", noteJa: "設備点検のため休診", createdBy: adminAll },
+    { clinicId: clinicId.honin, calDate: dbDate(addDays(today, 8)), kind: "CLOSED", ...TRAINING_NOTE, createdBy: adminHonin },
+    { clinicId: clinicId.honin, calDate: dbDate(addDays(today, 9)), kind: "CLOSED", ...TRAINING_NOTE, createdBy: adminHonin },
+    { clinicId: clinicId.honin, calDate: dbDate(addDays(today, 20)), kind: "PM_CLOSED", noteJa: "午後休診", noteEn: "Closed in the afternoon", noteVi: "Nghỉ buổi chiều", createdBy: adminHonin },
+    { clinicId: clinicId.ekimae, calDate: dbDate(addDays(today, 14)), kind: "CLOSED", noteJa: "設備点検のため休診", noteEn: "Closed for equipment inspection", noteVi: "Nghỉ để kiểm tra thiết bị", createdBy: adminAll },
   ];
   if (special) {
     calendar.push({
       clinicId: clinicId.honin, calDate: dbDate(special), kind: "SPECIAL_OPEN", amOpen: dbTime("09:00"), amClose: dbTime("12:00"),
-      noteJa: "臨時診療（午前のみ）", noteEn: "Special opening (morning only)", createdBy: adminHonin,
+      ...SPECIAL_NOTE, createdBy: adminHonin,
     });
   }
   // demo days yesterday / today / tomorrow must have frames at 本院 (S01, B1, B4 show real cases): a closed day
@@ -332,7 +348,7 @@ async function main() {
     if (day !== special) {
       calendar.push({
         clinicId: clinicId.honin, calDate: dbDate(day), kind: "SPECIAL_OPEN", amOpen: dbTime("09:00"), amClose: dbTime("12:00"),
-        noteJa: "臨時診療（午前のみ）", noteEn: "Special opening (morning only)", createdBy: adminHonin,
+        ...SPECIAL_NOTE, createdBy: adminHonin,
       });
     }
     for (const code of ["D001", "D003"]) {

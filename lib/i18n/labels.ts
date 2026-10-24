@@ -68,7 +68,7 @@ const L = {
   cancel: { ja: "キャンセル", en: "キャンセル", vi: "キャンセル" }, // staff dialogs (ja only)
   // P01 / P08 / P09 / P10 (public browsing). ja as drawn in the layouts; en / vi from 07 where it has the term, else drafts.
   bookCta: { ja: "予約する", en: "Book", vi: "Đặt lịch" }, // 07 §3
-  findDoctor: { ja: "医師を探す", en: "Find a doctor", vi: "Tìm bác sĩ" }, // en draft; vi spec item 6
+  findDoctor: { ja: "医師を探す", en: "Search", vi: "Tìm bác sĩ" }, // en draft (not the heading again); vi spec item 6
   detailMore: { ja: "詳しく", en: "Details", vi: "Chi tiết" }, // draft
   clinicListHeading: { ja: "クリニック一覧", en: "Our clinics", vi: "Danh sách phòng khám" }, // draft
   clinicDetail: { ja: "このクリニックの詳細", en: "Clinic details", vi: "Chi tiết phòng khám" }, // draft
@@ -113,7 +113,7 @@ const L = {
   wd4: { ja: "木", en: "Thu", vi: "Thứ Năm" },
   wd5: { ja: "金", en: "Fri", vi: "Thứ Sáu" },
   wd6: { ja: "土", en: "Sat", vi: "Thứ Bảy" },
-  sunHoliday: { ja: "日・祝", en: "Sun / Hol.", vi: "CN / Lễ" }, // draft
+  sunHoliday: { ja: "日・祝", en: "Sun/Hol.", vi: "CN/Lễ" }, // draft (one table column: no spaces)
   holidayMark: { ja: "祝", en: "Holiday", vi: "Lễ" }, // draft
   bandAM: { ja: "午前", en: "Morning", vi: "Buổi sáng" }, // 07 §1
   bandPM: { ja: "午後", en: "Afternoon", vi: "Buổi chiều" }, // 07 §1
@@ -124,6 +124,8 @@ const L = {
   clinicInfoHeading: { ja: "クリニック案内", en: "Clinic information", vi: "Thông tin phòng khám" }, // en draft; vi spec item 4
   switchClinicAria: { ja: "クリニックの切り替え", en: "Switch clinic", vi: "Chuyển phòng khám" }, // draft
   mapLink: { ja: "地図を見る", en: "View map", vi: "Xem bản đồ" }, // draft
+  // demo add-on: map, not in ver1 spec
+  mapAria: { ja: "クリニックの地図", en: "Map of the clinics", vi: "Bản đồ phòng khám" },
   phoneBtn: { ja: "電話", en: "Call", vi: "Gọi" }, // draft
   accessLabel: { ja: "アクセス", en: "Access", vi: "Đường đi" }, // 07 §1
   hoursHeading: { ja: "診療時間", en: "Business hours", vi: "Giờ khám" }, // 07 §1
@@ -194,7 +196,7 @@ const L = {
   townOther: { ja: "その他（直接入力）", en: "Other (enter directly)", vi: "Khác (nhập trực tiếp)" }, // draft
   addressLine: { ja: "番地", en: "Street number", vi: "Số nhà" }, // draft
   building: { ja: "建物名・部屋番号", en: "Building and room number", vi: "Tên tòa nhà và số phòng" }, // draft
-  buildingPh: { ja: "○○マンション 101号室", en: "○○ Mansion 101", vi: "○○ Mansion 101" }, // draft
+  buildingPh: { ja: "さくらマンション 101号室", en: "Sakura Mansion 101", vi: "Sakura Mansion 101" }, // draft
   phone: { ja: "電話番号", en: "Phone number", vi: "Số điện thoại" }, // 07
   phoneHelp: { ja: "ハイフンなしでも入力できます。", en: "You can enter it without hyphens.", vi: "Có thể nhập không cần dấu gạch ngang." }, // draft
   phonePh: { ja: "例: 090-1234-5678", en: "e.g. 090-1234-5678", vi: "Ví dụ: 090-1234-5678" }, // draft

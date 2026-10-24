@@ -2,6 +2,7 @@
 // Clinic page (state 基): tabs, notice, basic information, hours, closures, departments, doctors, booking button.
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
+import { ClinicMap } from "./ClinicMap";
 import type { Lang } from "@/lib/i18n";
 import { formatTimeRange } from "@/lib/i18n/format";
 import { label } from "@/lib/i18n/labels";
@@ -26,21 +27,22 @@ function Cell({ hours, wd, band, lang }: { hours: HoursTable; wd: number; band: 
 function HoursTables({ hours, lang }: { hours: HoursTable; lang: Lang }) {
   const th = "px-2 py-2 font-bold bg-[color:var(--pri-t)] border border-[color:var(--line)]";
   const td = "border border-[color:var(--line)]";
-  const bandHead = (b: HoursTable["bands"][number]) => `${bandName(b.band, lang)} ${formatTimeRange(b.open, b.close, lang)}`;
+  // the time keeps one line of its own when the band header wraps
+  const bandHead = (b: HoursTable["bands"][number]) => <>{bandName(b.band, lang)} <span className="whitespace-nowrap">{formatTimeRange(b.open, b.close, lang)}</span></>;
   return (
     <>
-      {/* desktop: rows = bands, columns = weekdays */}
-      <table className="hidden w-full border-collapse md:table" data-testid="hours-desktop">
+      {/* desktop: rows = bands, columns = weekdays (equal day columns, headers on one line) */}
+      <table className="hidden w-full table-fixed border-collapse md:table" data-testid="hours-desktop">
         <thead>
           <tr>
-            <td className={th} />
-            {WEEK_ORDER.map((wd) => <th key={wd} scope="col" className={`${th} ${wdColor(wd)}`}>{wdName(wd, lang)}</th>)}
+            <td className={`${th} w-[28%]`} />
+            {WEEK_ORDER.map((wd) => <th key={wd} scope="col" className={`${th} px-1 text-xs whitespace-nowrap lg:text-sm ${wd === 0 ? "w-[15%]" : ""} ${wdColor(wd)}`}>{wdName(wd, lang)}</th>)}
           </tr>
         </thead>
         <tbody>
           {hours.bands.map((b) => (
             <tr key={b.band}>
-              <th scope="row" className={`${th} text-left whitespace-nowrap`}>{bandHead(b)}</th>
+              <th scope="row" className={`${th} text-left text-sm`}>{bandHead(b)}</th>
               {WEEK_ORDER.map((wd) => <Cell key={wd} hours={hours} wd={wd} band={b.band} lang={lang} />)}
             </tr>
           ))}
@@ -57,7 +59,7 @@ function HoursTables({ hours, lang }: { hours: HoursTable; lang: Lang }) {
         <tbody>
           {WEEK_ORDER.map((wd) => (
             <tr key={wd} className={td}>
-              <th scope="row" className={`${th} text-left ${wdColor(wd)}`}>{wdName(wd, lang)}</th>
+              <th scope="row" className={`${th} text-left whitespace-nowrap ${wdColor(wd)}`}>{wdName(wd, lang)}</th>
               {hours.bands.map((b) => <Cell key={b.band} hours={hours} wd={wd} band={b.band} lang={lang} />)}
             </tr>
           ))}
@@ -77,7 +79,7 @@ export function ClinicDetail({ data, lang }: { data: Data; lang: Lang }) {
       {/* the image draws this heading in list state ① only; kept for the page outline (Q-E) */}
       <h1 className="sr-only">{label("clinicInfoHeading", lang)}</h1>
       {tabs.length > 0 && (
-        <nav aria-label={label("switchClinicAria", lang)} className="flex gap-2 overflow-x-auto" data-testid="p10-tabs">
+        <nav aria-label={label("switchClinicAria", lang)} className="flex flex-wrap gap-2" data-testid="p10-tabs">
           {tabs.map((t) => (
             <Link
               key={t.code}
@@ -101,6 +103,7 @@ export function ClinicDetail({ data, lang }: { data: Data; lang: Lang }) {
           <section className="box" aria-label={clinic.name}>
             <h2 className="m-0 text-lg font-bold">{clinic.name}</h2>
             <p className="m-0 flex gap-2"><Icon name="pin" /><span>{address}</span></p>
+            {clinic.pin && <ClinicMap pins={[{ code: clinic.code, name: clinic.name, ...clinic.pin }]} lang={lang} className="clinic-map-sm" />}
             {clinic.mapUrl && (
               <a className="lnk inline-flex items-center gap-1" href={clinic.mapUrl} target="_blank" rel="noopener noreferrer">
                 {label("mapLink", lang)}<Icon name="ext" size={16} />
@@ -144,10 +147,12 @@ export function ClinicDetail({ data, lang }: { data: Data; lang: Lang }) {
             ) : (
               <ul className="m-0 flex list-none flex-col gap-2 p-0" data-testid="p10-closures">
                 {closures.map((c) => (
-                  <li key={c.date} className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold">{c.dateText}</span>
-                    <span className={`rounded px-2 text-xs font-bold ${c.kind === "special" ? "bg-[color:var(--pri-t)]" : "bg-[color:var(--dan-t)] text-[color:var(--dan)]"}`}>{c.badge}</span>
-                    <span>{c.content}</span>
+                  <li key={c.date} className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-2">
+                    <span className="font-bold whitespace-nowrap">{c.dateText}</span>
+                    <span>
+                      <span className={`mr-2 rounded px-2 text-xs font-bold whitespace-nowrap ${c.kind === "special" ? "bg-[color:var(--pri-t)]" : "bg-[color:var(--dan-t)] text-[color:var(--dan)]"}`}>{c.badge}</span>
+                      {c.content}
+                    </span>
                   </li>
                 ))}
               </ul>

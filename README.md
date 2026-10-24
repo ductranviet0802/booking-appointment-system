@@ -44,6 +44,14 @@ Lưu ý TLS cho PostgreSQL hosted:
 - Nếu bạn dùng URL có `sslmode=require`, `pg` sẽ cảnh báo về thay đổi semantics ở version lớn tiếp theo.
 - Khuyến nghị dùng `sslmode=verify-full` để giữ hành vi bảo mật hiện tại và hết warning.
 
+Every variable the app reads, with its default, is listed in `.env.example`. A production-style run (postgres + the
+Dockerfile `runner` stage) is `docker-compose.yml`.
+
+**Demo add-on: clinic map (not in the ver1 spec).** P01 / P10 clinic lists, P10 clinic page and the P11 clinic step show
+an OpenStreetMap map (Leaflet, bundled; no API key, no cookies, no geolocation, no analytics; attribution
+「© OpenStreetMap contributors」). Pins come from `clinics.latitude` / `longitude` (nullable; no coordinates → no map, the
+`map_url` link stays). The CSP allows `https://tile.openstreetmap.org` in `img-src` only; offline the map is a grey box.
+
 ## Run local
 
 ```bash

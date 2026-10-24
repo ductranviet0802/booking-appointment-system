@@ -22,7 +22,8 @@
   .tabs { position: static; display: flex; background: none; border-bottom: 1px solid var(--line); border-radius: 0; padding: 0; gap: 0; }
   .tabs button { border-radius: 0; padding: 0 18px; border-bottom: 3px solid transparent; }
   .tabs button.on { box-shadow: none; border-bottom-color: var(--pri); }
-  .head, .row { display: grid; grid-template-columns: 1.6fr 1.1fr 1.6fr 0.8fr 1.1fr 1fr 0.9fr 24px; gap: 8px; align-items: center; }
+  .head, .row { display: grid; grid-template-columns: 1.6fr 1.1fr 1.6fr 0.8fr 1.1fr 1.3fr 0.9fr 24px; gap: 8px; align-items: center; }
+  .st { flex-direction: column; align-items: flex-start; gap: 2px; }
   .head { font-size: 12px; font-weight: 700; color: var(--mut); padding: 0 12px 6px; border-bottom: 1px solid var(--line); }
   .list { gap: 0; }
   .row { border: 0; border-bottom: 1px solid #eef2f3; border-radius: 0; padding: 10px 12px; }

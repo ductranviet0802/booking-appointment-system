@@ -2,12 +2,12 @@
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
 .tab { background: none; border: 0; padding: 10px 16px; font: inherit; font-weight: 700; color: var(--mut); border-bottom: 3px solid transparent; cursor: pointer; }
 .tabOn { color: var(--pri-d); border-bottom-color: var(--pri); }
-.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.split { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: 16px; align-items: start; }
 .bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.list { background: #fff; border: 1px solid var(--line); border-radius: 8px; max-height: 520px; overflow-y: auto; }
+.list { background: #fff; border: 1px solid var(--line); border-radius: 8px; max-height: 520px; overflow: auto; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.table th { text-align: left; padding: 8px; color: var(--mut); font-weight: 700; border-bottom: 1px solid var(--line); }
-.table td { padding: 8px; border-bottom: 1px solid #eef2f3; }
+.table th { text-align: left; padding: 8px; color: var(--mut); font-weight: 700; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table td { padding: 8px; border-bottom: 1px solid #eef2f3; white-space: nowrap; }
 .table tr[data-row] { cursor: pointer; }
 .sel { background: var(--pri-t); font-weight: 700; }
 .off { color: #8a979b; }
@@ -30,3 +30,13 @@
 .actions .sp { flex: 1; }
 .note { font-size: 12px; color: var(--mut); }
 .clinicRow { display: inline-flex; gap: 6px; align-items: center; margin-right: 12px; }
+.f textarea { min-height: 180px; } /* B22: 経歴 / 資格 */
+@media (max-width: 799px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 639px) {
+  .f { grid-template-columns: minmax(0, 1fr); }
+  .f > .lab { padding-top: 0; }
+  .cols, .two { grid-template-columns: minmax(0, 1fr); }
+  .tabs { flex-wrap: wrap; }
+}

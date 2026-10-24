@@ -72,7 +72,7 @@ describe("top page from the seed", () => {
     const html = renderToStaticMarkup(<Home data={data} lang="ja" />);
     expect(html).toContain("24時間いつでもWeb予約");
     expect(html).toContain('placeholder="医師名・ふりがな・診療科"');
-    expect(html).toContain("【○○クリニック 本院】");
+    expect(html).toContain("【たなか内科クリニック 本院】");
     expect(html).toContain('href="/clinics/honin"');
     expect(html).toContain('href="tel:0312345678"');
     expect(html).toContain("03-1234-5678");
@@ -97,7 +97,7 @@ describe("top page from the seed", () => {
     const before = await prisma.clinic.findUniqueOrThrow({ where: { code: "ekimae" } });
     await prisma.clinic.update({ where: { code: "ekimae" }, data: { noticeVi: null } });
     const en = await loadHome("en");
-    expect(en.cards[0].name).toBe("○○ Clinic Main");
+    expect(en.cards[0].name).toBe("Tanaka Clinic Main");
     const enHtml = renderToStaticMarkup(<Home data={en} lang="en" />);
     expect(enHtml).toContain(">Book<"); // 07 §3 予約する
     expect(enHtml).toContain("Leave the box empty to list all doctors.");

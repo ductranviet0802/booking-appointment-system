@@ -207,6 +207,9 @@ model Clinic {
   accessEn     String?  @map("access_en")
   accessVi     String?  @map("access_vi")
   mapUrl       String?  @map("map_url") @db.VarChar(500)
+  // demo add-on: map, not in ver1 spec (both or neither: CHECK in 20261024000000_clinic_coordinates)
+  latitude     Float?
+  longitude    Float?
   noticeJa     String?  @map("notice_ja")
   noticeEn     String?  @map("notice_en")
   noticeVi     String?  @map("notice_vi")

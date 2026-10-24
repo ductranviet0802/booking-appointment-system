@@ -5,18 +5,30 @@
 .help { font-size: 12px; color: var(--mut); }
 .searchForm { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
 .searchAct { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; }
-.card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; overflow-x: auto; } /* B13: tables scroll inside the card */
 .card h2 { margin: 0; font-size: 16px; display: flex; gap: 8px; align-items: center; }
 .count { font-weight: 700; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table th { text-align: left; padding: 6px 8px; color: var(--mut); border-bottom: 1px solid var(--line); white-space: nowrap; }
-.table td { padding: 6px 8px; border-bottom: 1px solid #eef2f3; vertical-align: top; }
+.table td { padding: 6px 8px; border-bottom: 1px solid #eef2f3; vertical-align: top; white-space: nowrap; }
+.table :global(.lnk-btn) { text-align: left; padding: 8px 0; }
 .table tr[data-row] { cursor: pointer; }
 .sel { background: var(--pri-t); }
 .failed { background: #fdecea; }
 .detail {
   display: grid; gap: 16px; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start;
   grid-template-areas: "back back" "head head" "basic account" "basic family" "basic cards" "book consent" "book merge" "notice merge" "act act";
+  grid-template-rows: auto auto auto auto 1fr auto 1fr 1fr auto; /* B11: spanned extra height goes to the 1fr rows, not between the cards */
+}
+@media (max-width: 799px) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: none;
+    grid-template-areas: "back" "head" "basic" "account" "family" "cards" "book" "notice" "consent" "merge" "act";
+  }
+  .searchForm { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 479px) {
+  .searchForm { grid-template-columns: minmax(0, 1fr); }
 }
 .back { grid-area: back; }
 .head { grid-area: head; display: flex; flex-direction: column; gap: 6px; }
@@ -28,7 +40,7 @@
 .aNotice { grid-area: notice; }
 .aConsent { grid-area: consent; }
 .aMerge { grid-area: merge; }
-.actions { grid-area: act; display: flex; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.actions { grid-area: act; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
 .name { font-size: 24px; font-weight: 700; }
 .tags { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -41,3 +53,4 @@
 .dl div { display: contents; }
 .mergeCards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .mergeCard { border: 1px solid var(--line); border-radius: 6px; padding: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
+@media (max-width: 479px) { .pair, .mergeCards { grid-template-columns: minmax(0, 1fr); } }

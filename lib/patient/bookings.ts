@@ -13,7 +13,7 @@ import { label, type LabelKey } from "@/lib/i18n/labels";
 import { w2, type W2Key } from "@/lib/i18n/labels-w2";
 import { prisma } from "@/lib/prisma";
 import { formatPhone, telHref } from "@/lib/public/phone";
-import { clinicAddress, doctorName, nameOf, pick } from "@/lib/public/text";
+import { clinicAddress, doctorName, dot, nameOf, pick } from "@/lib/public/text";
 import { checkCancelReason, isPatientReason } from "./cancel-rules";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -68,11 +68,11 @@ function common(b: Row, lang: Lang) {
       name: clinic, code: b.clinic.code, phone: formatPhone(b.clinic.phone), tel: telHref(b.clinic.phone),
       address: clinicAddress(b.clinic, lang), // P16 Q17 A
     },
-    deptVisit: `${dept}・${nameOf(v, lang)}`, // P14 item 6 / P16 item 7: 「・」 as drawn
+    deptVisit: `${dept}${dot(lang)}${nameOf(v, lang)}`, // P14 item 6 / P16 item 7: 「・」 as drawn
     doctor: b.doctorRequested ? doctorName(b.doctor, lang) : label("noPreference", lang), // F4-04: never the assigned name
     person: `${personName(b.patient, lang)}${label("nameSuffix", lang) ? ` ${label("nameSuffix", lang)}` : ""}`, // 様 in ja only (Q6 b A)
     notice: v.noticeJa ? pick(lang, v.noticeJa, v.noticeEn, v.noticeVi) : null,
-    summary: `${formatDateShort(date, lang)} ${formatTime(start)}${lang === "ja" ? "〜" : "–"} ${clinic} ${dept}`, // P16 16-5
+    summary: `${formatDateShort(date, lang)} ${formatTime(start)}${lang === "ja" ? "〜" : ""} ${clinic} ${dept}`, // P16 16-5; en / vi: no trailing dash
   };
 }
 
@@ -241,9 +241,9 @@ export async function listBookings(accountId: string, tab: Tab, offset: number, 
       const relText = rel === "SELF" ? w2("relSELF", lang) : label(`rel${rel}` as LabelKey, lang);
       return {
         id: b.id,
-        dateText: `${formatDate(date, lang)} ${formatTime(start)}${lang === "ja" ? "〜" : "–"}`, // Q7 A: start time only
+        dateText: `${formatDate(date, lang)} ${formatTime(start)}${lang === "ja" ? "〜" : ""}`, // Q7 A: start time only (a bare dash read as cut off in en / vi)
         person: family ? (lang === "ja" ? `${personName(b.patient, lang)}（${relText}）` : `${personName(b.patient, lang)} (${relText})`) : null,
-        clinicDept: `${nameOf(b.clinic, lang)}・${nameOf(b.department, lang)}`, // Q13 a A
+        clinicDept: `${nameOf(b.clinic, lang)}${dot(lang)}${nameOf(b.department, lang)}`, // Q13 a A
         visitType: nameOf(b.visitType, lang),
         doctor: b.doctorRequested ? doctorName(b.doctor, lang) : label("noPreference", lang),
         status: w2(key, lang),

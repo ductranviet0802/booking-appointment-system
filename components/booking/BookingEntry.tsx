@@ -13,6 +13,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { useFatal } from "@/components/patient/form";
+import { ClinicMap } from "@/components/public/ClinicMap";
 import { postJson, useApiFetch } from "@/lib/client/api";
 import { t } from "@/lib/i18n";
 import { formatDateShort, formatMonthHeading, formatPrice, formatTime } from "@/lib/i18n/format";
@@ -245,7 +246,11 @@ export function BookingEntry(p: EntryProps) {
           {!change && (
             <section className={s.step} id="p11-clinic">
               <h2><span className={s.no}>1</span>{lw1("clinic", lang)}</h2>
-              {radios("p11-clinic", p.clinics, sel.clinicId, (id) => choose({ ...after, clinicId: id }, { depts: true, types: true, doctors: true, cal: true }), (x) => x.name, "clinic")}
+              <div className="grid items-start gap-4 md:grid-cols-2">
+                {radios("p11-clinic", p.clinics, sel.clinicId, (id) => choose({ ...after, clinicId: id }, { depts: true, types: true, doctors: true, cal: true }), (x) => x.name, "clinic")}
+                {/* demo add-on: map, not in ver1 spec — shows where; choosing stays in the radios */}
+                <ClinicMap pins={p.clinics.flatMap((c) => (c.pin ? [{ code: c.code, name: c.name, ...c.pin }] : []))} lang={lang} selected={clinic?.code ?? null} className="clinic-map-sm" />
+              </div>
             </section>
           )}
 

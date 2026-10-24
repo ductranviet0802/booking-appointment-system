@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "leaflet/dist/leaflet.css"; // demo add-on: map, not in ver1 spec (components/public/ClinicMap.tsx)
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 import { MaintenanceScreen } from "@/components/frame/Maintenance";
