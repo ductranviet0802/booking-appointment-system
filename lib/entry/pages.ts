@@ -7,8 +7,8 @@ import { beforeDeadline, deadlineOf, policyOf } from "@/lib/booking/policy";
 import { toHhmm, toIsoDate } from "@/lib/datetime";
 import type { Lang } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
+import type { Rule } from "@/lib/booking/core";
 import { doctorName, nameOf, pick } from "@/lib/public/text";
-import { paramsOf } from "./check";
 import { bookingNotes, clinicsOf, ownBooking, personName, personsOf, type Person } from "./data";
 import { ageOn } from "./questionnaire";
 
@@ -25,6 +25,15 @@ const RETURN_AT: Record<string, "time" | "date" | "ops" | "top"> = {
   PE030: "time", PE031: "date", PE032: "time", PE035: "time", PE033: "ops", PE034: "ops", PE036: "top",
 };
 const RULE_OF: Record<string, "WINDOW" | "LIMIT" | "OVERLAP"> = { PE031: "WINDOW", PE033: "LIMIT", PE034: "OVERLAP" };
+
+/** {n} of PE031, {氏名} of PE033 / PE034 (the person, name order per language, without 様: P13 Q15 A) */
+export async function paramsOf(rule: Rule, c: { patientId: string }, windowDays: number, lang: Lang): Promise<Record<string, string | number>> {
+  if (rule === "WINDOW") return { n: windowDays };
+  if (rule !== "LIMIT" && rule !== "OVERLAP") return {};
+  const p = await prisma.patient.findUniqueOrThrow({ where: { id: c.patientId }, select: { familyName: true, givenName: true, nameType: true } });
+  const name = personName(p, lang);
+  return { 氏名: name, name };
+}
 
 export type ChangeInfo = {
   bookingId: string; version: number; bookingNo: string; date: string; start: string; patientName: string; relation: string;

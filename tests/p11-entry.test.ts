@@ -18,10 +18,9 @@ import path from "node:path";
 import { GET as options } from "@/app/api/booking/options/route";
 import { POST as next } from "@/app/api/booking/next/route";
 import { POST as discard } from "@/app/api/booking/discard/route";
-import { createBooking, cancelBooking } from "@/lib/booking/core";
+import { checkBooking, createBooking, cancelBooking } from "@/lib/booking/core";
 import { DRAFT_TTL_MS, getDraft, putDraft, EMPTY_SELECTIONS } from "@/lib/booking/draft";
 import { addDays, todayJst } from "@/lib/datetime";
-import { checkChoice } from "@/lib/entry/check";
 import { daysOf, type Frame } from "@/lib/entry/data";
 import { loadEntry } from "@/lib/entry/pages";
 import { pool, prisma } from "@/lib/prisma";
@@ -109,26 +108,37 @@ describe("P11 availability (抽出6–8, F4-02 / F4-04, Q10 / Q13 A)", () => {
 });
 
 describe("P11 event 11 rules, read only (抽出11, order PE031 → PE032 → PE035 → PE030 → PE033 → PE034)", () => {
-  it("window, closure, taken, limit, overlap; the booking being changed is excluded (Q7 A); nothing is written", async () => {
+  it("window, closure, taken, limit, overlap through the core's checkBooking; the booking being changed is excluded (Q7 A); nothing is written", async () => {
     const h = await holder();
-    const c = (o: Record<string, unknown>) => ({ ...sel(o), patientId: h.self.id }) as Parameters<typeof checkChoice>[0];
+    const actor = { kind: "PATIENT" as const, accountId: h.acc.id, channel: "WEB" as const };
+    const c = (o: Record<string, unknown>) => {
+      const s = sel(o);
+      return { ...s, patientId: h.self.id, doctorRequested: !!s.doctorId, slotDate: s.date as string, startTime: s.start as string, notes: null } as never;
+    };
+    const rule = async (o: Record<string, unknown>, change?: string) => {
+      const r = await checkBooking(c(o), actor, {}, change ? { bookingId: change } : undefined);
+      return r.ok ? "ok" : r.rule;
+    };
     const far = addDays(todayJst(), 31);
     await S.frames(0, ["10:00"], { date: far });
-    expect(await checkChoice(c({ date: far, start: "10:00" }), null, "ja")).toMatchObject({ code: "PE031", params: { n: 30 } });
+    expect(await rule({ date: far, start: "10:00" })).toBe("WINDOW");
     await S.frames(1, ["12:00"], { status: "CLOSED" });
-    expect(await checkChoice(c({ doctorId: S.f.doctors[1].id, start: "12:00" }), null, "ja")).toMatchObject({ code: "PE035" });
+    expect(await rule({ doctorId: S.f.doctors[1].id, start: "12:00" })).toBe("CLOSED");
     await S.frames(1, ["12:15"], { reserved: 1 });
-    expect(await checkChoice(c({ doctorId: S.f.doctors[1].id, start: "12:15" }), null, "ja")).toMatchObject({ code: "PE030" });
-    expect(await checkChoice(c({ doctorId: null, start: "13:59" }), null, "ja")).toMatchObject({ code: "PE030" }); // no frame at all
+    expect(await rule({ doctorId: S.f.doctors[1].id, start: "12:15" })).toBe("TAKEN");
+    expect(await rule({ doctorId: null, start: "13:59" })).toBe("TAKEN"); // no frame at all, the clinic open
 
     await S.frames(0, ["11:00", "11:15"]);
-    const booked = await createBooking({ ...c({ start: "11:00" }), doctorRequested: true, slotDate: DAY, startTime: "11:00", notes: null }, { kind: "PATIENT", accountId: h.acc.id, channel: "WEB" });
+    const booked = await createBooking(c({ start: "11:00" }), actor);
     if (!booked.ok) throw new Error("setup");
     const before = await prisma.booking.count({ where: { patientId: h.self.id } });
-    expect(await checkChoice(c({ start: "11:15" }), null, "ja")).toMatchObject({ code: "PE033", params: { 氏名: `予約 ${h.self.givenName}` } });
-    expect(await checkChoice(c({ start: "11:00" }), booked.bookingId, "ja")).toEqual({ ok: true }); // own frame free, own booking excluded
-    expect(await checkChoice(c({ start: "11:15" }), booked.bookingId, "ja")).toEqual({ ok: true });
+    expect(await rule({ start: "11:15" })).toBe("LIMIT");
+    expect(await rule({ start: "11:00" }, booked.bookingId)).toBe("ok"); // own frame free, own booking excluded
+    expect(await rule({ start: "11:15" }, booked.bookingId)).toBe("ok");
     expect(await prisma.booking.count({ where: { patientId: h.self.id } })).toBe(before);
+    // the route answers the message and its parameters (PE033 {氏名})
+    const res = await next(req("/api/booking/next", { body: { sel: sel({ patientId: h.self.id, start: "11:15" }), origin: "/" }, as: h }));
+    expect([res.status, await res.json()]).toEqual([409, { code: "PE033", params: { 氏名: `予約 ${h.self.givenName}`, name: `予約 ${h.self.givenName}` }, rule: "LIMIT" }]);
     await cancelBooking({ bookingId: booked.bookingId, reasonCode: "SCHEDULE", reasonText: null }, { kind: "STAFF", accountId: S.f.admin.id, channel: "PHONE" });
   });
 });

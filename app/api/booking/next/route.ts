@@ -6,10 +6,10 @@ import { loginUrlFor } from "@/lib/auth/context";
 import { dropDraft, getDraft, putDraft, type Selections } from "@/lib/booking/draft";
 import { beforeDeadline, policyOf } from "@/lib/booking/policy";
 import { setFlash } from "@/lib/auth/route";
+import { checkBooking, PATIENT_CODE } from "@/lib/booking/core";
 import { toHhmm, toIsoDate } from "@/lib/datetime";
-import { checkChoice, type Choice } from "@/lib/entry/check";
 import { HHMM, ISO_DATE, ownBooking, ownPerson, UUID } from "@/lib/entry/data";
-import { originOr } from "@/lib/entry/pages";
+import { originOr, paramsOf } from "@/lib/entry/pages";
 import { entryRoute, go, json, notOwn, tampered, withDraftCookie } from "@/lib/entry/route";
 import { parseLang } from "@/lib/i18n";
 import { prisma } from "@/lib/prisma";
@@ -70,8 +70,16 @@ export function POST(req: NextRequest) {
     if (!(await ownPerson(accountId, sel.patientId))) return notOwn();
 
     const lang = parseLang(v.session.account.language) ?? "ja";
-    const r = await checkChoice(sel as Choice, change?.bookingId ?? null, lang);
-    if (!r.ok) return json(409, { code: r.code, params: r.params, rule: r.rule });
+    // 抽出11 through the core's read-only check (notes play no part in the rules; P11 checked their length above)
+    const input = {
+      patientId: sel.patientId!, clinicId: sel.clinicId!, departmentId: sel.departmentId!, visitTypeId: sel.visitTypeId!,
+      doctorId: sel.doctorId, doctorRequested: !!sel.doctorId, slotDate: sel.date!, startTime: sel.start!, notes: null,
+    };
+    const r = await checkBooking(input, { kind: "PATIENT", accountId, channel: "WEB" }, {}, change ? { bookingId: change.bookingId } : undefined);
+    if (!r.ok) {
+      const policy = await policyOf(input.clinicId);
+      return json(409, { code: PATIENT_CODE[r.rule], params: await paramsOf(r.rule, input, policy.bookingWindowDays, lang), rule: r.rule });
+    }
 
     // the previous draft of this flow keeps its 問診 answers when person and visit type are unchanged (T052 → 次へ again)
     const prev = getDraft(v.draftId, v.owner);
