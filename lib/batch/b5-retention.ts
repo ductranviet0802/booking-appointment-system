@@ -140,7 +140,7 @@ export const CLASSES: Cls[] = [
   {
     // F9-06: never verified → account, its patient(s) and consents together (sessions / auth_tokens go by FK CASCADE).
     // A person with a booking (a staff booking, S02) is kept: deleting it is refused (FK) and would fail its batch every
-    // night (質疑 W5-B5 PENDING).
+    // night (Q-051).
     name: "accounts.pending", setting: "retention_pending_days", unit: "days", key: "a.id", type: "uuid",
     from: (c) => Prisma.sql`FROM accounts a WHERE a.status = 'PENDING' AND a.created_at < ${c.at}
       AND NOT EXISTS (SELECT 1 FROM patients p JOIN bookings b ON b.patient_id = p.id WHERE p.account_id = a.id)`,
