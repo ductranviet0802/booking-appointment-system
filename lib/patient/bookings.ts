@@ -223,15 +223,15 @@ export async function listBookings(accountId: string, tab: Tab, offset: number, 
     prisma.booking.findMany({
       where: tabWhere(tab, accountId, now), include,
       orderBy: [{ slotDate: dir }, { startTime: dir }, { bookingNo: dir }],
-      skip: tab === "upcoming" ? 0 : offset, take: PAGE_SIZE,
+      skip: offset, take: PAGE_SIZE,
     }),
     tabCounts(accountId, now),
     prisma.patient.count({ where: { accountId, relation: { not: "SELF" } } }), // 抽出3 (Q6 a A)
   ]);
   return {
     counts,
-    // item 12 only on 受診履歴 / キャンセル; 予約中 shows its first 20 rows (spec 基: item 12 never shown)
-    more: tab !== "upcoming" && offset + rows.length < counts[tab],
+    // item 12 on every tab, 予約中 too (Q-040 answer: family bookings can exceed 20)
+    more: offset + rows.length < counts[tab],
     rows: rows.map((b) => {
       const date = toIsoDate(b.slotDate);
       const start = toHhmm(b.startTime);
