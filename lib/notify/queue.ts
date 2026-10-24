@@ -26,6 +26,9 @@ const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const g = globalThis as unknown as { notifyVars?: Map<string, Record<string, string>> };
 const pendingVars = (g.notifyVars ??= new Map());
 
+/** keep the values of a row written by a caller's transaction (lib/booking/notify) until it is sent */
+export const holdVars = (id: string, vars: Record<string, string>) => void pendingVars.set(id, vars);
+
 export async function queueNotification(input: NotificationInput, now = new Date()) {
   const row = await prisma.notification.create({
     data: {

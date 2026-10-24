@@ -1,12 +1,10 @@
 // B2 枠生成 (06 §B2): frames from the calendar and the shifts. Pure planning first (rows in → inserts / closes / reopens /
 // substitutions out), then a thin database part per clinic. Idempotent (unique key doctor × date × start on slots), never
 // cancels a booking. The open-band computation of step 1 is exported for the booking screens (`openBandsForDate`).
-import type { Band, Language, Prisma } from "@prisma/client";
-import { APP_CONFIG } from "@/lib/config";
+import type { Band, Prisma } from "@prisma/client";
+import { deliverAfterCommit, enqueueBookingNotice } from "@/lib/booking/notify";
 import { addDays, dbDate, dbTime, todayJst, toHhmm, toIsoDate, weekdayOf } from "@/lib/datetime";
-import { formatDate, formatTime } from "@/lib/i18n/format";
 import { log } from "@/lib/logger";
-import { queueNotification } from "@/lib/notify/queue";
 import { prisma } from "@/lib/prisma";
 import type { Job, JobResult } from "@/lib/batch/runner";
 import { openBandsOfDay, type CalendarRow, type HourRow, type OpenBand } from "@/lib/public/hours";
@@ -312,39 +310,11 @@ async function moveBookings(db: Db, clinicId: string, moves: Plan["moves"], now:
   return moved;
 }
 
-const NO_PREFERENCE = { JA: "指名なし（当日の担当医）", EN: "No preference (doctor on duty)", VI: "Không chỉ định (bác sĩ trực hôm đó)" } as const;
-
 /** NT-03 for the bookings moved to a substitute; after the commit, a failure is logged and never fails the run (X1 / X2 retry per notification) */
-export async function notifySubstituted(bookingIds: string[], now = new Date()) {
+export async function notifySubstituted(bookingIds: string[]) {
   for (const id of bookingIds) {
     try {
-      const b = await prisma.booking.findUniqueOrThrow({
-        where: { id },
-        include: { patient: { include: { account: true } }, clinic: true, department: true, visitType: true, doctor: true },
-      });
-      const account = b.patient.account;
-      const phone = b.patient.phone;
-      const lang: Language = account?.language ?? "JA";
-      let channel: "MAIL" | "LINE" | "SMS" | null = null;
-      let to = "";
-      if (account) {
-        if (account.notifyChannel === "LINE" && account.lineUserId && account.lineFriend === "FOLLOWING") [channel, to] = ["LINE", account.lineUserId];
-        else if (account.notifyChannel === "SMS" && phone) [channel, to] = ["SMS", `+81${phone.replace(/^0/, "")}`];
-        else [channel, to] = ["MAIL", account.email];
-      } else if (b.patient.smsOptIn && phone) [channel, to] = ["SMS", `+81${phone.replace(/^0/, "")}`];
-      if (!channel) continue;
-      const l = lang.toLowerCase() as "ja" | "en" | "vi";
-      const selfName = `${b.patient.familyName} ${b.patient.givenName}`;
-      await queueNotification({
-        event: "NT03_CHANGED", channel, language: lang, toAddress: to, accountId: account?.id, patientId: b.patientId, bookingId: b.id,
-        vars: {
-          patient_name: selfName, clinic_name: b.clinic.nameJa, clinic_phone: b.clinic.phone, booking_no: b.bookingNo,
-          visit_date: formatDate(iso(b.slotDate), l), visit_time: formatTime(toHhmm(b.startTime)),
-          department: b.department.nameJa, visit_type: b.visitType.nameJa,
-          doctor_name: b.doctorRequested ? `${b.doctor.familyName} ${b.doctor.givenName}` : NO_PREFERENCE[lang],
-          booking_url: `${APP_CONFIG.baseUrl}/bookings/${b.id}`,
-        },
-      }, now);
+      await deliverAfterCommit([await enqueueBookingNotice(prisma, id, "NT03_CHANGED")]);
     } catch (e) {
       log("error", "NT-03 after a substitution failed", { bookingId: id, error: e instanceof Error ? e.message : String(e) });
     }
@@ -392,7 +362,7 @@ export const b2Job: Job = async (ctx) => {
       failed.push(`${c.code}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
-  if (notify.length > 0) await notifySubstituted(notify, now);
+  if (notify.length > 0) await notifySubstituted(notify);
   const message = `追加${total.inserted}・閉鎖${total.closed}・再開${total.reopened}・要調整${total.adjusted}・代診${total.moved}${failed.length ? `／失敗 ${failed.join("; ")}`.slice(0, 300) : ""}`;
   const status: JobResult["status"] = failed.length === 0 ? "SUCCESS" : failed.length === clinics.length ? "FAILED" : "PARTIAL";
   return { status, read: total.read, written: total.inserted + total.closed + total.reopened, errors: failed.length, message };

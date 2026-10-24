@@ -6,6 +6,10 @@ type Row = { ja: string; en: string; vi: string };
 
 const L = {
   // CF-01
+  noPreference: { ja: "指名なし（当日の担当医）", en: "No preference (doctor on duty)", vi: "Không chỉ định (bác sĩ trực hôm đó)" }, // F4-04, 04 §6.1; en/vi draft
+  calPrev: { ja: "前月", en: "Previous month", vi: "Tháng trước" }, // shared date picker; en/vi draft
+  calNext: { ja: "翌月", en: "Next month", vi: "Tháng sau" }, // en/vi draft
+  calOpen: { ja: "カレンダーから選ぶ", en: "Choose from calendar", vi: "Chọn từ lịch" }, // en/vi draft
   navTop: { ja: "トップ", en: "Home", vi: "Trang chủ" }, // draft en/vi
   navDoctors: { ja: "医師検索", en: "Find a doctor", vi: "Tìm bác sĩ" }, // en draft; vi from spec item 3
   navClinics: { ja: "クリニック案内", en: "Clinics", vi: "Thông tin phòng khám" }, // en draft; vi from spec item 4
