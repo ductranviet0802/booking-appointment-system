@@ -14,10 +14,10 @@ const MIN = 60_000;
 const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 
-/** F9-05; staff idle 30 min per Q-008 (not the 60 of _common 抽出8) */
+/** F9-05; staff idle 60 min per Q-008 answer (customer: 30 was too short) */
 export const SESSION_LIFETIME = {
   PATIENT: { absoluteMs: 30 * DAY, idleMs: 7 * DAY },
-  STAFF: { absoluteMs: 12 * HOUR, idleMs: 30 * MIN },
+  STAFF: { absoluteMs: 12 * HOUR, idleMs: 60 * MIN },
 } as const;
 
 export const lifetimeOf = (role: Role) => (role === "PATIENT" ? SESSION_LIFETIME.PATIENT : SESSION_LIFETIME.STAFF);

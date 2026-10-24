@@ -325,7 +325,7 @@ describe("F9-05 sessions", () => {
     expect((await prisma.session.findUniqueOrThrow({ where: { id: row.id } })).lastSeenAt).toEqual(t1);
   });
 
-  it("patient: idle 7 days and absolute 30 days; staff: idle 30 min and absolute 12 h", async () => {
+  it("patient: idle 7 days and absolute 30 days; staff: idle 60 min and absolute 12 h", async () => {
     const p = await makeAccount();
     const t0 = new Date();
     const pt = sid(await loginAs(p.email, PW, { now: t0 }));
@@ -337,8 +337,8 @@ describe("F9-05 sessions", () => {
 
     const s = await makeAccount({ role: "RECEPTION", clinics: ["honin"] });
     const st = sid(await loginAs(s.email, PW, { now: t0 }));
-    expect((await readSession(st, new Date(t0.getTime() + 29 * MIN))).state).toBe("valid");
-    expect((await readSession(st, new Date(t0.getTime() + 60 * MIN))).state).toBe("invalid");
+    expect((await readSession(st, new Date(t0.getTime() + 59 * MIN))).state).toBe("valid"); // Q-008: 60 min
+    expect((await readSession(st, new Date(t0.getTime() + 120 * MIN))).state).toBe("invalid");
     const st2 = sid(await loginAs(s.email, PW, { now: t0 }));
     for (let m = 25; m < 12 * 60; m += 25) await readSession(st2, new Date(t0.getTime() + m * MIN));
     expect((await readSession(st2, new Date(t0.getTime() + 12 * 60 * MIN))).state).toBe("invalid");
