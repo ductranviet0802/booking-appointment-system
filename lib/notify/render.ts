@@ -1,5 +1,5 @@
 // Template text of a notification (03 §3.26, F6-03): the clinic's row for event × channel × language, missing
-// language → ja. NT-05 / NT-06 belong to no clinic: they use the first active clinic by display_order (Q-009).
+// language → ja. NT-05 / NT-06 belong to no clinic: always the 04 §6 default text (Q-009 answer).
 import type { Language, NotificationEvent, NotifyChannel } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { MAIL_DEFAULTS, SMS_DEFAULTS } from "@/lib/notify/templates-default";
@@ -12,9 +12,11 @@ export async function renderNotification(
   n: { event: NotificationEvent; channel: NotifyChannel; language: Language; bookingId: string | null },
   vars: Record<string, string>,
 ): Promise<{ subject: string | null; body: string }> {
-  const clinicId = n.bookingId
-    ? (await prisma.booking.findUniqueOrThrow({ where: { id: n.bookingId }, select: { clinicId: true } })).clinicId
-    : (await prisma.clinic.findFirst({ where: { isActive: true }, orderBy: { displayOrder: "asc" }, select: { id: true } }))?.id;
+  // NT-05 / NT-06 are corporate account mails: always the 04 §6 default, A04 edits never apply (Q-009 answer)
+  const corporate = n.event === "NT05_PW_RESET" || n.event === "NT06_VERIFY";
+  const clinicId = corporate || !n.bookingId
+    ? undefined
+    : (await prisma.booking.findUniqueOrThrow({ where: { id: n.bookingId }, select: { clinicId: true } })).clinicId;
 
   const rows = clinicId
     ? await prisma.notificationTemplate.findMany({
