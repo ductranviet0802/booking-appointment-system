@@ -7,6 +7,8 @@ import { pool, prisma } from "@/lib/prisma";
 import { addDays, dbDate, dbTime, todayJst, toIsoDate, weekdayOf } from "@/lib/datetime";
 import { fetchHolidayFile, parseHolidayCsv } from "@/lib/adapters/x3-holidays";
 import { runJob } from "@/lib/batch/runner";
+import { encryptJson, encryptText } from "@/lib/crypto/field";
+import { storeExportFile } from "@/lib/export/store";
 import { defaultTemplateRows } from "@/lib/notify/templates-default";
 import { SEED_ACCOUNTS, SEED_PASSWORD } from "./seed-accounts";
 
@@ -491,6 +493,80 @@ async function main() {
       },
     });
     if (!canceled) await prisma.slot.updateMany({ where: { id: { in: frames.map((s) => s.id) } }, data: { reservedCount: { increment: 1 } } });
+  }
+
+  // B5 demo cases (W5 w1): one row past its 06 §5 period per class, so `npm run batch -- B5` acts on the seed.
+  // Patients 保存 (ホゾン) and accounts hozon.* only; no other seed row is touched.
+  {
+    const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000);
+    const sixYears = daysAgo(6 * 366);
+    const hozon = (data: Partial<Prisma.PatientUncheckedCreateInput>) => patient({
+      createdByKind: "STAFF", nameType: "JP", familyName: "保存", givenName: "一郎", familyNameKana: "ホゾン", givenNameKana: "イチロウ",
+      birthDate: dbDate("1970-02-14"), sex: "MALE", phone: "09099990001", ...data,
+    });
+    let n = 100;
+    const old = (patientId: string, daysBack: number, extra: Partial<Prisma.BookingUncheckedCreateInput> = {}) => prisma.booking.create({
+      data: {
+        bookingNo: bookingNo(++n), clinicId: clinicId.honin, departmentId: deptId.naika, visitTypeId: visitTypeId["honin/N-SAI"], doctorId: doctorId.D001,
+        doctorRequested: true, patientId, channel: "PHONE", slotDate: dbDate(addDays(today, -daysBack)), startTime: dbTime("09:00"), endTime: dbTime("09:15"),
+        status: "CHECKED_IN", checkedInAt: daysAgo(daysBack), createdAt: daysAgo(daysBack + 3), bookedByAccountId: receptionHonin, ...extra,
+        events: { create: [{ event: "CREATED", actorKind: "STAFF", actorAccountId: receptionHonin, channel: "PHONE", at: daysAgo(daysBack + 3) }] },
+      },
+    });
+    const questionnaire = (bookingId: string, daysBack: number) => prisma.questionnaire.create({
+      data: { bookingId, formVersion: "1.0", language: "JA", answers: encryptJson({ symptoms: "咳" }), submittedAt: daysAgo(daysBack + 3), purgeAfter: dbDate(addDays(today, -daysBack + 90)) },
+    });
+    // bookings 5 years past slot_date (events, 問診, notes with it) → then a patient without account and booking → anonymised
+    const ichiro = await hozon({ createdAt: sixYears });
+    const b5y = await old(ichiro, 5 * 366 + 10, { notes: encryptText("5年前のメモ"), visitTypeId: visitTypeId["honin/N-SHO"], endTime: dbTime("09:30") });
+    await questionnaire(b5y.id, 5 * 366 + 10);
+    // 問診 past the patient's last visit + 90 days, booking notes 90+ days after the visit, cancel text 1 year after cancellation
+    const jiro = await hozon({ givenName: "二郎", givenNameKana: "ジロウ", phone: "09099990002" });
+    const b100 = await old(jiro, 100, { notes: encryptText("100日前のメモ"), visitTypeId: visitTypeId["honin/N-SHO"], endTime: dbTime("09:30") });
+    await questionnaire(b100.id, 100);
+    await old(jiro, 400, {
+      status: "CANCELED", checkedInAt: null, canceledAt: daysAgo(400), canceledByKind: "STAFF", canceledByAccountId: receptionHonin,
+      cancelReasonCode: "OTHER", cancelReasonText: "仕事の都合",
+    });
+    await prisma.notification.create({
+      data: { event: "NT01_BOOKED", channel: "SMS", language: "JA", patientId: jiro, bookingId: b100.id, toAddress: "09099990002", status: "SENT", queuedAt: daysAgo(400), sentAt: daysAgo(400) },
+    });
+    // withdrawn 31 days ago (Q-022 setting 30): account deleted, SELF + family anonymised, the family visit kept
+    const withdrawn = await prisma.account.create({
+      data: { email: "hozon.withdrawn@example.jp", passwordHash, role: "PATIENT", status: "WITHDRAWN", notifyChannel: "MAIL", emailVerifiedAt: daysAgo(400), withdrawnAt: daysAgo(31), createdAt: daysAgo(400) },
+    });
+    await hozon({ accountId: withdrawn.id, relation: "SELF", createdByKind: "PATIENT", givenName: "三郎", givenNameKana: "サブロウ", phone: "09099990003" });
+    const child = await hozon({ accountId: withdrawn.id, relation: "CHILD", createdByKind: "PATIENT", givenName: "四子", givenNameKana: "ヨツコ", phone: null, sex: "FEMALE", birthDate: dbDate("2016-08-01") });
+    await old(child, 40, { bookedByAccountId: withdrawn.id, channel: "WEB", notes: encryptText("家族のメモ"), events: { create: [{ event: "CREATED", actorKind: "PATIENT", actorAccountId: withdrawn.id, at: daysAgo(43) }] } });
+    // PENDING 8 days, never verified: account, SELF patient, consents (and its token) together
+    const pending = await prisma.account.create({
+      data: { email: "hozon.pending@example.jp", passwordHash, role: "PATIENT", status: "PENDING", notifyChannel: "MAIL", createdAt: daysAgo(8) },
+    });
+    await hozon({ accountId: pending.id, relation: "SELF", createdByKind: "PATIENT", givenName: "五郎", givenNameKana: "ゴロウ", phone: "09099990005", createdAt: daysAgo(8) });
+    await prisma.consent.createMany({ data: (["TERMS", "PRIVACY"] as const).map((kind) => ({ accountId: pending.id, kind, version: "1.0", agreedAt: daysAgo(8) })) });
+    await prisma.authToken.create({ data: { tokenHash: "b5".padEnd(64, "0"), accountId: pending.id, purpose: "EMAIL_VERIFY", expiresAt: daysAgo(7) } });
+    // a session and a reset token 31 days past expiry (kato, a demo account)
+    await prisma.session.create({ data: { tokenHash: "b5".padEnd(64, "1"), accountId: katoAccount.id, expiresAt: daysAgo(31), lastSeenAt: daysAgo(32), createdAt: daysAgo(32) } });
+    await prisma.authToken.create({ data: { tokenHash: "b5".padEnd(64, "2"), accountId: katoAccount.id, purpose: "PASSWORD_RESET", expiresAt: daysAgo(31), createdAt: daysAgo(31) } });
+    // export files: a CSV of 31 days ago (file goes, row stays) and a row of 6 years ago (row goes)
+    const csv = await storeExportFile("honin_bookings_demo.csv", Buffer.from("予約番号\r\n"));
+    const exportRow = (createdAt: Date, storageKey: string, sha256: string) => prisma.exportFile.create({
+      data: {
+        clinicId: clinicId.honin, kind: "BOOKINGS", trigger: "BATCH", status: "DONE", periodFrom: dbDate(toIsoDate(createdAt)), periodTo: dbDate(toIsoDate(createdAt)),
+        fileName: "honin_bookings_demo.csv", storageKey, sha256, rowCount: 0, warningCount: 0, expiresAt: new Date(createdAt.getTime() + 30 * 86_400_000), createdAt,
+      },
+    });
+    await exportRow(daysAgo(31), csv.storageKey, csv.sha256);
+    await exportRow(sixYears, "0_honin_bookings_demo_gone.csv", "0".repeat(64));
+    // a batch run of 3 years ago, an audit row of 6 years ago, a free frame of 91 days ago
+    await prisma.batchRun.create({ data: { jobCode: "B4", trigger: "SCHEDULE", startedAt: daysAgo(3 * 366), endedAt: daysAgo(3 * 366), status: "SUCCESS", readCount: 0, writtenCount: 0, errorCount: 0, message: "B5 demo" } });
+    await prisma.auditLog.create({ data: { at: sixYears, accountId: null, action: "LOGIN_OK", detail: { demo: "B5" } } });
+    await prisma.slot.create({
+      data: {
+        clinicId: clinicId.honin, departmentId: deptId.naika, doctorId: doctorId.D001, slotDate: dbDate(addDays(today, -91)), startTime: dbTime("09:00"),
+        endTime: dbTime("09:15"), capacity: 1, status: "OPEN", generatedRunId: b2.run!.id,
+      },
+    });
   }
 
   console.log(`clinics ${CLINICS.length} · departments ${DEPARTMENTS.length} · doctors ${DOCTORS.length} · accounts ${SEED_ACCOUNTS.length}`);
