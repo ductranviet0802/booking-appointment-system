@@ -1,7 +1,7 @@
 // Batch runner (06 §0): one batch_runs row per run; a database advisory lock per job code (B1: per clinic), so two runs
 // of one job never overlap — a run that finds the lock taken ends SUCCESS 「実行中のため省略」 and writes nothing else.
 // A dry run (B2 --dry-run) writes nothing at all and returns the counts.
-import type { BatchRun, BatchStatus, NotificationEvent, Prisma } from "@prisma/client";
+import type { BatchRun, BatchStatus, Prisma } from "@prisma/client";
 import { log } from "@/lib/logger";
 import { send } from "@/lib/notify/transport";
 import { prisma } from "@/lib/prisma";
@@ -33,8 +33,8 @@ export async function alertRun(run: BatchRun) {
       `件数: 読込 ${run.readCount}・書込 ${run.writtenCount}・エラー ${run.errorCount}`, `メッセージ: ${run.message ?? ""}`, `実行ID: ${run.id}`,
     ].join("\n");
     for (const addr of to) {
-      // shortcut: the transport types `event` as an NT code; the alert is no notification row (no outbox, no retry) — tag BATCH_ALERT
-      const r = await send({ notificationId: run.id, event: "BATCH_ALERT" as NotificationEvent, channel: "MAIL", to: addr, subject, body });
+      // the mail transport every other mail uses (NOTIFY_TRANSPORT: fake → NOTIFY_OUTBOX_DIR, real → X1); no notifications row
+      const r = await send({ notificationId: run.id, event: "BATCH_ALERT", channel: "MAIL", to: addr, subject, body });
       if (!r.ok) log("error", "batch alert mail failed", { runId: run.id, error: r.error });
     }
   } catch (e) {

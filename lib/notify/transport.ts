@@ -6,8 +6,10 @@ import path from "node:path";
 import type { NotificationEvent, NotifyChannel } from "@prisma/client";
 
 export type OutboundMessage = {
+  /** notifications.id; for BATCH_ALERT the batch_runs.id (an operator mail has no notifications row: 03 §3.27 is the patient notice log) */
   notificationId: string;
-  event: NotificationEvent;
+  /** NT-xx of a patient notice, or BATCH_ALERT: the J-08 operator / admin mail of a FAILED / PARTIAL run (N-OPS-06) */
+  event: NotificationEvent | "BATCH_ALERT";
   channel: NotifyChannel;
   to: string;
   subject: string | null;
