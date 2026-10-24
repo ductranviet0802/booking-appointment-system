@@ -26,11 +26,14 @@ type Answer = {
   code?: string; params?: Record<string, string | number>; errors?: FieldError[]; rows?: SearchRow[]; confirm?: string;
   source?: MergeCard; target?: MergeCard; sourceUpdatedAt?: string; targetUpdatedAt?: string;
   questionnaire?: { title: string; language: string; answers: { key: string; value: string }[] };
+  detail?: PatientDetail | null;
 };
 const fid = (f: string) => `s03-${f}`;
 
-export function DetailClient({ detail: d, admin, back }: { detail: PatientDetail; admin: boolean; back: string }) {
+export function DetailClient({ detail, admin, back }: { detail: PatientDetail; admin: boolean; back: string }) {
   const router = useRouter();
+  // redrawn from the answer of 保存 / 確認 / 統合, not by a page refresh (that would write PATIENT_VIEW again, B-9)
+  const [d, setD] = useState(detail);
   const api = useApiFetch();
   const { toast } = useToast();
   const ro = !!d.merged;
@@ -90,7 +93,7 @@ export function DetailClient({ detail: d, admin, back }: { detail: PatientDetail
       if (!r) return;
       if (!r.ok) return refused(r.json);
       toast("SI030");
-      router.refresh();
+      if (r.json.detail) setD(r.json.detail);
     } finally {
       setBusy(false);
     }
@@ -101,7 +104,7 @@ export function DetailClient({ detail: d, admin, back }: { detail: PatientDetail
     if (!r) return;
     if (!r.ok) return refused(r.json);
     toast("SI030");
-    router.refresh();
+    if (r.json.detail) setD(r.json.detail);
   }
   async function openQ(bookingId: string) {
     const r = await call({ action: "questionnaire", bookingId });
@@ -136,7 +139,7 @@ export function DetailClient({ detail: d, admin, back }: { detail: PatientDetail
     if (!r) return;
     if (!r.ok) return refused(r.json);
     toast("SI031");
-    router.refresh();
+    if (r.json.detail) setD(r.json.detail);
   }
   async function doDisclose() {
     const r = await call({ action: "disclosure" });
