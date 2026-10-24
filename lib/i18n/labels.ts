@@ -335,11 +335,6 @@ const L = {
   editHeading: { ja: "家族の情報を編集", en: "Edit family member", vi: "Sửa thông tin thành viên" }, // draft
   addPrefillHelp: { ja: "追加時はあなたの住所を初期表示", en: "Your address is filled in when adding", vi: "Địa chỉ của bạn được điền sẵn khi thêm" }, // draft
   deleteTitle: { ja: "{name}様を削除しますか？", en: "Remove {name}?", vi: "Xóa {name}?" }, // draft en/vi
-  dupMember: {
-    ja: "このご家族は既に登録されています。",
-    en: "This family member is already registered.",
-    vi: "Thành viên gia đình này đã được đăng ký.",
-  }, // draft: no 04 id for P07 §6-1 "not registered twice" (question in the W2 report)
 } satisfies Record<string, Row>;
 
 export type LabelKey = keyof typeof L;

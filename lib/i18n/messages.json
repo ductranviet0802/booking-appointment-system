@@ -688,6 +688,11 @@
   },
   "SI081": {
    "ja": "該当データが0件のため、見出し行のみのファイルを作成しました。"
+  },
+  "TMP-Q017": {
+   "ja": "同じご家族がすでに登録されています。",
+   "en": "This family member is already registered.",
+   "vi": "Thành viên gia đình này đã được đăng ký."
   }
  },
  "aliases": {

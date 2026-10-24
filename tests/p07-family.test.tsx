@@ -18,6 +18,7 @@ jest.mock("next/navigation", () => ({
 jest.mock("next/link", () => ({ __esModule: true, default: (p: { href: string; children: React.ReactNode; className?: string }) => <a href={p.href} className={p.className}>{p.children}</a> }));
 process.env.__NEXT_EXPERIMENTAL_AUTH_INTERRUPTS = "true";
 
+import { t } from "@/lib/i18n";
 import { pool, prisma } from "@/lib/prisma";
 import { login } from "@/lib/auth/service";
 import { addDays, dbDate, todayJst } from "@/lib/datetime";
@@ -172,8 +173,19 @@ describe("P07 save (event 6)", () => {
     const h = await holder();
     const a = as(h);
     const rs = await Promise.all([saveMember(a, form()), saveMember(a, form()), saveMember(a, form({ familyName: "家族 " }))]);
-    expect(rs.map(code).sort()).toEqual(["DUP_MEMBER", "DUP_MEMBER", "PI042"]);
+    expect(rs.map(code).sort()).toEqual(["PI042", "TMP-Q017", "TMP-Q017"]);
     expect(await prisma.patient.count({ where: { accountId: h.acc.id, givenName: "花子" } })).toBe(1);
+  });
+
+  it("Q-017: SELF counts, edit counts, kana does not; the message is the customer's text (TMP-Q017)", async () => {
+    const h = await holder();
+    const a = as(h);
+    const selfLike = { familyName: "家族", givenName: "太郎", birthDate: "1985-05-05" };
+    expect(code(await saveMember(a, form({ ...selfLike, familyNameKana: "ベツ", givenNameKana: "ベツ" })))).toBe("TMP-Q017");
+    const m = await member(h, "別人");
+    expect(code(await saveMember(a, form({ ...selfLike, patientId: m.id })))).toBe("TMP-Q017");
+    expect(code(await saveMember(a, form({ ...selfLike, givenName: "次郎", givenNameKana: "タロウ" })))).toBe("PI042");
+    expect(t("TMP-Q017", "ja")).toBe("同じご家族がすでに登録されています。");
   });
 
   it("PE046 at family_member_max (9): refused at the press; two adds racing for the last place → one PI042, one PE046", async () => {
