@@ -35,8 +35,11 @@ ENV NODE_ENV=production \
     PORT=9105 \
     HOSTNAME=0.0.0.0
 
+# var/: outbox, export files and doctor photos (NOTIFY_OUTBOX_DIR, EXPORT_DIR, PHOTO_DIR); mount a volume on it
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 nextjs
+  && adduser --system --uid 1001 nextjs \
+  && mkdir -p var/outbox var/export var/photos \
+  && chown -R nextjs:nodejs var
 
 COPY --from=deps-prod --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
