@@ -5,6 +5,7 @@ import { b2Job } from "@/lib/batch/b2-frames";
 import { b3Job } from "@/lib/batch/b3-holidays";
 import { b4Job } from "@/lib/batch/b4-close";
 import { b5Job } from "@/lib/batch/b5-retention";
+import { b6Job } from "@/lib/batch/b6-export";
 import type { Job, JobCode } from "@/lib/batch/runner";
 
-export const JOBS: Partial<Record<JobCode, Job>> = { B1: b1Job, B2: b2Job, B3: b3Job, B4: b4Job, B5: b5Job };
+export const JOBS: Partial<Record<JobCode, Job>> = { B1: b1Job, B2: b2Job, B3: b3Job, B4: b4Job, B5: b5Job, B6: b6Job };

@@ -1,9 +1,6 @@
 // X5 レセコンCSV (05 X5, OD-14): Windows-31J, CRLF, every field quoted, Japanese header row; characters outside
-// CP932 → 〓 and the row counts as a warning. Files go to X5_DIR (default var/x5); B6 / A06 fill the rows (waves W4 / W5).
-// shortcut: files are written unencrypted to a local folder; use encrypted object storage (03 §3.28) before go-live.
-import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+// CP932 → 〓 and the row counts as a warning. B6 (lib/batch/b6-export.ts) builds the rows and stores the file encrypted
+// through lib/export/store.ts.
 import iconv from "iconv-lite";
 
 export const X5P_HEADER = ["診察券番号", "システム患者ID", "氏名", "氏名カナ", "性別", "生年月日", "郵便番号", "住所", "電話番号", "区分", "更新日時"];
@@ -43,21 +40,4 @@ export function buildX5Csv(header: string[], rows: string[][]) {
 export function x5FileName(kind: "P" | "B", clinicCode: string, at: Date) {
   const jst = new Date(at.getTime() + 9 * 60 * 60 * 1000).toISOString();
   return `${kind}_${clinicCode}_${jst.slice(0, 10).replace(/-/g, "")}_${jst.slice(11, 16).replace(":", "")}.csv`;
-}
-
-/** writes one file; the values for export_files (03 §3.28) */
-export async function writeX5File(kind: "P" | "B", clinicCode: string, rows: string[][], at = new Date()) {
-  const { text, warningCount } = buildX5Csv(kind === "P" ? X5P_HEADER : X5B_HEADER, rows);
-  const bytes = iconv.encode(text, "cp932");
-  const fileName = x5FileName(kind, clinicCode, at);
-  const dir = process.env.X5_DIR ?? "var/x5";
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, fileName), bytes);
-  return {
-    fileName,
-    storageKey: path.join(dir, fileName),
-    rowCount: rows.length,
-    warningCount,
-    sha256: createHash("sha256").update(bytes).digest("hex"),
-  };
 }

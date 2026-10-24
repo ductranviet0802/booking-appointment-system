@@ -2,21 +2,18 @@
 import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import iconv from "iconv-lite";
 import { pool, prisma } from "@/lib/prisma";
 import { deliver, queueNotification, quietUntil, recordMailBounce } from "@/lib/notify/queue";
 import { fill } from "@/lib/notify/render";
 import { defaultTemplateRows } from "@/lib/notify/templates-default";
 import { cleanTown, lookupPostcode, normalizePostcode, X4UnavailableError } from "@/lib/adapters/x4-postcode";
-import { buildX5Csv, toCp932Safe, writeX5File, x5FileName } from "@/lib/adapters/x5-csv";
+import { buildX5Csv, toCp932Safe, x5FileName } from "@/lib/adapters/x5-csv";
 import { JOBS } from "@/lib/batch/jobs";
 import { runJob } from "@/lib/batch/runner";
 import { dueJobs } from "@/lib/batch/schedule";
 
 const outbox = mkdtempSync(path.join(tmpdir(), "outbox-"));
-const x5dir = mkdtempSync(path.join(tmpdir(), "x5-"));
 process.env.NOTIFY_OUTBOX_DIR = outbox;
-process.env.X5_DIR = x5dir;
 
 const DAYTIME = new Date("2026-10-23T03:00:00Z"); // 12:00 JST
 const MARK = "ifacetest";
@@ -118,12 +115,8 @@ describe("X5 CSV", () => {
     expect(warningCount).toBe(1);
   });
 
-  it("names files in JST and writes Windows-31J", async () => {
+  it("names files in JST (the file itself is written by B6 through lib/export/store, tests/b6-export.test.ts)", () => {
     expect(x5FileName("B", "honin", new Date("2026-10-22T20:30:00Z"))).toBe("B_honin_20261023_0530.csv");
-    const f = await writeX5File("P", "honin", [["H-10001", "id", "山田　太郎", "ヤマダ　タロウ", "1", "19800401", "100-0005", "東京都", "090-1234-5678", "新規", "2026/10/23 05:30"]]);
-    expect(f.rowCount).toBe(1);
-    expect(iconv.decode(readFileSync(path.join(x5dir, f.fileName)), "cp932")).toContain('"診察券番号","システム患者ID"');
-    expect(f.sha256).toMatch(/^[0-9a-f]{64}$/);
   });
 });
 

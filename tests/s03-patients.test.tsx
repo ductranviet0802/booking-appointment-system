@@ -24,6 +24,7 @@ jest.mock("next/headers", () => ({
   headers: async () => ({ get: (n: string) => (n === "x-pathname" ? mockJar.path : null) }),
 }));
 jest.mock("../app/(staff)/staff/patients/patients.module.css", () => ({}));
+jest.mock("@/lib/export/disclosure", () => ({ startDisclosureBuild: jest.fn() })); // the build has its own tests (tests/disclosure-zip.test.ts)
 
 import { POST } from "@/app/api/staff/patients/route";
 import PatientDetailPage from "@/app/(staff)/staff/patients/[id]/page";

@@ -10,6 +10,7 @@ import { staffClinics } from "@/lib/auth/scope";
 import { digitsOnly, fullWidthSpaces } from "@/lib/auth/validate";
 import { lockBooking, lockPerson } from "@/lib/booking/core";
 import { decryptJson } from "@/lib/crypto/field";
+import { startDisclosureBuild } from "@/lib/export/disclosure";
 import { dbDate, todayJst, toHhmm, toIsoDate } from "@/lib/datetime";
 import { prisma } from "@/lib/prisma";
 import { formatPhone } from "@/lib/public/phone";
@@ -434,5 +435,6 @@ export async function requestDisclosure(a: Actor, b: Record<string, unknown>): P
     await changeAudit(tx, a, "DISCLOSURE_REQUEST", "patient", p.id, { exportFileId: f.id });
     return f;
   });
+  startDisclosureBuild(row.id); // after the commit; the answer does not wait (lib/export/disclosure.ts)
   return done({ code: "SI032", exportFileId: row.id });
 }
