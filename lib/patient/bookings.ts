@@ -247,6 +247,7 @@ export async function listBookings(accountId: string, tab: Tab, offset: number, 
         visitType: nameOf(b.visitType, lang),
         doctor: b.doctorRequested ? doctorName(b.doctor, lang) : label("noPreference", lang),
         status: w2(key, lang),
+        statusKey: key,
         pending: key === "stPENDING",
         bookingNo: formatBookingNo(b.bookingNo),
       };
