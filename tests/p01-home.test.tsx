@@ -99,7 +99,7 @@ describe("top page from the seed", () => {
     const en = await loadHome("en");
     expect(en.cards[0].name).toBe("○○ Clinic Main");
     const enHtml = renderToStaticMarkup(<Home data={en} lang="en" />);
-    expect(enHtml).toContain("Book an appointment");
+    expect(enHtml).toContain(">Book<"); // 07 §3 予約する
     expect(enHtml).toContain("Leave the box empty to list all doctors.");
     const vi = await loadHome("vi");
     const viHtml = renderToStaticMarkup(<Home data={vi} lang="vi" />);

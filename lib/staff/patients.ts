@@ -327,7 +327,8 @@ export async function openQuestionnaire(a: Actor, b: Record<string, unknown>): P
   });
   if (!bk?.questionnaire || !(await staffOf(a)).some((c) => c.id === bk.clinicId)) return bad(); // 8-2
   const answers = decryptJson(bk.questionnaire.answers);
-  await changeAudit(prisma, a, "QUESTIONNAIRE_VIEW", "booking", bk.id, {}); // no 問診 content (N-OPS-07)
+  // 更新9: detail null — no 問診 content (N-OPS-07)
+  await audit(prisma, { accountId: a.accountId, role: a.role, action: "QUESTIONNAIRE_VIEW", ip: a.ip, now: a.now, targetType: "booking", targetId: bk.id, clinicId: a.clinicId });
   const date = toIsoDate(bk.slotDate);
   return done({
     questionnaire: {

@@ -67,7 +67,7 @@ const L = {
   no: { ja: "いいえ", en: "No", vi: "Không" }, // 07 §3
   cancel: { ja: "キャンセル", en: "キャンセル", vi: "キャンセル" }, // staff dialogs (ja only)
   // P01 / P08 / P09 / P10 (public browsing). ja as drawn in the layouts; en / vi from 07 where it has the term, else drafts.
-  bookCta: { ja: "予約する", en: "Book an appointment", vi: "Đặt lịch" }, // draft en/vi
+  bookCta: { ja: "予約する", en: "Book", vi: "Đặt lịch" }, // 07 §3
   findDoctor: { ja: "医師を探す", en: "Find a doctor", vi: "Tìm bác sĩ" }, // en draft; vi spec item 6
   detailMore: { ja: "詳しく", en: "Details", vi: "Chi tiết" }, // draft
   clinicListHeading: { ja: "クリニック一覧", en: "Our clinics", vi: "Danh sách phòng khám" }, // draft
@@ -170,8 +170,8 @@ const L = {
   kanaGroup: { ja: "フリガナ", en: "Reading (furigana)", vi: "Cách đọc (furigana)" }, // vi 07; en draft
   familyNameKana: { ja: "フリガナ（セイ）", en: "Reading of family name", vi: "Cách đọc họ" }, // draft
   givenNameKana: { ja: "フリガナ（メイ）", en: "Reading of given name", vi: "Cách đọc tên" }, // draft
-  kanaSei: { ja: "セイ", en: "Family", vi: "Họ" }, // draft
-  kanaMei: { ja: "メイ", en: "Given", vi: "Tên" }, // draft
+  kanaSei: { ja: "セイ", en: "Reading of family name", vi: "Cách đọc họ" }, // draft; en / vi must not read as the name pair
+  kanaMei: { ja: "メイ", en: "Reading of given name", vi: "Cách đọc tên" }, // draft
   kanaHint: { ja: "フリガナは全角カタカナで入力してください。", en: "Enter the reading in full-width katakana.", vi: "Nhập cách đọc bằng katakana toàn độ rộng." }, // draft
   birthDate: { ja: "生年月日", en: "Date of birth", vi: "Ngày sinh" }, // 07
   yearOpt: { ja: "{y}年", en: "{y}", vi: "{y}" },

@@ -89,7 +89,8 @@ function textField(body: Record<string, unknown>, errors: FieldError[], field: s
     if (required) errors.push({ field, code: "PE001" });
     return v;
   }
-  if (v.length > max) errors.push({ field, code: "PE003", params: { n: max } });
+  // characters, as VARCHAR(n) counts them (𠮷 is one, not two UTF-16 units)
+  if ([...v].length > max) errors.push({ field, code: "PE003", params: { n: max } });
   else if (rule && !rule[0](v)) errors.push({ field, code: rule[1] });
   return v;
 }

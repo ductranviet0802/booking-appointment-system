@@ -45,8 +45,11 @@ async function exportClinic(
     files.push({ kind: "PATIENTS", fileName: x5FileName("P", clinic.code, o.now), bytes: iconv.encode(csv.text, "cp932"), rows: rows.length, warnings: csv.warningCount, changedSince: since ?? FIRST_SINCE });
   }
   if (o.kind !== "PATIENTS") {
-    const last = await prisma.exportFile.findFirst({ where: { clinicId: clinic.id, kind: "BOOKINGS", status: "DONE" }, orderBy: { createdAt: "desc" } });
-    const rows = await bookingRows(clinic.id, o.from, o.to, last?.createdAt ?? null);
+    const sent = await prisma.exportFile.findMany({
+      where: { clinicId: clinic.id, kind: "BOOKINGS", status: "DONE", periodFrom: { lte: dbDate(o.to) }, periodTo: { gte: dbDate(o.from) } },
+      select: { createdAt: true, periodFrom: true, periodTo: true },
+    });
+    const rows = await bookingRows(clinic.id, o.from, o.to, sent);
     const csv = buildX5Csv(X5B_HEADER, rows);
     files.push({ kind: "BOOKINGS", fileName: x5FileName("B", clinic.code, o.now), bytes: iconv.encode(csv.text, "cp932"), rows: rows.length, warnings: csv.warningCount });
   }

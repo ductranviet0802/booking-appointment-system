@@ -136,7 +136,7 @@ describe("P15 list API", () => {
     const ok = await get("tab=upcoming&offset=0");
     expect(ok.status).toBe(200);
     expect((await ok.json()).rows).toHaveLength(1);
-    for (const q of ["tab=all&offset=0", "tab=past&offset=7", "tab=past&offset=-20", "tab=past&offset=1020", "tab=past&offset=x"]) {
+    for (const q of ["tab=all&offset=0", "tab=past&offset=7", "tab=past&offset=-20", "tab=past&offset=1000", "tab=past&offset=x"]) {
       const res = await get(q);
       expect([q, res.status, (await res.json()).code]).toEqual([q, 400, "PE090"]);
     }

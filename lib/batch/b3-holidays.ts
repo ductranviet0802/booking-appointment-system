@@ -25,7 +25,12 @@ export function diffHolidays(stored: Array<{ date: string; nameJa: string; isAct
 export const b3Job: Job = async (ctx) => {
   const today = todayJst();
   const year = Number(today.slice(0, 4));
-  const source = typeof ctx.params.source === "string" ? ctx.params.source : undefined;
+  // 05 X3: the URL is system_settings.holiday_source_url; --param source / env X3_SOURCE override it, and outside
+  // production the local fixture stands in (fetchHolidayFile's default) so dev and tests never reach the network
+  const setting = process.env.NODE_ENV === "production" && !process.env.X3_SOURCE
+    ? (await prisma.systemSetting.findUnique({ where: { key: "holiday_source_url" } }))?.value || undefined
+    : undefined;
+  const source = typeof ctx.params.source === "string" ? ctx.params.source : setting;
   const delay = ctx.params.retryDelayMs === undefined ? RETRY_DELAY_MS : Number(ctx.params.retryDelayMs);
   const load = async () => parseHolidayCsv(await fetchHolidayFile(source), year);
 

@@ -29,3 +29,10 @@ describe("Q-021 katakana set", () => {
     expect(r?.input.givenNameKana).toBe("タロ　ウ");
   });
 });
+
+describe("name length counts characters (judge W5 A-6)", () => {
+  it("50 characters outside the BMP pass; 51 answer PE003", () => {
+    expect(checkPerson(body({ familyName: "𠮷".repeat(50) }))?.errors).toEqual([]);
+    expect(checkPerson(body({ familyName: "𠮷".repeat(51) }))?.errors).toEqual([{ field: "familyName", code: "PE003", params: { n: 50 } }]);
+  });
+});

@@ -23,6 +23,23 @@ it("first attempt HTTP error, retry after the delay succeeds → SUCCESS", async
   spy.mockRestore();
 });
 
+it("production without X3_SOURCE downloads system_settings.holiday_source_url (05 X3)", async () => {
+  const env = process.env as Record<string, string | undefined>;
+  const [node, x3src] = [env.NODE_ENV, env.X3_SOURCE];
+  env.NODE_ENV = "production";
+  delete env.X3_SOURCE;
+  const spy = jest.spyOn(x3, "fetchHolidayFile").mockRejectedValue(new x3.X3HttpError("HTTP 503"));
+  try {
+    await runJob("B3", { trigger: "MANUAL", params: { retryDelayMs: 0 }, dryRun: true });
+    const url = (await prisma.systemSetting.findUniqueOrThrow({ where: { key: "holiday_source_url" } })).value;
+    expect(spy).toHaveBeenCalledWith(url);
+  } finally {
+    spy.mockRestore();
+    env.NODE_ENV = node;
+    if (x3src !== undefined) env.X3_SOURCE = x3src;
+  }
+});
+
 it("two failures → FAILED with the SE041 reason (no third attempt)", async () => {
   const spy = jest.spyOn(x3, "fetchHolidayFile").mockRejectedValue(new x3.X3TimeoutError("timeout"));
   const r = await runJob("B3", { trigger: "MANUAL", params: { source, retryDelayMs: 0 }, dryRun: true });

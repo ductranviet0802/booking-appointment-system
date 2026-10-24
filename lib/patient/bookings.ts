@@ -18,8 +18,9 @@ import { checkCancelReason, isPatientReason } from "./cancel-rules";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const PAGE_SIZE = 20; // F8-04
-// cap: P15 もっと見る offset, 1,000 rows of one tab within the 12 months (質疑 pending)
-export const MAX_OFFSET = 1000;
+// cap: P15 もっと見る reaches 1,000 rows of one tab within the 12 months (Q-026); the last page starts at 980
+export const MAX_ROWS = 1000;
+export const MAX_OFFSET = MAX_ROWS - PAGE_SIZE;
 
 /** P16 §3.2: 基 BASE · ① AFTER (deadline passed) · ② PENDING (確認中) · ③ DONE (来院済 / 無断キャンセル) · ④ CANCELED · ⑤ ADJUST */
 export type DetailState = "BASE" | "AFTER" | "PENDING" | "DONE" | "CANCELED" | "ADJUST";
@@ -231,7 +232,7 @@ export async function listBookings(accountId: string, tab: Tab, offset: number, 
   return {
     counts,
     // item 12 on every tab, 予約中 too (Q-040 answer: family bookings can exceed 20)
-    more: offset + rows.length < counts[tab],
+    more: offset + rows.length < Math.min(counts[tab], MAX_ROWS),
     rows: rows.map((b) => {
       const date = toIsoDate(b.slotDate);
       const start = toHhmm(b.startTime);

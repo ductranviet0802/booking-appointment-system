@@ -155,8 +155,21 @@ describe("B6", () => {
     expect(again[2].rowCount).toBe(2); // handed over, not sent again
   });
 
+  it("a manual file of another period does not hand a cancellation over (judge W5 B-1)", async () => {
+    const b = await booking(f, p2.id, addDays(today, 5));
+    await run({ trigger: "MANUAL", params: { kind: "BOOKINGS" } }); // carries the booking
+    await prisma.booking.update({ where: { id: b.id }, data: { status: "CANCELED", canceledAt: new Date(), canceledByKind: "STAFF", cancelReasonCode: "OTHER", cancelReasonText: "x" } });
+    await run({ trigger: "MANUAL", params: { kind: "BOOKINGS", periodFrom: today, periodTo: today } }); // today only
+    await run({ trigger: "MANUAL", params: { kind: "BOOKINGS" } });
+    const bs = await files(f, "BOOKINGS");
+    const cancels = async (i: number) => lines(await text(bs[i].storageKey!)).filter((l) => l.includes("キャンセル済")).length;
+    expect(await cancels(bs.length - 2)).toBe(0); // the today-only file
+    expect(await cancels(bs.length - 1)).toBe(1); // the next full file still sends it
+  });
+
   it("patient delta: a changed patient is a 変更 row", async () => {
     await prisma.patient.update({ where: { id: p2.id }, data: { phone: "09011112222" } });
+    const bBefore = (await files(f, "BOOKINGS")).length;
     await run({ trigger: "MANUAL", params: { kind: "PATIENTS" } });
     const ps = await files(f, "PATIENTS");
     const last = ps[ps.length - 1];
@@ -164,7 +177,7 @@ describe("B6", () => {
     expect(rows).toHaveLength(2);
     expect(rows[1]).toContain(`"${p2.id}"`);
     expect(rows[1]).toContain('"090-1111-2222","変更"');
-    expect((await files(f, "BOOKINGS")).length).toBe(3); // kind PATIENTS wrote no B file
+    expect((await files(f, "BOOKINGS")).length).toBe(bBefore); // kind PATIENTS wrote no B file
   });
 
   it("period over 31 days → SE080 (FAILED, nothing written); exactly 31 days is accepted", async () => {

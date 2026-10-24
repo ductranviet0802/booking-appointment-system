@@ -45,15 +45,15 @@ const STATUS = { RESERVED: "予約済", CHECKED_IN: "来院済", NO_SHOW: "無�
 const CATEGORY = { FIRST: "初診", REPEAT: "再診", SELF_PAY: "自費" } as const;
 const CHANNEL = { WEB: "Web", PHONE: "電話", COUNTER: "窓口" } as const;
 
+export type SentFile = { createdAt: Date; periodFrom: Date | null; periodTo: Date | null };
+
 /**
- * the clinic's bookings with slot_date in [from, to]. A cancellation is sent once: CANCELED rows only when cancelled after
- * `handedOverAt` (created_at of the clinic's latest DONE BOOKINGS file; none → no cancelled row, nothing to cancel there).
+ * the clinic's bookings with slot_date in [from, to]. A cancellation is sent once (Q-056), judged per booking against the
+ * clinic's DONE BOOKINGS files `sent` whose period covers its slot_date: sent when a file made before the cancel carried
+ * the booking and no file made after the cancel carried the cancellation yet. A file of another period hands nothing over.
  */
-export async function bookingRows(clinicId: string, from: string, to: string, handedOverAt: Date | null): Promise<string[][]> {
-  const where: Prisma.BookingWhereInput = {
-    clinicId, slotDate: { gte: dbDate(from), lte: dbDate(to) }, anonymizedAt: null,
-    OR: [{ status: { not: "CANCELED" } }, ...(handedOverAt ? [{ status: "CANCELED" as const, canceledAt: { gt: handedOverAt } }] : [])],
-  };
+export async function bookingRows(clinicId: string, from: string, to: string, sent: SentFile[]): Promise<string[][]> {
+  const where: Prisma.BookingWhereInput = { clinicId, slotDate: { gte: dbDate(from), lte: dbDate(to) }, anonymizedAt: null };
   const count = await prisma.booking.count({ where });
   if (count > B6_MAX_ROWS) throw new Error(`${count} booking rows over the cap ${B6_MAX_ROWS}`);
   const rows = await prisma.booking.findMany({
@@ -64,7 +64,14 @@ export async function bookingRows(clinicId: string, from: string, to: string, ha
     },
     orderBy: [{ slotDate: "asc" }, { startTime: "asc" }, { bookingNo: "asc" }],
   });
-  return rows.map((b) => [
+  const covering = (d: Date) => sent.filter((f) => f.periodFrom && f.periodTo && f.periodFrom <= d && d <= f.periodTo);
+  const due = (b: (typeof rows)[number]) => {
+    if (b.status !== "CANCELED") return true;
+    const files = covering(b.slotDate);
+    const at = b.canceledAt ?? b.updatedAt;
+    return files.some((f) => f.createdAt > b.createdAt && f.createdAt <= at) && !files.some((f) => f.createdAt > at);
+  };
+  return rows.filter(due).map((b) => [
     b.bookingNo, toIsoDate(b.slotDate).replaceAll("-", ""), toHhmm(b.startTime).replace(":", ""), toHhmm(b.endTime).replace(":", ""),
     b.department.code, b.visitType.code, b.visitType.nameJa, CATEGORY[b.visitType.category], b.doctor.code, `${b.doctor.familyName}${b.doctor.givenName}`,
     b.patient.cards[0]?.cardNo ?? "", b.patient.id, `${wideKana(b.patient.familyNameKana)}${WIDE_SPACE}${wideKana(b.patient.givenNameKana)}`,

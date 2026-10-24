@@ -278,7 +278,7 @@ describe("detail and save", () => {
     const r = await act({ action: "questionnaire", id: p.id, bookingId: bk.id });
     expect(r.body.questionnaire).toMatchObject({ language: "ja", answers: [{ key: "主訴", value: "腹痛" }, { key: "発症時期", value: "1〜3日前" }] }); // 10 labels and choice texts (Q21)
     const [a] = await audits("QUESTIONNAIRE_VIEW", bk.id);
-    expect(JSON.stringify(a.detail)).not.toContain("腹痛");
+    expect(a.detail).toBeNull(); // 更新9
     const none = await booking(p.id);
     expect((await act({ action: "questionnaire", id: p.id, bookingId: none.id })).body.code).toBe("SE090");
   });
