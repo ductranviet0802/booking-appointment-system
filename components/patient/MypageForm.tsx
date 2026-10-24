@@ -32,6 +32,13 @@ export type MypageData = {
 const FORM = "p06";
 const cardKey = (id: string) => `card:${id}`;
 
+// event 16: the mobile panels in marker order; a failed check opens the panel of the first error
+const PANELS = ["profile", "login", "lang", "cards"] as const;
+type Panel = (typeof PANELS)[number];
+export const panelOf = (field: string): Panel =>
+  field.startsWith("card:") ? "cards" : field === "email" || /assword/.test(field) ? "login" : field === "notifyChannel" || field === "smsOptIn" ? "lang" : "profile";
+export const firstPanel = (errors: ServerError[]): Panel => PANELS[Math.min(...errors.map((e) => PANELS.indexOf(panelOf(e.field))))];
+
 export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
   const router = useRouter();
   const apiFetch = useApiFetch();
@@ -78,9 +85,17 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
   const id = (f: string) => fieldId(FORM, f);
   const inlineEmail = data.inline === "PE005" && !fe.errors.email ? t("PE005", lang) : null;
 
+  const [open, setOpen] = useState<Panel>("profile"); // Q13 f
+  /** open the panel of the first error, then show / focus the errors once it is rendered (mobile; desktop shows all) */
+  const showErrors = (list: ServerError[], apply: () => void) => {
+    if (list.length) setOpen(firstPanel(list));
+    setTimeout(apply, 0);
+  };
+
   // ── event 7 ──
   async function save() {
-    if (!fe.all()) return;
+    const list = check();
+    if (list.length) return showErrors(list, () => fe.all());
     setBusy(true);
     try {
       const res = await apiFetch(...postJson("/api/mypage/save", body()));
@@ -94,7 +109,7 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
         setV(next);
         setSaved(next);
         router.refresh();
-      } else if (out.errors) fe.fromServer(out.errors);
+      } else if (out.errors) showErrors(out.errors, () => fe.fromServer(out.errors));
       else if (res.status === 401) router.refresh();
       else if (res.status !== 429) fatal();
     } finally {
@@ -134,21 +149,30 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
 
   const channelError = err("notifyChannel");
   const lineState = !data.lineLinked ? "lineNone" : data.lineFriend === "FOLLOWING" ? "lineLinked" : "lineNeedFriend";
+  /** a section: desktop card with its heading; mobile collapsible panel (event 16), one open at a time */
+  const panel = (k: Panel, title: LabelKey, children: React.ReactNode, badge?: React.ReactNode) => (
+    <section className={`frm mp-panel ${open === k ? "open" : ""}`} aria-labelledby={id(`sec-${k}`)}>
+      <button type="button" className="mp-ph" aria-expanded={open === k} aria-controls={id(`body-${k}`)} onClick={() => setOpen(k)}>
+        <span>{label(title, lang)} {badge}</span>
+        <Icon name="down" size={16} />
+      </button>
+      <h2 className="mp-h" id={id(`sec-${k}`)}>{label(title, lang)}</h2>
+      <div className="mp-body" id={id(`body-${k}`)}>{children}</div>
+    </section>
+  );
 
   return (
     <div className="col g16" data-testid="p06">
       <h1 className="m0" style={{ fontSize: 22 }}>{label("navMypage", lang)}</h1>
+      {/* mobile: shortcuts, notice, panels, 退会, sticky 保存する; desktop: left column shortcuts + 退会, right column the cards and 保存する */}
       <div className="mp">
-        <aside className="col g12">
-          <nav className="col g8" aria-label={label("navMypage", lang)}>
-            <Link className="btn bs" href="/bookings"><Icon name="cal" />{label("navBookings", lang)}</Link>
-            <Link className="btn bs" href="/mypage/family"><Icon name="user" />{label("familyBtn", lang)}</Link>
-            <Link className="btn bp" href="/booking/new">{label("bookCta", lang)}</Link>
-          </nav>
-          <Withdraw lang={lang} />
-        </aside>
+        <nav className="mp-nav col g8" aria-label={label("navMypage", lang)}>
+          <Link className="btn bs" href="/bookings"><Icon name="cal" />{label("navBookings", lang)}</Link>
+          <Link className="btn bs" href="/mypage/family"><Icon name="user" />{label("familyBtn", lang)}</Link>
+          <Link className="btn bp" href="/booking/new">{label("bookCta", lang)}</Link>
+        </nav>
 
-        <div className="col g16">
+        <div className="mp-main col g16">
           {(data.bounced || data.lineFriend === "UNFOLLOWED") && (
             <div className="warn col g4" data-testid="p06-notice">
               {data.bounced && <p className="m0 row"><Icon name="alert" />{t("PI059", lang)}</p>}
@@ -156,16 +180,14 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
             </div>
           )}
           <ErrorSummary errors={fe.summary} lang={lang} />
-          <form className="col g16" noValidate onSubmit={(e) => { e.preventDefault(); if (changed) void save(); }}>
-            <section className="frm" aria-labelledby={id("sec-profile")}>
-              <h2 id={id("sec-profile")}>{label("secProfile", lang)}</h2>
+          <form id={FORM} className="col g16" noValidate onSubmit={(e) => { e.preventDefault(); if (changed) void save(); }}>
+            {panel("profile", "secProfile", <>
               <NameFields form={FORM} lang={lang} values={v} set={set} blur={fe.blur} err={err} />
               <BirthSexFields form={FORM} lang={lang} values={v} set={set} blur={fe.blur} err={err} />
               <AddressFields form={FORM} lang={lang} values={v} set={set} blur={fe.blur} err={err} />
-            </section>
+            </>)}
 
-            <section className="frm" aria-labelledby={id("sec-login")}>
-              <h2 id={id("sec-login")}>{label("loginInfo", lang)} {pending && <span className="badge badge-warn">{label("pendingBadge", lang)}</span>}</h2>
+            {panel("login", "loginInfo", <>
               <Field id={id("email")} name={label("fEmail", lang)} lang={lang} required error={err("email") ?? inlineEmail}>
                 <input
                   id={id("email")} className="inp" type="email" autoComplete="email" maxLength={254} value={v.email ?? ""}
@@ -174,10 +196,9 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
                 {pending && <p className="xs mut row m0" data-testid="p06-pending"><Icon name="clock" size={14} />{label("pendingEmail", lang, { address: pending })}</p>}
               </Field>
               <PasswordChange lang={lang} />
-            </section>
+            </>, pending && <span className="badge badge-warn" data-testid="p06-pending-badge">{label("pendingBadge", lang)}</span>)}
 
-            <section className="frm" aria-labelledby={id("sec-lang")}>
-              <h2 id={id("sec-lang")}>{label("secLangNotify", lang)}</h2>
+            {panel("lang", "secLangNotify", <>
               <Field id={id("language")} name={label("displayLang", lang)} lang={lang} required>
                 <select id={id("language")} className="inp w-pref" value={lang} onChange={(e) => void changeLanguage(e.target.value as Lang)}>
                   {LANGS.map((l) => <option key={l} value={l}>{LANG_NAMES[l]}</option>)}
@@ -213,10 +234,9 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
                   {data.inline === "PE052" && <p className="fe m0" role="alert"><Icon name="alert" size={16} />{t("PE052", lang)}</p>}
                 </div>
               </div>
-            </section>
+            </>)}
 
-            <section className="frm" aria-labelledby={id("sec-cards")}>
-              <h2 id={id("sec-cards")}>{label("secCards", lang)}</h2>
+            {panel("cards", "secCards", <>
               <table className="tbl">
                 <thead><tr><th>{label("clinicLabel", lang)}</th><th>{label("cardNoCol", lang)}</th><th>{label("cardState", lang)}</th></tr></thead>
                 <tbody>
@@ -241,12 +261,13 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
                 </tbody>
               </table>
               <p className="xs mut m0">{label("cardNote", lang)}</p>
-            </section>
-
-            <div className="mp-save">
-              <Button type="submit" full disabled={!changed} busy={busy}>{label("saveBtn", lang)}</Button>
-            </div>
+            </>)}
           </form>
+        </div>
+
+        <Withdraw lang={lang} />
+        <div className="mp-save">
+          <Button type="submit" form={FORM} full disabled={!changed} busy={busy}>{label("saveBtn", lang)}</Button>
         </div>
       </div>
     </div>
@@ -336,7 +357,7 @@ function Withdraw({ lang }: { lang: Lang }) {
   }
 
   return (
-    <section className="box" style={{ borderColor: "#f0b8b1" }} aria-labelledby="p06-withdraw">
+    <section className="box mp-wd" style={{ borderColor: "#f0b8b1" }} aria-labelledby="p06-withdraw">
       <h2 id="p06-withdraw" className="m0" style={{ fontSize: 15 }}>{label("withdrawHeading", lang)}</h2>
       <p className="m0 sm">{label("withdrawNote", lang)}</p>
       <Button variant="danger" onClick={() => ask(false)}>{label("withdrawBtn", lang)}</Button>

@@ -32,6 +32,22 @@ export const personOf = (v: Values) => ({ ...v, birthDate: birthOf(v) });
 
 const OTHER = "__other";
 
+type Candidate = { prefecture: string; city: string; town: string };
+/**
+ * 05 X4 / reading 4, the answer of /api/postcode → what the form does: 1 candidate fills 都道府県 · 市区町村 · 町域;
+ * n fill 都道府県 · 市区町村 and offer the towns; 404 (0) → PE012, anything else → PE013; the fields stay editable.
+ */
+export function postcodeOutcome(status: number, candidates: Candidate[] = []):
+  { patch: Values | null; towns: string[] | null; note: "PE012" | "PE013" | null } {
+  if (status !== 200 || candidates.length === 0) return { patch: null, towns: null, note: status === 404 ? "PE012" : "PE013" };
+  const first = candidates[0];
+  const towns = [...new Set(candidates.map((c) => c.town).filter(Boolean))];
+  if (candidates.length === 1 || towns.length <= 1) {
+    return { patch: { prefecture: first.prefecture, city: first.city, town: towns[0] ?? "" }, towns: null, note: null };
+  }
+  return { patch: { prefecture: first.prefecture, city: first.city, town: "" }, towns, note: null };
+}
+
 export function NameFields({ form, lang, values: v, set, blur, err, disabled }: Props) {
   const romaji = v.nameType === "ROMAJI";
   const id = (f: string) => fieldId(form, f);
@@ -133,17 +149,10 @@ export function AddressFields({ form, lang, values: v, set, blur, err, phoneRequ
       setNote(null);
       try {
         const res = await fetch(`/api/postcode?code=${code}`);
-        if (res.ok) {
-          const { candidates } = (await res.json()) as { candidates: Array<{ prefecture: string; city: string; town: string }> };
-          const first = candidates[0];
-          const many = candidates.length > 1 ? [...new Set(candidates.map((c) => c.town).filter(Boolean))] : [];
-          set({ prefecture: first.prefecture, city: first.city, town: candidates.length === 1 ? first.town : "" });
-          setTowns(many.length > 1 ? many : null);
-          if (many.length === 1) set({ prefecture: first.prefecture, city: first.city, town: many[0] });
-        } else {
-          setTowns(null);
-          setNote(res.status === 404 ? "PE012" : "PE013");
-        }
+        const out = postcodeOutcome(res.status, res.ok ? ((await res.json()) as { candidates: Candidate[] }).candidates : []);
+        if (out.patch) set(out.patch);
+        setTowns(out.towns);
+        setNote(out.note);
       } catch {
         setTowns(null);
         setNote("PE013");
@@ -163,12 +172,15 @@ export function AddressFields({ form, lang, values: v, set, blur, err, phoneRequ
   return (
     <>
       <Field
-        id={id("postcode")} name={label("postcode", lang)} lang={lang} required error={err("postcode")}
+        id={id("postcode")} name={label("postcode", lang)} lang={lang} required error={err("postcode") ?? (note && t(note, lang))}
         help={busy ? <span className="row" role="status"><Icon name="spin" className="spin" size={14} />{label("postcodeSearching", lang)}</span> : label("postcodeHelp", lang)}
       >
         <div className="row">
           <span aria-hidden="true">〒</span>
-          {text("postcode", 8, { inputMode: "numeric", autoComplete: "postal-code", className: "inp w-pc", onBlur: lookup })}
+          <input
+            id={id("postcode")} className="inp w-pc" value={v.postcode ?? ""} maxLength={8} disabled={disabled} inputMode="numeric"
+            autoComplete="postal-code" onChange={(e) => set({ postcode: e.target.value })} onBlur={lookup} {...invalid(id("postcode"), err("postcode"))}
+          />
         </div>
       </Field>
       <Field id={id("prefecture")} name={label("prefecture", lang)} lang={lang} required error={err("prefecture")}>
@@ -199,7 +211,6 @@ export function AddressFields({ form, lang, values: v, set, blur, err, phoneRequ
           </select>
         ) : text("town", 100)}
       </Field>
-      {note && <p className="fe" role="status"><Icon name="alert" size={16} />{t(note, lang)}</p>}
       <Field id={id("addressLine")} name={label("addressLine", lang)} lang={lang} required error={err("addressLine")}>{text("addressLine", 200)}</Field>
       <Field id={id("building")} name={label("building", lang)} lang={lang} optional error={err("building")}>
         {text("building", 100, { placeholder: label("buildingPh", lang) })}

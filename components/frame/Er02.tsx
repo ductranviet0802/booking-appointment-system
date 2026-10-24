@@ -15,9 +15,9 @@ import { ErrorBlock } from "./ErrorBlock";
 
 export const isStaffPath = (pathname: string | null) => /^\/(staff|admin)(\/|$)/.test(pathname ?? "");
 
-export function Er02View({ lang, staff }: { lang: Lang; staff: boolean }) {
+export function Er02View({ lang, staff, inFrame }: { lang: Lang; staff: boolean; inFrame?: boolean }) {
   return (
-    <ErrorBlock icon="alert" tone="red" title={label("er02Title", lang)} message={t(staff ? "SE090" : "PE090", lang)} testId="er02">
+    <ErrorBlock icon="alert" tone="red" title={label("er02Title", lang)} message={t(staff ? "SE090" : "PE090", lang)} testId="er02" inFrame={inFrame}>
       <div className="acts acts-rev">
         {staff ? (
           <Link className="btn bs" href="/staff/ledger">{label("toLedger", "ja")}</Link>
@@ -33,11 +33,11 @@ export function Er02View({ lang, staff }: { lang: Lang; staff: boolean }) {
   );
 }
 
-/** For app/error.tsx and the group error boundaries: language from the provider, staff from the URL */
-export function Er02() {
+/** For app/error.tsx and the group error boundaries (inFrame: inside a layout that already has <main>) */
+export function Er02({ inFrame }: { inFrame?: boolean }) {
   const staff = isStaffPath(usePathname());
   const lang = useLang();
-  return <Er02View lang={staff ? "ja" : lang} staff={staff} />;
+  return <Er02View lang={staff ? "ja" : lang} staff={staff} inFrame={inFrame} />;
 }
 
 /** For app/global-error.tsx, which has no providers: the language comes from the cookie once mounted */

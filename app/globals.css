@@ -248,6 +248,13 @@ a { color: inherit; }
 .pw-wrap .inp { padding-right: 48px; }
 .pw-eye { position: absolute; right: 0; top: 0; width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; color: var(--mut); cursor: pointer; }
 .pw-eye[aria-pressed="true"] { color: var(--pri); }
+/* P06: mobile panels (event 16) with a sticky 保存する; desktop two columns (shortcuts + 退会 | cards + 保存する) */
+.mp { display: flex; flex-direction: column; gap: 16px; }
+.mp-h { display: none; }
+.mp-ph { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 15px; font-weight: 700; text-align: left; cursor: pointer; }
+.mp-panel.open .mp-ph svg { transform: rotate(180deg); }
+.mp-body { display: flex; flex-direction: column; gap: 14px; }
+.mp-panel:not(.open) > .mp-body { display: none; }
 .mp-save { position: sticky; bottom: 0; background: var(--page); padding: 8px 0; z-index: 5; }
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th, .tbl td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eef2f3; vertical-align: middle; }
@@ -259,7 +266,12 @@ a { color: inherit; }
   .login-cards { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 284px); justify-content: center; align-items: start; }
   .login-cards .fld, .acct-narrow .fld { display: flex; }
   .login-cards .fld > .lbl, .acct-narrow .fld > .lbl { padding-top: 0; }
-  .mp { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
+  .mp { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: auto 1fr auto; grid-template-areas: "nav main" "wd main" ". save"; gap: 24px; align-items: start; }
+  .mp-nav { grid-area: nav; } .mp-main { grid-area: main; } .mp-wd { grid-area: wd; }
+  .mp-save { grid-area: save; position: static; padding: 0; }
+  .mp-ph { display: none; }
+  .mp-h { display: block; }
+  .mp-panel:not(.open) > .mp-body { display: flex; }
   .fam { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; }
   .sheet { position: static; inset: auto; z-index: auto; border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
 }

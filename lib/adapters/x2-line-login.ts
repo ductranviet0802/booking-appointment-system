@@ -2,10 +2,10 @@
 // LINE_LOGIN = fake (default, no channel before go-live) | line (LINE_CHANNEL_ID, LINE_CHANNEL_SECRET).
 // fake: the authorize URL is our own callback with code=fake-<random> and the friendship flag; the exchange returns a
 // deterministic user id for the code.
-import { createHash, randomBytes } from "node:crypto";
+import { newSecret, sha256 } from "@/lib/auth/session";
 
 export const lineMode = () => (process.env.LINE_LOGIN === "line" ? "line" : "fake");
-export const randomToken = () => randomBytes(24).toString("base64url");
+export const randomToken = () => newSecret().value;
 
 export function authorizeUrl(o: { state: string; nonce: string; redirectUri: string }) {
   if (lineMode() === "fake") {
@@ -23,7 +23,7 @@ export function authorizeUrl(o: { state: string; nonce: string; redirectUri: str
 export async function exchangeCode(code: string, redirectUri: string, nonce: string): Promise<{ userId: string; friend: boolean }> {
   if (lineMode() === "fake") {
     if (!code.startsWith("fake-")) throw new Error("not a fake code");
-    return { userId: `U${createHash("sha256").update(code).digest("hex").slice(0, 32)}`, friend: true };
+    return { userId: `U${sha256(code).slice(0, 32)}`, friend: true };
   }
   const res = await fetch("https://api.line.me/oauth2/v2.1/token", {
     method: "POST",

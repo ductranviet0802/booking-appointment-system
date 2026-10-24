@@ -19,6 +19,7 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/mypage",
 }));
 jest.mock("next/link", () => ({ __esModule: true, default: (p: { href: string; children: React.ReactNode; className?: string }) => <a href={p.href} className={p.className}>{p.children}</a> }));
+jest.mock("@/components/frame/Frames", () => ({ PatientFrameHeader: () => <header data-testid="cf01" />, ViewerHeader: () => null, StaffFrameHeader: () => null }));
 process.env.NOTIFY_OUTBOX_DIR = mkdtempSync(path.join(tmpdir(), "p06-outbox-"));
 process.env.__NEXT_EXPERIMENTAL_AUTH_INTERRUPTS = "true";
 
@@ -33,8 +34,17 @@ import type { Actor } from "@/lib/patient/route";
 import { POST as saveRoute } from "@/app/api/mypage/save/route";
 import { POST as withdrawRoute } from "@/app/api/mypage/withdraw/route";
 import { GET as lineStart } from "@/app/api/mypage/line/start/route";
+import { GET as postcodeRoute } from "@/app/api/postcode/route";
+import { GET as lineCallbackRoute } from "@/app/api/mypage/line/callback/route";
+import PatientLayout from "@/app/(patient)/layout";
+import PatientError from "@/app/(patient)/error";
+import PatientNotFound from "@/app/(patient)/not-found";
+import PatientUnauthorized from "@/app/(patient)/unauthorized";
 import { ToastProvider } from "@/components/ui/Toast";
-import { MypageForm } from "@/components/patient/MypageForm";
+import { consumeFlash, FlashToast } from "@/components/patient/FlashToast";
+import { firstPanel, MypageForm } from "@/components/patient/MypageForm";
+import { postcodeOutcome } from "@/components/patient/PersonFields";
+import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 
 jest.setTimeout(90_000);
 const MARK = "p06test";
@@ -312,6 +322,103 @@ describe("P06 LINE link (event 5, X2-L fake mode)", () => {
     const rt = await roundTrip(h.sid);
     expect(await lineCallback(h.acc.id, { ...rt.q, error: "access_denied" }, rt.cookie)).toBe("PE052");
   });
+
+  it("callback route: a forged state → PE052 flash for P06, state cookie dropped, nothing written; a replay without the cookie → PE052", async () => {
+    const h = await holder();
+    const rt = await roundTrip(h.sid);
+    const call = (state: string, cookie?: string) => lineCallbackRoute(new NextRequest(
+      `http://localhost:3002/api/mypage/line/callback?code=${rt.q.code}&state=${state}`,
+      { headers: cookie ? { cookie: `line_oauth=${cookie}` } : {} },
+    ));
+    const forged = await call("forged", rt.cookie);
+    expect(forged.status).toBe(303);
+    expect(forged.headers.get("location")).toBe("/mypage");
+    expect(forged.headers.getSetCookie().join("\n")).toMatch(/flash=PE052/);
+    expect(forged.headers.getSetCookie().join("\n")).toMatch(/line_oauth=;/);
+    expect((await prisma.account.findUniqueOrThrow({ where: { id: h.acc.id } })).lineUserId).toBeNull();
+    const ok = await call(rt.q.state!, rt.cookie);
+    expect(ok.headers.getSetCookie().join("\n")).toMatch(/flash=PI043/);
+    const linked = (await prisma.account.findUniqueOrThrow({ where: { id: h.acc.id } })).lineUserId;
+    expect(linked).not.toBeNull();
+    // the browser dropped the cookie: replaying the same URL is refused and changes nothing
+    expect((await call(rt.q.state!)).headers.getSetCookie().join("\n")).toMatch(/flash=PE052/);
+    expect((await prisma.account.findUniqueOrThrow({ where: { id: h.acc.id } })).lineUserId).toBe(linked);
+  });
+});
+
+describe("X4 postcode for P06 / P07 (reading 4)", () => {
+  const ask = async (code: string) => {
+    const res = await postcodeRoute(new NextRequest(`http://localhost:3002/api/postcode?code=${code}`));
+    return postcodeOutcome(res.status, res.ok ? (await res.json()).candidates : []);
+  };
+  it("1 candidate fills prefecture / city / town; n fill prefecture / city and offer the towns; 0 → PE012; unavailable (503) → PE013", async () => {
+    const one = await ask("100-0000");
+    expect(one).toMatchObject({ towns: null, note: null, patch: { prefecture: "東京都", city: "千代田区", town: "" } });
+    const many = await ask("0790177");
+    expect(many.note).toBeNull();
+    expect(many.towns!.length).toBeGreaterThan(1);
+    expect(many.patch).toMatchObject({ town: "" });
+    expect(many.patch!.prefecture).toBeTruthy();
+    expect(await ask("9999999")).toEqual({ patch: null, towns: null, note: "PE012" });
+    process.env.X4_SOURCE = "https://example.invalid";
+    try {
+      const res = await postcodeRoute(new NextRequest("http://localhost:3002/api/postcode?code=1112223"));
+      expect(res.status).toBe(503);
+      expect(postcodeOutcome(res.status)).toEqual({ patch: null, towns: null, note: "PE013" });
+    } finally {
+      delete process.env.X4_SOURCE;
+    }
+  });
+});
+
+describe("patient frame: F-04 (no CF-02 in the error frames) and PI041 on P01 (reading 6)", () => {
+  /** renders async server components the way the server would, for renderToStaticMarkup */
+  async function resolve(node: ReactNode): Promise<ReactNode> {
+    if (Array.isArray(node)) return Children.toArray(await Promise.all(node.map(resolve))); // keys for the rebuilt lists
+    if (!isValidElement(node)) return node;
+    const el = node as ReactElement<{ children?: ReactNode }>;
+    if (typeof el.type === "function" && el.type.constructor.name === "AsyncFunction") {
+      return resolve(await (el.type as (p: unknown) => Promise<ReactNode>)(el.props));
+    }
+    if (el.props.children === undefined) return el;
+    return { ...el, props: { ...el.props, children: await resolve(el.props.children) } } as ReactElement;
+  }
+  const frame = async (child: ReactNode) => {
+    mockJar.sid = undefined;
+    const tree = await resolve(await PatientLayout({ children: child }));
+    return renderToStaticMarkup(<ToastProvider lang="ja">{tree}</ToastProvider>);
+  };
+  const css = readFileSync(path.join(process.cwd(), "app/globals.css"), "utf8");
+
+  it("ER-01 / ER-02 / ER-05 of the group: the error block carries .eb, so the layout's CF-02 is hidden; a normal page keeps it", async () => {
+    expect(css).toMatch(/\.page:has\(\.eb\) \.ft \{ display: none; \}/);
+    for (const child of [<PatientError key="e" />, await PatientNotFound(), await PatientUnauthorized()]) {
+      const html = await frame(child);
+      expect(html).toMatch(/^<div class="page">/); // the rule's .page is the layout root
+      expect(html).toContain('class="eb"');
+      expect(html).toContain('data-testid="cf02"'); // in the DOM, hidden by the rule above
+      expect(html).toContain('data-testid="cf01"'); // CF-01 stays
+      expect((html.match(/<main/g) ?? []).length).toBe(1); // the error block does not open a second <main>
+    }
+    const page = await frame(<p>P01</p>);
+    expect(page).not.toContain('class="eb"');
+    expect(page).toContain('data-testid="cf02"');
+  });
+
+  it("the withdrawal flash PI041 is read once on the next screen (P01 is in the group, whose layout mounts FlashToast)", async () => {
+    const layout = await PatientLayout({ children: null });
+    expect((layout.props as { children: ReactElement[] }).children.some((c) => c?.type === FlashToast)).toBe(true);
+    const jar = new Map([["flash", "PI041"], ["lang", "ja"]]);
+    const doc = {
+      get cookie() { return [...jar].map(([k, v]) => `${k}=${v}`).join("; "); },
+      set cookie(s: string) { const [k, v] = s.split(";")[0].split("="); if (/Max-Age=0/.test(s)) jar.delete(k); else jar.set(k, v); },
+    };
+    expect(consumeFlash(doc)).toBe("PI041");
+    expect(jar.has("flash")).toBe(false);
+    expect(consumeFlash(doc)).toBeNull(); // once
+    jar.set("flash", "PE052"); // shown in place by P06 item 21, not as a toast
+    expect(consumeFlash(doc)).toBeNull();
+  });
 });
 
 describe("P06 screen", () => {
@@ -327,7 +434,26 @@ describe("P06 screen", () => {
     expect(html).toContain('href="/api/mypage/line/start"');
     expect(html).toContain('href="/mypage/family"');
     expect((html.match(/placeholder="未登録"/g) ?? []).length).toBe(clinicIds.length);
-    expect(html).toMatch(/class="btn bdis bw" disabled="">保存する/);
+    expect(html).toMatch(/class="btn bdis bw" disabled="" form="p06">保存する/);
     expect(html).toContain("退会すると、ご家族の情報を含めて利用できなくなります。");
+    expect(html.indexOf('form="p06"')).toBeGreaterThan(html.indexOf("p06-withdraw")); // 保存する after the 退会 box (mobile order), submitting the form
+    expect(html).toMatch(/class="frm mp-panel open"[^>]*aria-labelledby="p06-sec-profile"/); // Q13 f
+    expect(html).not.toContain("p06-pending-badge");
+  });
+
+  it("state ②: the pending address under item 16 and the 確認待ちあり badge on the mobile panel header", async () => {
+    const h = await holder();
+    await prisma.account.update({ where: { id: h.acc.id }, data: { pendingEmail: `p.${h.acc.email}` } });
+    const data = await loadMypage(h.acc.id, "en");
+    const html = renderToStaticMarkup(<ToastProvider lang="en"><MypageForm lang="en" data={{ ...data, inline: null }} /></ToastProvider>);
+    expect(html).toContain(`p.${h.acc.email}`);
+    expect(html).toContain("p06-pending-badge");
+    expect(html).toContain("Save");
+  });
+
+  it("event 16: the panel of the first error (document order) opens", () => {
+    expect(firstPanel([{ field: "card:x", code: "PE002" }, { field: "email", code: "PE002" }])).toBe("login");
+    expect(firstPanel([{ field: "notifyChannel", code: "PE050" }, { field: "phone", code: "PE015" }])).toBe("profile");
+    expect(firstPanel([{ field: "card:x", code: "PE053" }])).toBe("cards");
   });
 });

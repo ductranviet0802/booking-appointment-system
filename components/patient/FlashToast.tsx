@@ -16,14 +16,20 @@ export function readFlash(cookie: string) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
+/** reads the flash once and drops it; returns the id to toast (null: none, or shown in place by its page) */
+export function consumeFlash(doc: { cookie: string }) {
+  const id = readFlash(doc.cookie);
+  if (!id) return null;
+  doc.cookie = `${FLASH}=; Max-Age=0; Path=/`;
+  return hasMessage(id) && !INLINE_FLASH.has(id) ? id : null;
+}
+
 export function FlashToast() {
   const { toast } = useToast();
   const pathname = usePathname();
   useEffect(() => {
-    const id = readFlash(document.cookie);
-    if (!id) return;
-    document.cookie = `${FLASH}=; Max-Age=0; Path=/`;
-    if (hasMessage(id) && !INLINE_FLASH.has(id)) toast(id);
+    const id = consumeFlash(document);
+    if (id) toast(id);
   }, [pathname, toast]);
   return null;
 }
