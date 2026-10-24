@@ -243,6 +243,11 @@ a { color: inherit; }
 .card.cur { border-color: var(--pri); box-shadow: inset 0 0 0 1px var(--pri); }
 .avatar { width: 40px; height: 40px; border-radius: 20px; background: var(--pri-t); color: #075e5a; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
 .sheet { position: fixed; inset: 0; z-index: 45; background: #fff; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.login-cards { display: flex; flex-direction: column; gap: 16px; }
+.pw-wrap { position: relative; }
+.pw-wrap .inp { padding-right: 48px; }
+.pw-eye { position: absolute; right: 0; top: 0; width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; color: var(--mut); cursor: pointer; }
+.pw-eye[aria-pressed="true"] { color: var(--pri); }
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th, .tbl td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eef2f3; vertical-align: middle; }
 @media (min-width: 768px) {
@@ -250,6 +255,9 @@ a { color: inherit; }
   .fld { display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: start; }
   .fld > .lbl { padding-top: 12px; }
   .pair .fld { display: flex; }
+  .login-cards { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 284px); justify-content: center; align-items: start; }
+  .login-cards .fld, .acct-narrow .fld { display: flex; }
+  .login-cards .fld > .lbl, .acct-narrow .fld > .lbl { padding-top: 0; }
   .mp { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
   .fam { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; }
   .sheet { position: static; inset: auto; z-index: auto; border: 1px solid var(--line); border-radius: 12px; padding: 24px; }

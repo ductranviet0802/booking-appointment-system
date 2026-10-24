@@ -8,7 +8,6 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
-import { useToast } from "@/components/ui/Toast";
 import { STAFF } from "@/lib/i18n/labels";
 import { openStaffErrorScreen, postJson, useApiFetch } from "@/lib/client/api";
 import { staffMenu } from "@/lib/frame/menu";
@@ -28,7 +27,6 @@ export function StaffHeader({ groupName, role, displayName, clinics, clinicId }:
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const apiFetch = useApiFetch();
-  const { toast } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const menu = staffMenu(role);
   const current = menu.find((e) => pathname === e.href || pathname.startsWith(`${e.href}/`));
@@ -42,8 +40,7 @@ export function StaffHeader({ groupName, role, displayName, clinics, clinicId }:
   async function logout() {
     const res = await apiFetch("/api/auth/logout", { method: "POST" });
     if (res?.ok) {
-      toast("PI011");
-      router.push("/login"); // T089 → P02
+      router.push("/login"); // T089 → P02, which shows PI011 in its box 1-1 (flash cookie of the logout answer)
       router.refresh();
     }
   }
