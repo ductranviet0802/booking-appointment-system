@@ -224,7 +224,13 @@ describe("confirm", () => {
     expect(yes.status).toBe(200);
     expect(await prisma.booking.count({ where: { patientId: p.id } })).toBe(2);
     expect((await call("confirm", book(p.id, { date: addDays(todayJst(), 40) }))).body.code).toBe("SE022");
-    expect((await call("confirm", book(p.id, { date: addDays(todayJst(), 7), ackNoTarget: true }))).body.code).toBe("SE020"); // no frames: nothing to hold
+    // no frames: a day the clinic is open → nothing to hold (SE020); a closed day (the fixture's Sat / Sun) → SE023 (A-5)
+    const days = Array.from({ length: 7 }, (_, i) => addDays(todayJst(), 7 + i));
+    const weekend = days.find((d) => [0, 6].includes(new Date(`${d}T00:00:00Z`).getUTCDay()))!;
+    const holidays = new Set((await prisma.holiday.findMany({ where: { holidayDate: { in: days.map(dbDate) } } })).map((h) => h.holidayDate.toISOString().slice(0, 10)));
+    const open = days.find((d) => ![0, 6].includes(new Date(`${d}T00:00:00Z`).getUTCDay()) && !holidays.has(d))!;
+    expect((await call("confirm", book(p.id, { date: open, ackNoTarget: true }))).body.code).toBe("SE020");
+    expect((await call("confirm", book(p.id, { date: weekend, ackNoTarget: true }))).body.code).toBe("SE023");
   });
 
   it("new patient: SW021 first (nothing written), then registered with 診察券 and booked in one transaction; SMS target with consent", async () => {

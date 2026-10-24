@@ -6,6 +6,7 @@ import { randomInt } from "node:crypto";
 import { Prisma, type Booking, type BookingChannel, type CancelReason, type Language } from "@prisma/client";
 import { encryptJson, encryptText } from "@/lib/crypto/field";
 import { addDays, dbDate, dbTime, jstInstant, todayJst, toHhmm, toIsoDate } from "@/lib/datetime";
+import { openBandsForDate } from "@/lib/batch/b2-frames";
 import { prisma } from "@/lib/prisma";
 import { deliverAfterCommit, enqueueBookingNotice } from "./notify";
 import { beforeDeadline, policyOf } from "./policy";
@@ -274,6 +275,7 @@ async function rulesOf(tx: Tx, input: BookingInput, actor: Actor, opts: Options,
   let doctorId = input.doctorId;
   let run: Frame[] | null = null;
   if (!masterOk) failed.add("TAKEN"); // master no longer bookable = frame no longer bookable (P13 5-1)
+  else if (rows.length === 0 && (await closedDay(tx, input))) failed.add("CLOSED");
   else if (doctorId) {
     run = runOf(doctorId);
     if (!run) failed.add("TAKEN");
@@ -304,6 +306,13 @@ async function rulesOf(tx: Tx, input: BookingInput, actor: Actor, opts: Options,
     return { ok: false, rule: list[0], failed: list, sameDayBookingNos: failed.has("LIMIT") ? limitRows.map((b) => b.bookingNo) : undefined } satisfies Fail;
   }
   return { ok: true as const, old, oldFrames, doctorId: doctorId!, frames: run!, endIso, vt: vt!, now };
+}
+
+/** PE035 for a date without frame rows (A-5): clinic × department has no frame that day and clinic_calendar_days /
+ *  holidays close the whole day (P11 抽出11 closure; a closed frame gives CLOSED by itself) */
+async function closedDay(tx: Tx, input: BookingInput) {
+  const frames = await tx.slot.count({ where: { clinicId: input.clinicId, departmentId: input.departmentId, slotDate: dbDate(input.slotDate) } });
+  return frames === 0 && (await openBandsForDate(tx, input.clinicId, input.slotDate)).length === 0;
 }
 
 /** 指名なし (F4-04, P13 抽出5, Q7 A): fewest RESERVED + CHECKED_IN bookings at the clinic that date, tie display_order */

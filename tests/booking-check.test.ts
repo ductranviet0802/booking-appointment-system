@@ -25,16 +25,17 @@ beforeAll(async () => {
   runId = (await prisma.batchRun.create({
     data: { jobCode: "B2", trigger: "MANUAL", clinicId: f.clinic.id, startedAt: new Date(), endedAt: new Date(), status: "SUCCESS", readCount: 0, writtenCount: 0, errorCount: 0 },
   })).id;
-  // a weekday of the fixture's hours, not a holiday, inside the window (the calendar rules of A-5 must not hit it)
-  for (let i = 3; ; i++) {
+  DAY = await openWeekday(3); // the calendar rules of A-5 must not hit it
+});
+
+/** the first weekday (the fixture's hours: Mon–Fri) without a holiday, `from` days after today or later */
+async function openWeekday(from: number) {
+  for (let i = from; ; i++) {
     const d = addDays(todayJst(), i);
     const wd = new Date(`${d}T00:00:00Z`).getUTCDay();
-    if (wd >= 1 && wd <= 5 && !(await prisma.holiday.count({ where: { holidayDate: dbDate(d), isActive: true } }))) {
-      DAY = d;
-      break;
-    }
+    if (wd >= 1 && wd <= 5 && !(await prisma.holiday.count({ where: { holidayDate: dbDate(d) } }))) return d;
   }
-});
+}
 
 afterAll(async () => {
   await f.cleanup();
@@ -106,6 +107,20 @@ const cases: Case[] = [
   ["CLOSED frame → CLOSED (PE035)", ["CLOSED"], async () => {
     await frames(1, ["09:15"], { status: "CLOSED" });
     return { inp: input((await person()).id, { doctorId: f.doctors[1].id, startTime: "09:15" }), actor: patientActor() };
+  }],
+  ["A-5: no frames on a date clinic_calendar_days closes → CLOSED (PE035)", ["CLOSED"], async () => {
+    const d = await openWeekday(12);
+    await f.calendar(d, "CLOSED");
+    return { inp: input((await person()).id, { slotDate: d, startTime: "10:00" }), actor: patientActor() };
+  }],
+  ["A-5: no frames on a national holiday → CLOSED (PE035)", ["CLOSED"], async () => {
+    const d = await openWeekday(16);
+    await f.holiday(d);
+    return { inp: input((await person()).id, { slotDate: d, doctorId: null, doctorRequested: false, startTime: "10:00" }), actor: patientActor() };
+  }],
+  ["A-5: no frames on an open weekday → TAKEN (PE030), not a closure", ["TAKEN"], async () => {
+    const d = await openWeekday(20);
+    return { inp: input((await person()).id, { slotDate: d, startTime: "10:00" }), actor: patientActor() };
   }],
   ["full frame → TAKEN (PE030)", ["TAKEN"], async () => {
     await frames(1, ["09:30"], { reserved: 1 });
