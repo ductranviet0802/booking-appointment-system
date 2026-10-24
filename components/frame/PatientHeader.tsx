@@ -53,11 +53,16 @@ export function PatientHeader({ lang, groupName, userName, clinicsHref, logoOnly
   const burger = useRef<HTMLButtonElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const langBox = useRef<HTMLDivElement>(null);
+  const langBtn = useRef<HTMLButtonElement>(null);
   const loggedIn = userName !== null;
 
   useEffect(() => {
     if (drawer) closeBtn.current?.focus();
   }, [drawer]);
+
+  useEffect(() => {
+    if (langOpen) langBox.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus();
+  }, [langOpen]);
 
   useEffect(() => {
     if (!drawer && !langOpen) return;
@@ -67,6 +72,7 @@ export function PatientHeader({ lang, groupName, userName, clinicsHref, logoOnly
         setDrawer(false);
         burger.current?.focus(); // focus returns to item 7 (Q14)
       }
+      if (langOpen) langBtn.current?.focus();
       setLangOpen(false);
     };
     const onDown = (e: MouseEvent) => {
@@ -107,6 +113,17 @@ export function PatientHeader({ lang, groupName, userName, clinicsHref, logoOnly
     }
   }
 
+  // listbox keys (item 8): ↑ ↓ Home End move, Enter / Space choose (buttons), Esc closes (above), Tab leaves and closes
+  function listKeys(e: React.KeyboardEvent<HTMLDivElement>) {
+    const opts = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="option"]'));
+    const i = opts.indexOf(document.activeElement as HTMLElement);
+    const next = ({ ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: opts.length - 1 } as Record<string, number>)[e.key];
+    if (next !== undefined) {
+      e.preventDefault();
+      opts[(next + opts.length) % opts.length].focus();
+    } else if (e.key === "Tab") setLangOpen(false);
+  }
+
   const hrefOf = (href: string) => (href === "/clinics" ? clinicsHref : href);
   const isCurrent = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
   const name = userName ? `${userName}${label("nameSuffix", lang)}` : "";
@@ -136,14 +153,34 @@ export function PatientHeader({ lang, groupName, userName, clinicsHref, logoOnly
       <nav className="nav" aria-label={label("menuNav", lang)}>{items("bar")}</nav>
       <span className="sp" />
 
+      {/* before 8 in the DOM: Tab 1 → 7 → 8 on mobile (_common §3.1); drawn rightmost by .burger order */}
+      <button
+        ref={burger}
+        type="button"
+        className="ib burger"
+        aria-label={label("openMenu", lang)}
+        aria-expanded={drawer}
+        aria-controls="cf01-drawer"
+        onClick={() => setDrawer(true)}
+      >
+        <Icon name="menu" size={24} />
+      </button>
+
       <div className="lang-box" ref={langBox}>
         <button
+          ref={langBtn}
           type="button"
           className="lang"
           aria-haspopup="listbox"
           aria-expanded={langOpen}
           aria-label={`${label("langAria", lang)}: ${LANG_NAMES[lang]}`}
           onClick={() => setLangOpen((o) => !o)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault();
+              setLangOpen(true);
+            }
+          }}
         >
           <Icon name="globe" />
           <span className="lang-full">{LANG_NAMES[lang]}</span>
@@ -151,9 +188,9 @@ export function PatientHeader({ lang, groupName, userName, clinicsHref, logoOnly
           <Icon name="down" size={16} className="lang-caret" />
         </button>
         {langOpen && (
-          <div className="dd" role="listbox" aria-label={label("langAria", lang)}>
+          <div className="dd" role="listbox" aria-label={label("langAria", lang)} onKeyDown={listKeys}>
             {LANGS.map((l) => (
-              <button key={l} type="button" role="option" aria-selected={l === lang} className={l === lang ? "on2" : undefined} onClick={() => switchLang(l)}>
+              <button key={l} type="button" role="option" tabIndex={-1} aria-selected={l === lang} className={l === lang ? "on2" : undefined} onClick={() => switchLang(l)}>
                 {l === lang ? <Icon name="check" /> : <span style={{ width: 18 }} />}
                 {LANG_NAMES[l]}
               </button>
@@ -175,18 +212,6 @@ export function PatientHeader({ lang, groupName, userName, clinicsHref, logoOnly
           </>
         )}
       </div>
-
-      <button
-        ref={burger}
-        type="button"
-        className="ib burger"
-        aria-label={label("openMenu", lang)}
-        aria-expanded={drawer}
-        aria-controls="cf01-drawer"
-        onClick={() => setDrawer(true)}
-      >
-        <Icon name="menu" size={24} />
-      </button>
 
       {drawer && <div className="scrim-fixed drawer-scrim" onClick={() => setDrawer(false)} />}
       <aside id="cf01-drawer" className={`drawer ${drawer ? "open" : ""}`} aria-label={label("drawerTitle", lang)} hidden={!drawer}>
@@ -218,8 +243,9 @@ export function PatientHeader({ lang, groupName, userName, clinicsHref, logoOnly
             </>
           ) : (
             <>
-              <Link className="btn bp bw" href="/register">{label("register", lang)}</Link>
+              {/* Tab 9 → 10; 10 drawn above 9 by its order */}
               <Link className="btn bs bw" href="/login">{label("login", lang)}</Link>
+              <Link className="btn bp bw drawer-reg" href="/register">{label("register", lang)}</Link>
             </>
           )}
         </div>

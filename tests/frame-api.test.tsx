@@ -88,4 +88,21 @@ describe("frames", () => {
     const two = renderToStaticMarkup(<StaffHeader {...base} clinics={[{ id: "c1", nameJa: "本院" }, { id: "c2", nameJa: "分院" }]} />);
     expect(two).toContain("<select");
   });
+  // Tab order = DOM order (no positive tabindex); _common §3.1 (F-06, F-07)
+  const before = (html: string, a: string, b: string) => expect(html.indexOf(a)).toBeLessThan(html.indexOf(b));
+  it("CF-03 Tab order 17 → 18-n → 20", () => {
+    const html = renderToStaticMarkup(
+      <StaffHeader groupName="G" role="ADMIN" displayName="管理者" clinicId="c1" clinics={[{ id: "c1", nameJa: "本院" }, { id: "c2", nameJa: "分院" }]} />,
+    );
+    before(html, 'id="cf03-clinic"', 'id="cf03-menu"');
+    before(html, 'id="cf03-menu"', "sh-out");
+  });
+  it("CF-01 Tab order 1 → 7 → 8 → 9 → 10, in the drawer too", () => {
+    const html = renderToStaticMarkup(<PatientHeader {...props} userName={null} />);
+    before(html, 'class="logo"', "burger");
+    before(html, "burger", 'class="lang"');
+    const drawer = html.slice(html.indexOf('id="cf01-drawer"'));
+    before(drawer, 'href="/login"', 'href="/register"');
+    expect(html).not.toMatch(/tabindex="[1-9]/i);
+  });
 });

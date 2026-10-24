@@ -76,7 +76,6 @@ export function StaffHeader({ groupName, role, displayName, clinics, clinicId }:
           <span>
             <span className="role">{STAFF.roles[role]}</span> {displayName}
           </span>
-          <button type="button" className="olb" onClick={logout}><Icon name="logout" size={16} />{STAFF.logout}</button>
         </div>
       </div>
       <nav id="cf03-menu" className={`sh2 ${menuOpen ? "open" : ""}`} aria-label={STAFF.menuNav}>
@@ -93,6 +92,8 @@ export function StaffHeader({ groupName, role, displayName, clinics, clinicId }:
           );
         })}
       </nav>
+      {/* after the menu in the DOM: Tab 17 → 18-1…18-9 → 20 (_common §3.1); drawn in the top bar by the .sh grid */}
+      <button type="button" className="olb sh-out" onClick={logout}><Icon name="logout" size={16} />{STAFF.logout}</button>
     </header>
   );
 }
