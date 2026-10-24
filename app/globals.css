@@ -248,6 +248,7 @@ a { color: inherit; }
 .pw-wrap .inp { padding-right: 48px; }
 .pw-eye { position: absolute; right: 0; top: 0; width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; color: var(--mut); cursor: pointer; }
 .pw-eye[aria-pressed="true"] { color: var(--pri); }
+.mp-save { position: sticky; bottom: 0; background: var(--page); padding: 8px 0; z-index: 5; }
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th, .tbl td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eef2f3; vertical-align: middle; }
 @media (min-width: 768px) {

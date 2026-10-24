@@ -27,10 +27,6 @@ export const PERSON_LABELS = {
 export function birthOf(v: Values) {
   return v.bY && v.bM && v.bD ? `${v.bY}-${v.bM.padStart(2, "0")}-${v.bD.padStart(2, "0")}` : "";
 }
-export function splitBirth(iso: string) {
-  const [y = "", m = "", d = ""] = iso ? iso.split("-") : [];
-  return { bY: y, bM: m ? String(Number(m)) : "", bD: d ? String(Number(d)) : "" };
-}
 /** the request body of the person part */
 export const personOf = (v: Values) => ({ ...v, birthDate: birthOf(v) });
 
