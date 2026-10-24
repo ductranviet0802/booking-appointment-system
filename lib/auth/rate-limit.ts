@@ -41,8 +41,9 @@ export function pwChangeBlocked(accountId: string, now = Date.now()) {
   return !!cur && cur.resetAt > now && cur.count >= PW_CHANGE_LIMIT.failures;
 }
 
+/** counts a wrong current password; true when this one is the 5th in the window (Q-019: it already shows PE092) */
 export function countPwChangeFailure(accountId: string, now = Date.now()) {
-  bump(`pwchange:${accountId}`, PW_CHANGE_LIMIT.windowMs, now);
+  return bump(`pwchange:${accountId}`, PW_CHANGE_LIMIT.windowMs, now) >= PW_CHANGE_LIMIT.failures;
 }
 
 /** tests only */
