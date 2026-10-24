@@ -104,9 +104,10 @@ export function decideAccess(screen: ScreenId, s: SessionState, path: string): D
   const { account, reconsent, clinics } = s.ctx;
   if (account.role === "PATIENT") {
     if (firstChangeMode) return { kind: "redirect", to: PATIENT_HOME };
-    if (reconsent.length > 0) return { kind: "redirect", to: CONSENT_PATH };
-    // Q-011 answer: a logged-in patient on a staff URL gets ER-03, not a redirect to P06
+    // Q-011 answer: a logged-in patient on a staff URL gets ER-03, not a redirect to P06 — before CF-04, which would
+    // only lead back to the same ER-03
     if (isStaffScreen(screen)) return { kind: "forbidden" };
+    if (reconsent.length > 0) return { kind: "redirect", to: CONSENT_PATH };
     if (screen === "P02" || screen === "P03" || screen === "P04") return { kind: "redirect", to: PATIENT_HOME };
     return { kind: "allow" };
   }

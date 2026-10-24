@@ -363,20 +363,39 @@ describe("B5 settings and failures", () => {
     }
   });
 
-  it("a failing batch (a booked patient on a PENDING account, FK RESTRICT) rolls back whole → PARTIAL; next run picks up the rest", async () => {
+  it("a PENDING account whose person has a booking (S02) is kept, not a nightly failure; the others go", async () => {
     const created = new Date(Date.now() - 8 * 86_400_000);
-    const bad = await account("PENDING", { createdAt: created });
-    const badSelf = await patient({ accountId: bad.id, relation: "SELF" });
-    const b = await booking(badSelf.id, ago(3));
+    const booked = await account("PENDING", { createdAt: created });
+    const b = await booking((await patient({ accountId: booked.id, relation: "SELF" })).id, ago(3));
     const fine = await account("PENDING", { createdAt: created });
     await patient({ accountId: fine.id, relation: "SELF" });
-    const old = await session(new Date(Date.now() - 40 * 86_400_000));
-    const res = await b5();
-    expect(res.result).toMatchObject({ status: "PARTIAL", errors: 1 });
-    expect(res.result.message).toMatch(/失敗 accounts\.pending: /);
-    expect(await prisma.account.count({ where: { id: { in: [bad.id, fine.id] } } })).toBe(2); // same batch: rolled back together
-    expect(await prisma.session.findUnique({ where: { id: old.id } })).toBeNull(); // the next classes went on
+    expect((await b5()).result.status).toBe("SUCCESS");
+    expect(await prisma.account.findUnique({ where: { id: booked.id } })).not.toBeNull();
+    expect(await prisma.account.findUnique({ where: { id: fine.id } })).toBeNull();
     await prisma.booking.delete({ where: { id: b.id } });
+    expect((await b5()).result.status).toBe("SUCCESS");
+    expect(await prisma.account.findUnique({ where: { id: booked.id } })).toBeNull();
+  });
+
+  it("a failing batch rolls back whole → PARTIAL; next run picks up the rest", async () => {
+    const created = new Date(Date.now() - 8 * 86_400_000);
+    const bad = await account("PENDING", { createdAt: created });
+    const fine = await account("PENDING", { createdAt: created });
+    const old = await session(new Date(Date.now() - 40 * 86_400_000));
+    // test-only trigger: deleting `bad` raises, as any DB error inside the batch would
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION b5t_refuse() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF OLD.id = '${bad.id}' THEN RAISE EXCEPTION 'refused'; END IF; RETURN OLD; END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER b5t_refuse BEFORE DELETE ON accounts FOR EACH ROW EXECUTE FUNCTION b5t_refuse()`);
+    try {
+      const res = await b5();
+      expect(res.result).toMatchObject({ status: "PARTIAL", errors: 1 });
+      expect(res.result.message).toMatch(/失敗 accounts\.pending: /);
+      expect(await prisma.account.count({ where: { id: { in: [bad.id, fine.id] } } })).toBe(2); // same batch: rolled back together
+      expect(await prisma.session.findUnique({ where: { id: old.id } })).toBeNull(); // the next classes went on
+    } finally {
+      await prisma.$executeRawUnsafe(`DROP TRIGGER b5t_refuse ON accounts`);
+      await prisma.$executeRawUnsafe(`DROP FUNCTION b5t_refuse()`);
+    }
     expect((await b5()).result.status).toBe("SUCCESS");
     expect(await prisma.account.count({ where: { id: { in: [bad.id, fine.id] } } })).toBe(0);
   });

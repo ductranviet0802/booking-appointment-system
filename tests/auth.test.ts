@@ -9,6 +9,7 @@ import type { Language, Role } from "@prisma/client";
 import { pool, prisma } from "@/lib/prisma";
 import { SEED_ACCOUNTS, SEED_PASSWORD } from "@/prisma/seed-accounts";
 import { dbDate, todayJst } from "@/lib/datetime";
+import { adminRoute } from "@/lib/admin/common";
 import { internalPath } from "@/lib/auth/access";
 import { guardScreen, requireOwnBooking, requireOwnPatient, requireStaffClinic, resolveSession } from "@/lib/auth/context";
 import { createGuard, readGuard, GUARD_TTL_MS } from "@/lib/auth/guard-store";
@@ -422,6 +423,7 @@ describe("guardScreen (02 §2) and scope helpers", () => {
     for (const s of ["S01", "A05", "P01"] as const) expect(await guard(s, firstChange)).toBe("redirect:/password/change");
     expect(await guard("P05", firstChange, "/password/change")).toBe("allow");
     for (const s of ["P01", "P06", "P15", "P02"] as const) expect(await guard(s, reconsent)).toBe("redirect:/consent");
+    expect(await guard("S01", reconsent, "/staff/ledger")).toBe("http:403"); // Q-011: ER-03 before CF-04
   });
 
   it("requireStaffClinic (N-SEC-08): outside the session's clinics → ER-03; patients and anonymous refused", async () => {
@@ -436,6 +438,15 @@ describe("guardScreen (02 §2) and scope helpers", () => {
     expect(await outcome(() => requireStaffClinic(honin))).toBe("http:403");
     mockJar.sid = undefined;
     expect(await outcome(() => requireStaffClinic(honin))).toBe("http:401");
+  });
+
+  it("Q-011: a patient session on a staff / admin API (adminRoute) gets 403 SE091 and nothing runs", async () => {
+    mockJar.sid = patient;
+    const fn = jest.fn();
+    const res = await adminRoute(new NextRequest("http://localhost/api/staff/ledger/list"), fn, { roles: ["ADMIN", "RECEPTION", "DOCTOR"] });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ code: "SE091", params: {} });
+    expect(fn).not.toHaveBeenCalled();
   });
 
   it("requireOwnPatient / requireOwnBooking (F8-01): another account's records answer ER-01", async () => {

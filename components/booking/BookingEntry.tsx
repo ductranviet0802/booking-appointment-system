@@ -5,7 +5,7 @@
 // earlier step clears the later ones (notes kept, Q24 A). Change mode (state ①): person / clinic / department / visit
 // type read-only with the lock text. The calendar answer covers the whole window, so months, dates, 次の空き and the
 // PI030 link are local.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { MonthGrid } from "@/components/ui/DatePicker";
 import { ErrorSummary, FieldError } from "@/components/ui/FormParts";
@@ -22,7 +22,9 @@ import { formatPhone, telHref } from "@/lib/public/phone";
 import type { Day, VisitTypeOption } from "@/lib/entry/data";
 import type { EntryProps } from "@/lib/entry/pages";
 import type { Selections } from "@/lib/booking/draft";
+import { leaveTarget } from "./leave-target";
 import { Steps } from "./Steps";
+import { useLeaveGuard } from "./useLeaveGuard";
 import s from "./entry.module.css";
 
 type Opt = { id: string; name: string };
@@ -55,6 +57,7 @@ export function BookingEntry(p: EntryProps) {
   const [lost, setLost] = useState(p.lostStart);
   const [busy, setBusy] = useState(false);
   const [quit, setQuit] = useState(false);
+  const [linkTo, setLinkTo] = useState<string | null>(null);
   const [presetDoctor, setPresetDoctor] = useState(p.presetDoctorId);
   const [noNext, setNoNext] = useState(false);
 
@@ -174,8 +177,14 @@ export function BookingEntry(p: EntryProps) {
   async function leave() {
     const res = await apiFetch(...postJson("/api/booking/discard", { origin: p.origin }));
     const body = res ? await res.json().catch(() => ({})) : {};
-    window.location.assign(body.to ?? p.origin);
+    window.location.assign(leaveTarget(linkTo, body.to, p.origin));
   }
+  // Q-039 answer: a header link asks PW005 when something is chosen (Q20 A); はい → the link pressed
+  useLeaveGuard(useCallback((href: string) => {
+    if (!touched) return window.location.assign(href);
+    setLinkTo(href);
+    setQuit(true);
+  }, [touched]));
 
   const msg = (at: string) => error?.at === at && (
     <div className="err" role="alert"><div className="row"><Icon name="alert" />{t(error.code, lang, error.params)}</div></div>
@@ -387,10 +396,10 @@ export function BookingEntry(p: EntryProps) {
         {msg("ops")}
         {sel.date && sel.start && <span className="sm row"><Icon name="clock" size={16} />{lw1("selectedAt", lang, { date: formatDateShort(sel.date, lang), time: formatTime(sel.start) })}</span>}
         <Button busy={busy} disabled={!ready} onClick={submit} id="p11-datetime">{lw1(nextLabel, lang)}</Button>
-        <button type="button" className={`lnk lnk-btn ${s.quit}`} onClick={() => (touched ? setQuit(true) : leave())}>{lw1("quit", lang)}</button>
+        <button type="button" className={`lnk lnk-btn ${s.quit}`} onClick={() => { setLinkTo(null); if (touched) setQuit(true); else leave(); }}>{lw1("quit", lang)}</button>
       </div>
 
-      <ConfirmDialog open={quit} title={lw1("quitTitle", lang)} messageId="PW005" onConfirm={leave} onCancel={() => setQuit(false)} />
+      <ConfirmDialog open={quit} title={lw1("quitTitle", lang)} messageId="PW005" onConfirm={leave} onCancel={() => { setQuit(false); setLinkTo(null); }} />
     </div>
   );
 }
