@@ -236,6 +236,11 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
     setAdds((a) => [...a, { ...v, key: `x${++seq}` }]);
     setForm(blankForm());
   }
+  // event 3 on the exception form: the field's own checks; SE042 needs the date's hours (抽出5), so it waits for 追加 (質疑)
+  const blurX = (field: string) => {
+    const list = validateException({ ...form, date: iso(form.date) }, { today, hours: () => ({ open: "00:00", close: "24:00" }) }).filter((x) => x.field === `x.${field}`);
+    setErrors((prev) => [...prev.filter((x) => x.field !== `x.${field}`), ...list]);
+  };
   const exceptionRows = () => {
     const stored = (detail?.exceptions ?? []).filter((x) => !removedExc.includes(x.id)).map((x: ExceptionRow) => ({ key: x.id, held: false, x }));
     const clinic = detail?.choices.clinicName ?? "";
@@ -282,7 +287,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
           <div className={s.form}>
             <div>
               <label htmlFor={f("date")}>日付 <RequiredMark lang="ja" /></label>
-              <input id={f("date")} className="inp" placeholder="YYYY/MM/DD" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} aria-invalid={err("x.date") ? true : undefined} />
+              <input id={f("date")} className="inp" placeholder="YYYY/MM/DD" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} onBlur={() => blurX("date")} aria-invalid={err("x.date") ? true : undefined} />
               <FieldError id="e-x-date" message={err("x.date")} />
             </div>
             <div>
@@ -296,7 +301,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
             </div>
             <div>
               <label htmlFor={f("band")}>時間帯</label>
-              <select id={f("band")} className="inp" disabled={k === ""} value={form.band} onChange={(e) => setForm({ ...form, band: e.target.value as ExceptionValues["band"] })}>
+              <select id={f("band")} className="inp" disabled={k === ""} value={form.band} onChange={(e) => setForm({ ...form, band: e.target.value as ExceptionValues["band"] })} onBlur={() => blurX("band")}>
                 <option value="">選択してください</option>
                 {k === "OFF" && <option value="ALL">終日</option>}
                 <option value="AM">午前</option>
@@ -306,7 +311,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
             </div>
             <div>
               <label htmlFor={f("departmentId")}>クリニック・診療科</label>
-              <select id={f("departmentId")} className="inp" disabled={k !== "EXTRA" && k !== "SUBSTITUTE"} value={form.departmentId} onChange={(e) => setForm({ ...form, departmentId: e.target.value })}>
+              <select id={f("departmentId")} className="inp" disabled={k !== "EXTRA" && k !== "SUBSTITUTE"} value={form.departmentId} onChange={(e) => setForm({ ...form, departmentId: e.target.value })} onBlur={() => blurX("departmentId")}>
                 <option value="">選択してください</option>
                 {detail?.choices.departments.map((d) => <option key={d.id} value={d.id}>{detail.choices.clinicName}・{d.name}</option>)}
               </select>
@@ -315,15 +320,15 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
             <div>
               <label>開始〜終了</label>
               <span className={s.row}>
-                <input id={f("start")} className={`inp ${s.time}`} aria-label="開始" disabled={k !== "EXTRA"} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />〜
-                <input id={f("end")} className={`inp ${s.time}`} aria-label="終了" disabled={k !== "EXTRA"} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
+                <input id={f("start")} className={`inp ${s.time}`} aria-label="開始" disabled={k !== "EXTRA"} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} onBlur={() => blurX("start")} />〜
+                <input id={f("end")} className={`inp ${s.time}`} aria-label="終了" disabled={k !== "EXTRA"} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} onBlur={() => blurX("end")} />
               </span>
               <FieldError id="e-x-start" message={err("x.start")} />
               <FieldError id="e-x-end" message={err("x.end")} />
             </div>
             <div>
               <label htmlFor={f("substituteDoctorId")}>代診医</label>
-              <select id={f("substituteDoctorId")} className="inp" disabled={k !== "SUBSTITUTE"} value={form.substituteDoctorId} onChange={(e) => setForm({ ...form, substituteDoctorId: e.target.value })}>
+              <select id={f("substituteDoctorId")} className="inp" disabled={k !== "SUBSTITUTE"} value={form.substituteDoctorId} onChange={(e) => setForm({ ...form, substituteDoctorId: e.target.value })} onBlur={() => blurX("substituteDoctorId")}>
                 <option value="">{k === "SUBSTITUTE" ? "選択してください" : "—"}</option>
                 {detail?.choices.substitutes.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
@@ -331,7 +336,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
             </div>
             <div>
               <label htmlFor={f("note")}>メモ</label>
-              <input id={f("note")} className="inp" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              <input id={f("note")} className="inp" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} onBlur={() => blurX("note")} />
               <FieldError id="e-x-note" message={err("x.note")} />
             </div>
             <div><label>&nbsp;</label><Button variant="secondary" onClick={() => void hold()}>追加</Button></div>

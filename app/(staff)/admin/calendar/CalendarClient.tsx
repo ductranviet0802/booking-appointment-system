@@ -488,6 +488,12 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
     setRangeOpen(false);
   }
 
+  // event 3 on 12-1 / 12-2 (4.2 row 12: フォーカスアウト and 設定する): the left field's own errors
+  const blurRange = (field: "range.start" | "range.end") => {
+    const list = validateRange(range.start.trim().replace(/\//g, "-"), range.end.trim().replace(/\//g, "-"), st.today).filter((x) => x.field === field);
+    setRangeErrors((prev) => [...prev.filter((x) => x.field !== field), ...list]);
+  };
+
   const tabKeys = (e: React.KeyboardEvent, i: number) => {
     const n = e.key === "ArrowRight" ? i + 1 : e.key === "ArrowLeft" ? i - 1 : null;
     if (n !== null) { e.preventDefault(); const next = TABS[(n + TABS.length) % TABS.length].id; setTab(next); setTimeout(() => document.getElementById(`a01-tab-${next}`)?.focus(), 0); }
@@ -534,9 +540,9 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
           <div className="dlg" role="dialog" aria-modal="true" aria-label="期間で設定">
             <h3>期間で設定</h3>
             <div className={s.dlgRow}>
-              <input id="a01-range-start" className="inp" autoFocus placeholder="YYYY/MM/DD" aria-label="開始日" value={range.start} onChange={(e) => setRange({ ...range, start: e.target.value })} />
+              <input id="a01-range-start" className="inp" autoFocus placeholder="YYYY/MM/DD" aria-label="開始日" value={range.start} onChange={(e) => setRange({ ...range, start: e.target.value })} onBlur={() => blurRange("range.start")} />
               〜
-              <input id="a01-range-end" className="inp" placeholder="YYYY/MM/DD" aria-label="終了日" value={range.end} onChange={(e) => setRange({ ...range, end: e.target.value })} />
+              <input id="a01-range-end" className="inp" placeholder="YYYY/MM/DD" aria-label="終了日" value={range.end} onChange={(e) => setRange({ ...range, end: e.target.value })} onBlur={() => blurRange("range.end")} />
             </div>
             {rangeErrors.map((e) => <FieldError key={e.field} id={`e-${e.field}`} message={msg(e)} />)}
             <div className={s.radios} role="radiogroup">
