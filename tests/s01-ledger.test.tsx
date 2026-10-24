@@ -177,6 +177,14 @@ describe("doctor read-only", () => {
     expect(html2).toContain("新規予約");
     expect(html2).toContain("<th>受付</th>");
   });
+
+  it("Q-028: rows cut at 1,000 show the customer's message above the list", async () => {
+    as(reception.token);
+    const v = (await list({})).body.view as LedgerView;
+    const cut = renderToStaticMarkup(<LedgerClient initial={{ ...v, truncated: true }} flash={null} />);
+    expect(cut).toContain("表示件数が上限（1,000件）を超えました。条件を絞り込んでください。");
+    expect(renderToStaticMarkup(<LedgerClient initial={{ ...v, truncated: false }} flash={null} />)).not.toContain("表示件数が上限");
+  });
 });
 
 describe("status writes", () => {
