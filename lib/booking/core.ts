@@ -108,8 +108,9 @@ async function once<T extends { ok: boolean }>(actor: Actor, opts: Options, fn: 
 
 // ── locks ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** account row (if any) then patient row; refuses a merged or anonymised patient */
-async function lockPerson(tx: Tx, patientId: string) {
+/** account row (if any) then patient row; refuses a merged or anonymised patient. Status writes outside this file
+ *  (S01 check-in / no-show, B4) take lockPerson then lockBooking too, so every booking write locks in one order. */
+export async function lockPerson(tx: Tx, patientId: string) {
   const p = await tx.patient.findUniqueOrThrow({ where: { id: patientId }, select: { accountId: true } });
   if (p.accountId) await tx.$queryRaw`SELECT 1 FROM accounts WHERE id = ${p.accountId}::uuid FOR UPDATE`;
   const [row] = await tx.$queryRaw<{ merged: boolean; anon: boolean }[]>`
@@ -117,7 +118,7 @@ async function lockPerson(tx: Tx, patientId: string) {
   if (row.merged || row.anon) throw new Error(`patient ${patientId} is merged or anonymised`);
 }
 
-const lockBooking = (tx: Tx, id: string) => tx.$queryRaw`SELECT 1 FROM bookings WHERE id = ${id}::uuid FOR UPDATE`;
+export const lockBooking = (tx: Tx, id: string) => tx.$queryRaw`SELECT 1 FROM bookings WHERE id = ${id}::uuid FOR UPDATE`;
 
 type Frame = { id: string; doctor_id: string; start: string; end: string; capacity: number; reserved: number; status: "OPEN" | "CLOSED" };
 
