@@ -1,0 +1,37 @@
+/* P11 予約入力: mobile one column; desktop left column person … doctor, right column calendar + times, 次へ bottom right */
+.root { width: 100%; max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.head { display: flex; flex-direction: column; gap: 8px; }
+.head h1 { font-size: 20px; }
+.cols { display: flex; flex-direction: column; gap: 16px; }
+.step { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.step h2 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.no:not(:empty) { width: 22px; height: 22px; border-radius: 11px; background: var(--pri-t); color: #075e5a; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.cards { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { display: flex; align-items: flex-start; gap: 10px; min-height: 48px; padding: 10px 14px; border: 1px solid #c3ced1; border-radius: 10px; cursor: pointer; flex: 1 1 100%; }
+.opt input { accent-color: var(--pri); width: 20px; height: 20px; margin: 2px 0 0; flex: none; }
+.opt.on { border-color: var(--pri); background: var(--pri-t); box-shadow: inset 0 0 0 1px var(--pri); }
+.optBody { display: flex; flex-direction: column; gap: 2px; }
+.nm { font-weight: 700; white-space: nowrap; }
+.pre { white-space: pre-wrap; }
+.fixed { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.fixed dt { color: var(--mut); font-size: 13px; }
+.fixed dd { margin: 0; font-weight: 700; }
+.monthNav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.grid :global(.mg-head) { display: none; } /* the month switch above (item 12) can be disabled outside the window */
+.grid :global(.mg-cell) { min-height: 48px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; }
+.times { display: flex; flex-wrap: wrap; gap: 8px; }
+.time { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 76px; min-height: 44px; padding: 0 12px; border: 1px solid #c3ced1; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.time input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.time:focus-within { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+.time.on { background: var(--pri); color: #fff; border-color: var(--pri); }
+.time.gone { color: #a3b0b4; border-style: dashed; cursor: default; text-decoration: line-through; }
+.linkBtn { background: none; border: 0; padding: 0 2px; font: inherit; cursor: pointer; }
+.quit { color: var(--mut); align-self: center; }
+@media (min-width: 768px) {
+  .opt { flex: 0 1 auto; }
+}
+@media (min-width: 1024px) {
+  .head { flex-direction: row; justify-content: space-between; align-items: center; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+}

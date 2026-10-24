@@ -304,4 +304,16 @@ a { color: inherit; }
   .fam { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; }
   .sheet { position: static; inset: auto; z-index: auto; border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
 }
+/* w1: P11 / P12 / P13 step display (item 1) and the sticky action bar of the mobile layout */
+.w1-steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; font-size: 13px; flex-wrap: wrap; }
+.w1-steps li { display: flex; align-items: center; gap: 6px; color: var(--mut); }
+.w1-steps li + li::before { content: ""; width: 16px; height: 1px; background: var(--line2); }
+.w1-steps li.cur { color: var(--ink); font-weight: 700; }
+.w1-step-no { width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: #eef2f3; font-size: 12px; }
+.w1-steps li.cur .w1-step-no { background: var(--pri); color: #fff; }
+.w1-steps li.past .w1-step-no { background: var(--pri-t); color: #075e5a; }
+.w1-bar { position: sticky; bottom: 0; z-index: 5; background: #fff; border-top: 1px solid var(--line); padding: 10px 16px; margin: 0 -16px; display: flex; flex-direction: column; gap: 6px; }
+@media (min-width: 768px) {
+  .w1-bar { position: static; border: 0; background: transparent; padding: 0; margin: 0; flex-direction: row; align-items: center; justify-content: flex-end; gap: 16px; }
+}
 }
