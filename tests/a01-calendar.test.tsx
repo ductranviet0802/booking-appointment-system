@@ -131,12 +131,12 @@ describe("rules (§4.2)", () => {
   });
 
   const clinic: ClinicValues = {
-    nameJa: "○○クリニック", nameEn: "", nameVi: "", nameKana: "マルマルクリニック ホンイン", postcode: "1000005", prefecture: "東京都", city: "千代田区",
+    nameJa: "たなか内科クリニック", nameEn: "", nameVi: "", nameKana: "タナカナイカクリニック ホンイン", postcode: "1000005", prefecture: "東京都", city: "千代田区",
     addressLine: "丸の内1", addressEn: "", phone: "0312345678", accessJa: "東京駅", accessEn: "", accessVi: "", mapUrl: "", noticeJa: "", noticeEn: "", noticeVi: "",
   };
   it("S-02: クリニック名カナ is full-width katakana, ー and space; clinic profile rules 13–27", () => {
     expect(validateClinic(clinic)).toEqual([]);
-    expect(validateClinic({ ...clinic, nameKana: "マルマル　クリニック" })).toEqual([]); // full-width space
+    expect(validateClinic({ ...clinic, nameKana: "タナカ　クリニック" })).toEqual([]); // full-width space
     expect(validateClinic({ ...clinic, nameKana: "" })[0]).toMatchObject({ field: "clinic.nameKana", code: "SE001" });
     for (const bad of ["まるまる", "ﾏﾙﾏﾙ", "Maru", "マル1"]) expect(validateClinic({ ...clinic, nameKana: bad })[0]).toMatchObject({ code: "SE002", params: { 項目: "クリニック名カナ" } });
     expect(validateClinic({ ...clinic, nameKana: "ア".repeat(101) })[0]).toMatchObject({ code: "SE003", params: { n: 100 } });

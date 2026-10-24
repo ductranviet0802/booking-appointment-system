@@ -64,7 +64,7 @@ describe("seeded doctor", () => {
     const data = await loadDoctorPage(d.id, "ja");
     expect(data).not.toBeNull();
     expect(data!.buttons[0]).toEqual({
-      text: "○○クリニック 本院 内科で予約",
+      text: "たなか内科クリニック 本院 内科で予約",
       href: `/booking/new?clinic=honin&department=naika&doctor=${d.id}`,
     });
     expect(data!.schedule.map((b) => b.clinicCode)).toEqual(["honin"]);
@@ -108,16 +108,19 @@ describe("seeded doctor", () => {
 
   it("en: romaji name without kana, English texts; vi: Vietnamese, empty vi master falls back to ja (state ②)", async () => {
     const d = await prisma.doctor.findUniqueOrThrow({ where: { code: "D001" } });
+    // the seed fills en / vi; blank two of them to see the fallback
+    await prisma.doctor.update({ where: { id: d.id }, data: { qualificationsEn: null, profileVi: null } });
     const en = await loadDoctorPage(d.id, "en");
+    const vi = await loadDoctorPage(d.id, "vi");
+    await prisma.doctor.update({ where: { id: d.id }, data: { qualificationsEn: d.qualificationsEn, profileVi: d.profileVi } });
     expect(en!.name).toBe("Makoto Tanaka");
     expect(en!.kana).toBeNull();
     expect(en!.profile).toContain("Director since 2018");
     expect(en!.qualifications).toEqual(["日本内科学会 総合内科専門医"]); // qualifications_en empty → ja
     const enHtml = renderToStaticMarkup(<DoctorDetail data={en!} backHref="/doctors" lang="en" />);
-    expect(enHtml).toContain("Book: ○○ Clinic Main – Internal Medicine");
+    expect(enHtml).toContain("Book: Tanaka Clinic Main – Internal Medicine");
     expect(enHtml).toContain("Back to the doctor list");
     expect(enHtml).toContain("The co-payment for insured care");
-    const vi = await loadDoctorPage(d.id, "vi");
     expect(vi!.profile).toBe(d.profileJa); // profile_vi empty → ja
     expect(renderToStaticMarkup(<DoctorDetail data={vi!} backHref="/doctors" lang="vi" />)).toContain("Lịch khám");
   });

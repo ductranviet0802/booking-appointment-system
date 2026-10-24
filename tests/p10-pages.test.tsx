@@ -40,7 +40,7 @@ describe("P10 clinic-list state", () => {
     expect(idx.kind).toBe("list");
     if (idx.kind !== "list") return;
     expect(idx.cards.map((c) => c.code)).toEqual(["honin", "ekimae", "nishiguchi"]);
-    expect(idx.cards[0]).toMatchObject({ name: "○○クリニック 本院", address: "東京都千代田区丸の内1-2-3 ○○ビル2階", phone: "0312345678" });
+    expect(idx.cards[0]).toMatchObject({ name: "たなか内科クリニック 本院", address: "東京都千代田区丸の内1-2-3 丸の内中央ビル2階", phone: "0312345678" });
     const html = renderToStaticMarkup(<ClinicList cards={idx.cards} lang="ja" />);
     expect(html).toContain('href="/clinics/ekimae"');
     expect(html).toContain("03-1234-5678");
@@ -98,7 +98,7 @@ describe("P10 clinic page", () => {
     const html = renderToStaticMarkup(<ClinicDetail data={page!} lang="ja" />);
     expect(html).toContain('href="/clinics/ekimae"');
     expect(html).toContain("院内研修のため臨時休診日があります");
-    expect(html).toContain("〒100-0005 東京都千代田区丸の内1-2-3 ○○ビル2階");
+    expect(html).toContain("〒100-0005 東京都千代田区丸の内1-2-3 丸の内中央ビル2階");
     expect(html).toContain('href="tel:0312345678"');
     expect(html).toContain('target="_blank"');
     expect(html).toContain("受付は午前 11:30、午後 17:30 まで（診療終了の30分前）");
@@ -136,15 +136,14 @@ describe("P10 clinic page", () => {
     const before = await prisma.clinic.findUniqueOrThrow({ where: { code: "ekimae" } });
     await prisma.clinic.update({ where: { code: "ekimae" }, data: { accessVi: null } });
     const en = await loadClinicPage("honin", "en");
-    expect(en!.clinic.name).toBe("○○ Clinic Main");
-    expect(en!.clinic.address).toBe("2F ○○ Bldg., 1-2-3 Marunouchi, Chiyoda-ku, Tokyo");
+    expect(en!.clinic.name).toBe("Tanaka Clinic Main");
+    expect(en!.clinic.address).toBe("2F Marunouchi Chuo Bldg., 1-2-3 Marunouchi, Chiyoda-ku, Tokyo");
     const enHtml = renderToStaticMarkup(<ClinicDetail data={en!} lang="en" />);
     expect(enHtml).toContain("Business hours");
     expect(enHtml).toContain("Makoto Tanaka");
     expect(enHtml).not.toContain("〒");
-    // honin has no Vietnamese notice? the seed gives ja + en only → vi shows the ja notice
     const vi = await loadClinicPage("honin", "vi");
-    expect(vi!.clinic.notice).toContain("院内研修");
+    expect(vi!.clinic.notice).toContain("đào tạo nhân viên");
     expect(vi!.clinic.access).toContain("Marunouchi");
     const eki = await loadClinicPage("ekimae", "vi");
     await prisma.clinic.update({ where: { code: "ekimae" }, data: { accessVi: before.accessVi } });

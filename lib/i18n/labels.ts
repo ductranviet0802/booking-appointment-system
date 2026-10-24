@@ -194,7 +194,7 @@ const L = {
   townOther: { ja: "その他（直接入力）", en: "Other (enter directly)", vi: "Khác (nhập trực tiếp)" }, // draft
   addressLine: { ja: "番地", en: "Street number", vi: "Số nhà" }, // draft
   building: { ja: "建物名・部屋番号", en: "Building and room number", vi: "Tên tòa nhà và số phòng" }, // draft
-  buildingPh: { ja: "○○マンション 101号室", en: "○○ Mansion 101", vi: "○○ Mansion 101" }, // draft
+  buildingPh: { ja: "さくらマンション 101号室", en: "Sakura Mansion 101", vi: "Sakura Mansion 101" }, // draft
   phone: { ja: "電話番号", en: "Phone number", vi: "Số điện thoại" }, // 07
   phoneHelp: { ja: "ハイフンなしでも入力できます。", en: "You can enter it without hyphens.", vi: "Có thể nhập không cần dấu gạch ngang." }, // draft
   phonePh: { ja: "例: 090-1234-5678", en: "e.g. 090-1234-5678", vi: "Ví dụ: 090-1234-5678" }, // draft
