@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { forbidden } from "next/navigation";
 import { guardScreen } from "@/lib/auth/context";
+import { clientIp } from "@/lib/request-security";
 import { loadDetail, viewAudit } from "@/lib/staff/patients";
 import { DetailClient } from "./DetailClient";
 
@@ -14,7 +15,7 @@ export default async function PatientDetailPage({ params, searchParams }: {
   const { id } = await params;
   const detail = await loadDetail(id, { accountId: session.account.id });
   if (!detail) throw new Error("ER-02: unknown or anonymised patient"); // 2-2 (Q14)
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const ip = clientIp(await headers());
   await viewAudit({ accountId: session.account.id, role: session.account.role, ip, clinicId: session.clinicId }, detail.id);
   const back = (await searchParams).back;
   return <DetailClient detail={detail} admin={session.account.role === "ADMIN"} back={typeof back === "string" ? back : ""} />;

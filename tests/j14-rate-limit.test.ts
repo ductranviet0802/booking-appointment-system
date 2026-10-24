@@ -4,6 +4,7 @@
 import { AUTH_LIMITS, overAuthLimit, resetAuthLimits, type AuthAction } from "@/lib/auth/rate-limit";
 import { APP_CONFIG } from "@/lib/config";
 import { consumeRateLimitToken } from "@/lib/rate-limiter";
+import { clientIp } from "@/lib/request-security";
 
 const WINDOW = APP_CONFIG.rateLimit.windowMs;
 const MAX = APP_CONFIG.rateLimit.maxRequestsByGroup;
@@ -76,11 +77,47 @@ describe("overAuthLimit (N-SEC-03, per IP and per address)", () => {
     expect(overAuthLimit("login", "other@x.jp", "192.0.2.250", t)).toBe(false);
   });
 
-  it("requests without an IP share one bucket ('unknown') — documented behaviour, see the J-14 report", () => {
+  it("requests without a usable IP share no bucket: one client cannot fill an 'unknown' bucket for everyone; the address limit still holds", () => {
     const t = start();
     const l = AUTH_LIMITS.register;
-    for (let i = 0; i < l.perIp; i++) overAuthLimit("register", `n${i}@x.jp`, null, t);
-    expect(overAuthLimit("register", "late@x.jp", null, t)).toBe(true);
-    expect(overAuthLimit("register", "late@x.jp", "192.0.2.77", t)).toBe(false);
+    for (let i = 0; i <= l.perIp; i++) overAuthLimit("register", `n${i}@x.jp`, null, t);
+    expect(overAuthLimit("register", "late@x.jp", null, t)).toBe(false);
+    for (let i = 0; i < l.perAddress; i++) overAuthLimit("register", "same@x.jp", null, t);
+    expect(overAuthLimit("register", "same@x.jp", null, t)).toBe(true);
+  });
+});
+
+describe("clientIp (X-Forwarded-For trusted only behind TRUSTED_PROXY_HOPS proxies)", () => {
+  const xff = (v: string | null) => new Headers(v === null ? {} : { "x-forwarded-for": v });
+  const env = process.env.TRUSTED_PROXY_HOPS;
+  afterEach(() => {
+    if (env === undefined) delete process.env.TRUSTED_PROXY_HOPS;
+    else process.env.TRUSTED_PROXY_HOPS = env;
+  });
+
+  it("default 0: the header is not trusted (a client cannot pick its address)", () => {
+    delete process.env.TRUSTED_PROXY_HOPS;
+    expect(clientIp(xff("203.0.113.9"))).toBeNull();
+    process.env.TRUSTED_PROXY_HOPS = "0";
+    expect(clientIp(xff("203.0.113.9"))).toBeNull();
+  });
+
+  it("N hops: the N-th address from the right; a spoofed left part is ignored", () => {
+    process.env.TRUSTED_PROXY_HOPS = "1";
+    expect(clientIp(xff("1.2.3.4, 203.0.113.9"))).toBe("203.0.113.9");
+    expect(clientIp(xff("2001:db8::1"))).toBe("2001:db8::1");
+    process.env.TRUSTED_PROXY_HOPS = "2";
+    expect(clientIp(xff("1.2.3.4, 203.0.113.9, 10.0.0.2"))).toBe("203.0.113.9");
+  });
+
+  it("no usable address → null: header missing, shorter than N, not an address, a bad setting", () => {
+    process.env.TRUSTED_PROXY_HOPS = "2";
+    expect(clientIp(xff(null))).toBeNull();
+    expect(clientIp(xff("203.0.113.9"))).toBeNull();
+    process.env.TRUSTED_PROXY_HOPS = "1";
+    expect(clientIp(xff("unknown"))).toBeNull();
+    expect(clientIp(xff(" , "))).toBeNull();
+    process.env.TRUSTED_PROXY_HOPS = "one";
+    expect(clientIp(xff("203.0.113.9"))).toBeNull();
   });
 });

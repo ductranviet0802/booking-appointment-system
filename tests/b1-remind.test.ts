@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { Prisma } from "@prisma/client";
 import { remindClinic } from "@/lib/batch/b1-remind";
+import { lockKeyOf, SKIPPED } from "@/lib/batch/lock";
 import { runJob } from "@/lib/batch/runner";
 import { cancelInTx } from "@/lib/booking/core";
 import { addDays, dbDate, dbTime, todayJst } from "@/lib/datetime";
@@ -120,9 +121,43 @@ describe("B1 selection, dry run, idempotency", () => {
     for (const b of bs) expect(await reminders(b.id)).toHaveLength(1);
   });
 
+  it("Q-033: targets read in chunks, every chunk sent in the same run (chunk 2, 5 new targets → 5 reminders, ≥ 3 reads)", async () => {
+    const bs = await Promise.all([1, 2, 3, 4, 5].map(async () => booking((await person()).id, { start: "11:30" })));
+    const reads = jest.spyOn(prisma.booking, "findMany");
+    const c = await remindClinic(f.clinic.id, tomorrow, noon, false, 2);
+    expect(reads.mock.calls.length).toBeGreaterThanOrEqual(3);
+    reads.mockRestore();
+    expect(c.queued).toBe(5);
+    for (const b of bs) expect(await reminders(b.id)).toHaveLength(1);
+    expect(await remindClinic(f.clinic.id, tomorrow, noon, false, 2)).toMatchObject({ queued: 0 }); // re-run: only the unsent
+  });
+
   it("two B1 jobs at once through the runner: one is skipped 「実行中のため省略」", async () => {
     const [x, y] = await Promise.all([runJob("B1", { trigger: "MANUAL", clinicId: f.clinic.id }), runJob("B1", { trigger: "MANUAL", clinicId: f.clinic.id })]);
     expect([x, y].filter((r) => r.result.message === "実行中のため省略")).toHaveLength(1);
+  });
+
+  it("B1 lock per clinic: another clinic runs while one clinic's lock is held; that clinic is refused; B2 keeps its job lock", async () => {
+    const f2 = await fixture({ doctors: 1 });
+    const holder = await pool.connect();
+    try {
+      await holder.query("SELECT pg_advisory_lock(hashtext($1))", [lockKeyOf("B1", f.clinic.id)]);
+      const [mine, theirs] = await Promise.all([
+        runJob("B1", { trigger: "SCHEDULE", clinicId: f.clinic.id }),
+        runJob("B1", { trigger: "SCHEDULE", clinicId: f2.clinic.id }),
+      ]);
+      expect(mine.result.message).toBe(SKIPPED);
+      expect(theirs.result.message).not.toBe(SKIPPED);
+      expect(theirs.run!.status).toBe("SUCCESS");
+      // an all-clinic run skips the clinic being reminded by its own run and names it
+      const all = await runJob("B1", { trigger: "MANUAL", params: { date: addDays(today, 60) } }); // a date without seeded bookings
+      expect(all.result.message).toContain(`${SKIPPED} ${f.clinic.code}`);
+    } finally {
+      await holder.query("SELECT pg_advisory_unlock(hashtext($1))", [lockKeyOf("B1", f.clinic.id)]);
+      holder.release();
+      await f2.cleanup();
+    }
+    expect([lockKeyOf("B2", f.clinic.id), lockKeyOf("B4", null), lockKeyOf("B1", null)]).toEqual(["batch:B2", "batch:B4", "batch:B1"]);
   });
 
   it("a booking cancelled while B1 runs gets no reminder (the cancel holds the booking lock; B1 reads it FOR SHARE)", async () => {
@@ -216,13 +251,22 @@ describe("X1 / X2 retry rules (lib/notify/queue) through B1", () => {
     expect((await reminders(b.id))[0]).toMatchObject({ status: "SENT" });
   });
 
-  it("LINE refused (400): the LINE row is FAILED and the same NT-02 goes by MAIL to the account address", async () => {
+  it("LINE refused (400): the LINE row is FAILED and the same NT-02 goes by MAIL to the account address — not a failure of the run (Q-042)", async () => {
     const p = await person({ line: `U${f.tag}fail400` });
     const b = await booking(p.id, { start: "15:30" });
-    await remindClinic(f.clinic.id, tomorrow, noon, false);
+    const c = await remindClinic(f.clinic.id, tomorrow, noon, false);
     const rows = await reminders(b.id);
     expect(rows.map((r) => [r.channel, r.status])).toEqual([["LINE", "FAILED"], ["MAIL", "SENT"]]);
     expect(rows[1].toAddress).toMatch(/\.w4test@example\.jp$/);
+    expect([c.queued, c.failed]).toEqual([1, 0]);
+  });
+
+  it("LINE refused and the MAIL fallback refused too: the notice reached no channel → counted failed (run PARTIAL, Q-042)", async () => {
+    const p = await person({ line: `U${f.tag}both.fail400`, email: `${f.tag}.both.fail400.w4test@example.jp` });
+    const b = await booking(p.id, { start: "17:00" });
+    const c = await remindClinic(f.clinic.id, tomorrow, noon, false);
+    expect((await reminders(b.id)).map((r) => [r.channel, r.status])).toEqual([["LINE", "FAILED"], ["MAIL", "FAILED"]]);
+    expect([c.queued, c.failed]).toEqual([1, 1]);
   });
 
   it("LINE inside the quiet hours (21:00–08:00) is held until 08:00, not sent", async () => {

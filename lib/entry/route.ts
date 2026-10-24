@@ -13,7 +13,10 @@ export type Viewer = { session: SessionContext | null; draftId: string | undefin
 
 export const json = (status: number, body: Record<string, unknown>) => NextResponse.json(body, { status });
 export const tampered = () => json(400, { code: "PE090", params: {} }); // a value the UI cannot produce → ER-02
-export const notOwn = () => json(404, { code: "PE091", params: {} }); // another account's person / booking → ER-01
+/** an address no page answers: the app's not-found (ER-01 with its frame), shown by the clients that follow `to` */
+export const ER01_PATH = "/booking/not-found";
+// another account's person / booking (a tampered id) → ER-01 (`02` §1, T099), not ER-02: the clients follow `to`
+export const notOwn = () => json(404, { code: "PE091", params: {}, to: ER01_PATH });
 /** the screen is left for another one (T053 / T054–T056 / T103) */
 export const go = (to: string, status = 200, extra: Record<string, unknown> = {}) => json(status, { ok: status === 200, to, ...extra });
 

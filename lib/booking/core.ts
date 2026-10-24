@@ -6,6 +6,7 @@ import { randomInt } from "node:crypto";
 import { Prisma, type Booking, type BookingChannel, type CancelReason, type Language } from "@prisma/client";
 import { encryptJson, encryptText } from "@/lib/crypto/field";
 import { addDays, dbDate, dbTime, jstInstant, todayJst, toHhmm, toIsoDate } from "@/lib/datetime";
+import { openBandsForDate } from "@/lib/batch/b2-frames";
 import { prisma } from "@/lib/prisma";
 import { deliverAfterCommit, enqueueBookingNotice } from "./notify";
 import { beforeDeadline, policyOf } from "./policy";
@@ -109,12 +110,13 @@ async function once<T extends { ok: boolean }>(actor: Actor, opts: Options, fn: 
 // ── locks ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** account row (if any) then patient row; refuses a merged or anonymised patient. Status writes outside this file
- *  (S01 check-in / no-show, B4) take lockPerson then lockBooking too, so every booking write locks in one order. */
-export async function lockPerson(tx: Tx, patientId: string) {
+ *  (S01 check-in / no-show, B4) take lockPerson then lockBooking too, so every booking write locks in one order.
+ *  `lock` false = the same refusal without row locks (checkBooking). */
+export async function lockPerson(tx: Tx, patientId: string, lock = true) {
   const p = await tx.patient.findUniqueOrThrow({ where: { id: patientId }, select: { accountId: true } });
-  if (p.accountId) await tx.$queryRaw`SELECT 1 FROM accounts WHERE id = ${p.accountId}::uuid FOR UPDATE`;
+  if (lock && p.accountId) await tx.$queryRaw`SELECT 1 FROM accounts WHERE id = ${p.accountId}::uuid FOR UPDATE`;
   const [row] = await tx.$queryRaw<{ merged: boolean; anon: boolean }[]>`
-    SELECT merged_into_id IS NOT NULL AS merged, anonymized_at IS NOT NULL AS anon FROM patients WHERE id = ${patientId}::uuid FOR UPDATE`;
+    SELECT merged_into_id IS NOT NULL AS merged, anonymized_at IS NOT NULL AS anon FROM patients WHERE id = ${patientId}::uuid ${lock ? Prisma.sql`FOR UPDATE` : Prisma.empty}`;
   if (row.merged || row.anon) throw new Error(`patient ${patientId} is merged or anonymised`);
 }
 
@@ -127,6 +129,82 @@ type Frame = { id: string; doctor_id: string; start: string; end: string; capaci
 export async function bookInTx(
   tx: Tx, input: BookingInput, actor: Actor, opts: Options = {}, changing?: { bookingId: string; version: number },
 ): Promise<BookOk | Fail> {
+  const plan = await rulesOf(tx, input, actor, opts, changing, true);
+  if (!plan.ok) return plan;
+  const { old, oldFrames, doctorId, frames, endIso, vt, now } = plan;
+  const startIso = input.startTime;
+
+  // writes (P13 更新1–11, S02 event 10)
+  if (old) {
+    await tx.bookingSlot.deleteMany({ where: { bookingId: old.id } });
+    for (const id of oldFrames) await tx.slot.update({ where: { id }, data: { reservedCount: { decrement: 1 } } });
+  }
+  const data = {
+    doctorId, doctorRequested: input.doctorRequested, slotDate: dbDate(input.slotDate),
+    startTime: dbTime(startIso), endTime: dbTime(endIso), notes: input.notes ? encryptText(input.notes) : null,
+  };
+  let bookingId: string;
+  let bookingNo: string;
+  if (old) {
+    const moved = await tx.booking.updateMany({
+      where: { id: old.id, version: old.version, status: "RESERVED" },
+      data: { ...data, changeCount: { increment: 1 }, version: { increment: 1 }, adjustRequiredAt: null },
+    });
+    if (moved.count !== 1) throw new Error("booking changed under its lock");
+    [bookingId, bookingNo] = [old.id, old.bookingNo];
+    const at = now;
+    const actorCols = { actorKind: actor.kind, actorAccountId: actor.accountId, channel: actor.kind === "STAFF" ? actor.channel : null, at };
+    await tx.bookingEvent.create({ data: { bookingId, event: "CHANGED", ...actorCols, before: snapshot(old), after: snapshot({ ...data, status: "RESERVED" }) } });
+    if (old.adjustRequiredAt) await tx.bookingEvent.create({ data: { bookingId, event: "ADJUST_CLEARED", ...actorCols } });
+    await tx.questionnaire.updateMany({ where: { bookingId }, data: { purgeAfter: dbDate(addDays(input.slotDate, 90)) } }); // Q8 c, 06 §5
+  } else {
+    bookingNo = await newBookingNo(tx);
+    const created = await tx.booking.create({
+      data: {
+        ...data, bookingNo, clinicId: input.clinicId, departmentId: input.departmentId, visitTypeId: input.visitTypeId,
+        patientId: input.patientId, bookedByAccountId: opts.bookedByAccountId === undefined ? actor.accountId : opts.bookedByAccountId,
+        channel: actor.channel, status: "RESERVED", priceYen: vt.category === "SELF_PAY" ? vt.priceYen : null,
+      },
+    });
+    bookingId = created.id;
+    await tx.bookingEvent.create({
+      data: {
+        bookingId, event: "CREATED", actorKind: actor.kind, actorAccountId: actor.accountId,
+        channel: actor.kind === "STAFF" ? actor.channel : null, after: snapshot({ ...data, status: "RESERVED" }), at: now,
+      },
+    });
+    if (input.questionnaire) {
+      await tx.questionnaire.create({
+        data: {
+          bookingId, formVersion: input.questionnaire.formVersion, language: input.questionnaire.language,
+          answers: encryptJson(input.questionnaire.answers), submittedAt: now, purgeAfter: dbDate(addDays(input.slotDate, 90)),
+        },
+      });
+    }
+  }
+  await tx.bookingSlot.createMany({ data: frames.map((f) => ({ bookingId, slotId: f.id })) });
+  for (const f of frames) await tx.slot.update({ where: { id: f.id }, data: { reservedCount: { increment: 1 } } });
+
+  const notificationId = opts.notify === false ? null : await enqueueBookingNotice(tx, bookingId, old ? "NT03_CHANGED" : "NT01_BOOKED");
+  return { ok: true, bookingId, bookingNo, notificationId };
+}
+
+export type CheckOk = { ok: true; doctorId: string; endTime: string };
+
+/**
+ * Read-only entry (P11 event 11 / 抽出11): the rules of bookInTx / change in the same order with the same Fail, without a
+ * write and without row locks — the transactional claim stays P13's (F4-07). `changing.version` omitted = STALE not
+ * compared (P11 does not know a newer version yet; P13 compares it).
+ */
+export async function checkBooking(
+  input: BookingInput, actor: Actor, opts: Options = {}, changing?: { bookingId: string; version?: number },
+): Promise<CheckOk | Fail> {
+  const r = await rulesOf(prisma as unknown as Tx, input, actor, opts, changing, false);
+  return r.ok ? { ok: true, doctorId: r.doctorId, endTime: r.endIso } : r;
+}
+
+/** the rules of P13 §4.2 / S02 event 10 and the frames they pick; `lock` = take the row locks (inside bookInTx) */
+async function rulesOf(tx: Tx, input: BookingInput, actor: Actor, opts: Options, changing: { bookingId: string; version?: number } | undefined, lock: boolean) {
   const now = opts.now ?? new Date();
   const patient = actor.kind === "PATIENT";
   // values a screen cannot produce: the caller turns a throw into ER-02 (nothing written)
@@ -134,12 +212,12 @@ export async function bookInTx(
     throw new Error("bad slot date / start time");
   }
   if (input.notes && input.notes.length > 200) throw new Error("notes over 200 characters");
-  await lockPerson(tx, input.patientId);
+  await lockPerson(tx, input.patientId, lock);
 
   let old: Booking | null = null;
   let oldFrames = new Set<string>();
   if (changing) {
-    await lockBooking(tx, changing.bookingId);
+    if (lock) await lockBooking(tx, changing.bookingId);
     old = await tx.booking.findUniqueOrThrow({ where: { id: changing.bookingId } });
     if (old.patientId !== input.patientId || old.clinicId !== input.clinicId || old.departmentId !== input.departmentId || old.visitTypeId !== input.visitTypeId) {
       throw new Error("change mode keeps patient, clinic, department and visit type (F5-01)");
@@ -149,7 +227,7 @@ export async function bookInTx(
     if ((opts.deadline ?? patient) && !old.adjustRequiredAt && !beforeDeadline(await policyOf(old.clinicId, tx), toIsoDate(old.slotDate), toHhmm(old.startTime), now)) {
       return fail("DEADLINE");
     }
-    if (old.version !== changing.version) return fail("STALE");
+    if (changing.version !== undefined && old.version !== changing.version) return fail("STALE");
     oldFrames = new Set((await tx.bookingSlot.findMany({ where: { bookingId: old.id }, select: { slotId: true } })).map((r) => r.slotId));
   }
 
@@ -158,7 +236,8 @@ export async function bookInTx(
   const masterOk = !!vt && vt.isActive && vt.clinicId === input.clinicId && vt.departmentId === input.departmentId && (!patient || vt.webBookable);
   const n = vt?.durationFrames ?? 1;
 
-  // frames of clinic × department × date from the start on (one frame ≤ 30 min, so n × 30 min bounds the run), locked by id
+  // frames of clinic × department × date from the start on (one frame ≤ 30 min, so n × 30 min bounds the run) of active
+  // doctors (a deactivated doctor's frames are not bookable, P11 抽出6), locked by id
   const startIso = input.startTime;
   const until = addMinutes(startIso, n * 30);
   const rows = await tx.$queryRaw<Frame[]>`
@@ -167,8 +246,9 @@ export async function bookInTx(
       FROM slots
      WHERE clinic_id = ${input.clinicId}::uuid AND department_id = ${input.departmentId}::uuid AND slot_date = ${input.slotDate}::date
        AND start_time >= ${startIso}::time AND start_time < ${until}::time
+       AND doctor_id IN (SELECT id FROM doctors WHERE is_active)
        ${input.doctorId ? Prisma.sql`AND doctor_id = ${input.doctorId}::uuid` : Prisma.empty}
-     ORDER BY id FOR UPDATE`;
+     ORDER BY id ${lock ? Prisma.sql`FOR UPDATE` : Prisma.empty}`;
   const free = (f: Frame) => f.status === "OPEN" && f.reserved - (oldFrames.has(f.id) ? 1 : 0) < f.capacity;
 
   /** the run of n consecutive frames of one doctor from the start, or null when the doctor has no such run */
@@ -195,9 +275,9 @@ export async function bookInTx(
   let doctorId = input.doctorId;
   let run: Frame[] | null = null;
   if (!masterOk) failed.add("TAKEN"); // master no longer bookable = frame no longer bookable (P13 5-1)
+  else if (rows.length === 0 && (await closedDay(tx, input))) failed.add("CLOSED");
   else if (doctorId) {
-    const doctor = await tx.doctor.findUnique({ where: { id: doctorId }, select: { isActive: true } });
-    run = doctor?.isActive ? runOf(doctorId) : null;
+    run = runOf(doctorId);
     if (!run) failed.add("TAKEN");
     else if (run.some((f) => f.status === "CLOSED")) failed.add("CLOSED");
     else if (!run.every(free)) failed.add("TAKEN");
@@ -211,10 +291,11 @@ export async function bookInTx(
   const notSelf = changing ? { id: { not: changing.bookingId } } : {};
   const sameDay = await tx.booking.findMany({
     where: { patientId: input.patientId, slotDate: dbDate(input.slotDate), status: { in: ["RESERVED", "CHECKED_IN"] }, ...notSelf },
-    select: { clinicId: true, status: true, bookingNo: true, startTime: true, endTime: true },
+    select: { clinicId: true, bookingNo: true, startTime: true, endTime: true },
     orderBy: { startTime: "asc" },
   });
-  const limitRows = sameDay.filter((b) => b.clinicId === input.clinicId && b.status === "RESERVED");
+  // per person × clinic × date: RESERVED and CHECKED_IN count (F4-06, P11 Q29 A, 質疑 Q-046 answered)
+  const limitRows = sameDay.filter((b) => b.clinicId === input.clinicId);
   if (!opts.overrideLimit && limitRows.length >= policy.perPersonDailyLimit) failed.add("LIMIT");
   const endIso = run ? run[run.length - 1].end : addMinutes(startIso, n * policy.frameMinutes);
   if (sameDay.some((b) => toHhmm(b.startTime) < endIso && toHhmm(b.endTime) > startIso)) failed.add("OVERLAP");
@@ -222,63 +303,16 @@ export async function bookInTx(
   if (failed.size > 0) {
     const order = patient ? PATIENT_ORDER : STAFF_ORDER;
     const list = order.filter((r) => failed.has(r));
-    return { ok: false, rule: list[0], failed: list, sameDayBookingNos: failed.has("LIMIT") ? limitRows.map((b) => b.bookingNo) : undefined };
+    return { ok: false, rule: list[0], failed: list, sameDayBookingNos: failed.has("LIMIT") ? limitRows.map((b) => b.bookingNo) : undefined } satisfies Fail;
   }
-  const frames = run!;
+  return { ok: true as const, old, oldFrames, doctorId: doctorId!, frames: run!, endIso, vt: vt!, now };
+}
 
-  // writes (P13 更新1–11, S02 event 10)
-  if (old) {
-    await tx.bookingSlot.deleteMany({ where: { bookingId: old.id } });
-    for (const id of oldFrames) await tx.slot.update({ where: { id }, data: { reservedCount: { decrement: 1 } } });
-  }
-  const data = {
-    doctorId: doctorId!, doctorRequested: input.doctorRequested, slotDate: dbDate(input.slotDate),
-    startTime: dbTime(startIso), endTime: dbTime(endIso), notes: input.notes ? encryptText(input.notes) : null,
-  };
-  let bookingId: string;
-  let bookingNo: string;
-  if (old) {
-    const moved = await tx.booking.updateMany({
-      where: { id: old.id, version: old.version, status: "RESERVED" },
-      data: { ...data, changeCount: { increment: 1 }, version: { increment: 1 }, adjustRequiredAt: null },
-    });
-    if (moved.count !== 1) throw new Error("booking changed under its lock");
-    [bookingId, bookingNo] = [old.id, old.bookingNo];
-    const at = now;
-    const actorCols = { actorKind: actor.kind, actorAccountId: actor.accountId, channel: actor.kind === "STAFF" ? actor.channel : null, at };
-    await tx.bookingEvent.create({ data: { bookingId, event: "CHANGED", ...actorCols, before: snapshot(old), after: snapshot({ ...data, status: "RESERVED" }) } });
-    if (old.adjustRequiredAt) await tx.bookingEvent.create({ data: { bookingId, event: "ADJUST_CLEARED", ...actorCols } });
-    await tx.questionnaire.updateMany({ where: { bookingId }, data: { purgeAfter: dbDate(addDays(input.slotDate, 90)) } }); // Q8 c, 06 §5
-  } else {
-    bookingNo = await newBookingNo(tx);
-    const created = await tx.booking.create({
-      data: {
-        ...data, bookingNo, clinicId: input.clinicId, departmentId: input.departmentId, visitTypeId: input.visitTypeId,
-        patientId: input.patientId, bookedByAccountId: opts.bookedByAccountId === undefined ? actor.accountId : opts.bookedByAccountId,
-        channel: actor.channel, status: "RESERVED", priceYen: vt!.category === "SELF_PAY" ? vt!.priceYen : null,
-      },
-    });
-    bookingId = created.id;
-    await tx.bookingEvent.create({
-      data: {
-        bookingId, event: "CREATED", actorKind: actor.kind, actorAccountId: actor.accountId,
-        channel: actor.kind === "STAFF" ? actor.channel : null, after: snapshot({ ...data, status: "RESERVED" }), at: now,
-      },
-    });
-    if (input.questionnaire) {
-      await tx.questionnaire.create({
-        data: {
-          bookingId, formVersion: input.questionnaire.formVersion, language: input.questionnaire.language,
-          answers: encryptJson(input.questionnaire.answers), submittedAt: now, purgeAfter: dbDate(addDays(input.slotDate, 90)),
-        },
-      });
-    }
-  }
-  await tx.bookingSlot.createMany({ data: frames.map((f) => ({ bookingId, slotId: f.id })) });
-  for (const f of frames) await tx.slot.update({ where: { id: f.id }, data: { reservedCount: { increment: 1 } } });
-
-  const notificationId = opts.notify === false ? null : await enqueueBookingNotice(tx, bookingId, old ? "NT03_CHANGED" : "NT01_BOOKED");
-  return { ok: true, bookingId, bookingNo, notificationId };
+/** PE035 for a date without frame rows (A-5): clinic × department has no frame that day and clinic_calendar_days /
+ *  holidays close the whole day (P11 抽出11 closure; a closed frame gives CLOSED by itself) */
+async function closedDay(tx: Tx, input: BookingInput) {
+  const frames = await tx.slot.count({ where: { clinicId: input.clinicId, departmentId: input.departmentId, slotDate: dbDate(input.slotDate) } });
+  return frames === 0 && (await openBandsForDate(tx, input.clinicId, input.slotDate)).length === 0;
 }
 
 /** 指名なし (F4-04, P13 抽出5, Q7 A): fewest RESERVED + CHECKED_IN bookings at the clinic that date, tie display_order */

@@ -54,6 +54,8 @@ export const b4Job: Job = async (ctx) => {
       const found = await prisma.booking.count({ where: candidatesWhere(c.id, date) });
       read += found;
       if (found === 0) continue;
+      // Q-034 / Q-043: the clinic is refused whole (the run FAILED → J-08 alert to the admins), the dry run says so too
+      if (found > B4_MAX_PER_CLINIC) throw new Error(`${found} candidates over the cap ${B4_MAX_PER_CLINIC}`);
       const n = ctx.dryRun ? found : await prisma.$transaction((tx) => closeClinic(tx, c.id, date, now), { timeout: 120_000, maxWait: 20_000 });
       written += ctx.dryRun ? 0 : n;
       per.push(`${c.code} ${n}`);

@@ -244,6 +244,21 @@ describe("detail and save", () => {
     expect(await audits("PATIENT_UPDATE", p.id)).toHaveLength(1);
   });
 
+  it("B-9: 保存 / 確認 answer the detail as it is now (the screen redraws without a refresh): no PATIENT_VIEW after a change, one per open", async () => {
+    as(reception.token);
+    const p = await patient({ account: true });
+    mockJar.path = `/staff/patients/${p.id}`;
+    await PatientDetailPage({ params: Promise.resolve({ id: p.id }), searchParams: Promise.resolve({}) });
+    const saved = await act({ action: "save", id: p.id, updatedAt: await updatedAt(p.id), profile: profile(p, { city: "港区" }), cards: [] });
+    const d = saved.body.detail as { updatedAt: string; profile: { city: string } };
+    expect([saved.body.code, d.profile.city, d.updatedAt]).toEqual(["SI030", "港区", await updatedAt(p.id)]);
+    // the next 保存 uses the redrawn updated_at (no SE010)
+    expect((await act({ action: "save", id: p.id, updatedAt: d.updatedAt, profile: profile(p, { city: "中央区" }), cards: [] })).body.code).toBe("SI030");
+    const card = await prisma.patientCard.create({ data: { patientId: p.id, clinicId: f.clinic.id, cardNo: `B9-${f.tag}`, enteredByKind: "PATIENT" } });
+    expect((await act({ action: "confirm", id: p.id, clinicId: f.clinic.id, updatedAt: card.updatedAt.toISOString() })).body.detail).toBeTruthy();
+    expect(await audits("PATIENT_VIEW", p.id)).toHaveLength(1); // the open only
+  });
+
   it("確認する: a patient entry gets confirmed_at; a stale row → SE010", async () => {
     as(reception.token);
     const p = await patient({ account: true });

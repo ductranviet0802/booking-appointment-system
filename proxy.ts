@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { PATH_HEADER } from "@/lib/auth/path-header";
 import type { RateLimitGroup } from "@/lib/config";
 import { consumeRateLimitToken } from "@/lib/rate-limiter";
+import { clientIp } from "@/lib/request-security";
 
 const BOT_PATTERNS = [
   /bot/i,
@@ -12,12 +13,6 @@ const BOT_PATTERNS = [
   /python-requests/i,
   /go-http-client/i,
 ];
-
-function getClientIp(request: NextRequest) {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    ?? request.headers.get("x-real-ip")
-    ?? "unknown";
-}
 
 function isBotRequest(request: NextRequest) {
   const userAgent = request.headers.get("user-agent") ?? "";
@@ -91,9 +86,10 @@ export function proxy(request: NextRequest) {
     return rejectRequest(request, 403, "BOT_BLOCKED", "Request blocked.");
   }
 
-  const group = getRateLimitGroup(pathname);
-  const ip = getClientIp(request);
-  const rateLimit = consumeRateLimitToken(ip, group);
+  // no usable client address (TRUSTED_PROXY_HOPS unset or a short X-Forwarded-For): not limited by IP, never one shared bucket
+  const ip = clientIp(request.headers);
+  if (!ip) return NextResponse.next();
+  const rateLimit = consumeRateLimitToken(ip, getRateLimitGroup(pathname));
   if (rateLimit.limited) {
     return rejectRequest(
       request,
