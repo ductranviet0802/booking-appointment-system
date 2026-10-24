@@ -1,6 +1,7 @@
 // Shared by the P11 / P12 / P13 tests: an own clinic (b2-helpers) with frames inside the booking window, patient accounts
 // with a real login session (the session cookie is served by the next/headers mock of each test file through `jar`),
 // requests carrying the draft cookie, and the cleanup of everything made here.
+import { AsyncLocalStorage } from "node:async_hooks";
 import bcrypt from "bcrypt";
 import { NextRequest } from "next/server";
 import { resolveSession } from "@/lib/auth/context";
@@ -9,9 +10,15 @@ import { addDays, dbDate, dbTime, todayJst } from "@/lib/datetime";
 import { prisma } from "@/lib/prisma";
 import { fixture, type Fixture } from "./b2-helpers";
 
-/** the session cookie the next/headers mock serves: `(globalThis as W1).w1jar` (a mock factory cannot import) */
-export type W1 = { w1jar: { sid?: string } };
-export const jar = ((globalThis as unknown as W1).w1jar ??= {});
+/**
+ * the session cookie the next/headers mock serves (a mock factory cannot import, so both live on globalThis): the
+ * AsyncLocalStorage value of `run` (parallel requests of different users), else the last `req` caller (`jar`)
+ */
+export type W1 = { w1jar: { sid?: string }; w1als: AsyncLocalStorage<string | undefined> };
+const g = globalThis as unknown as W1;
+export const jar = (g.w1jar ??= {});
+const als = (g.w1als ??= new AsyncLocalStorage<string | undefined>());
+export const run = <T>(as: { sid: string } | null, fn: () => Promise<T>) => als.run(as?.sid, fn);
 export const DAY = addDays(todayJst(), 5);
 const MARK = "w1slot";
 const PW = "Test1234";

@@ -43,7 +43,9 @@ export type Draft = {
 
 export type Owner = { accountId: string; sessionId: string } | null;
 
-const store = new Map<string, Draft>();
+// on globalThis: route handlers and pages are separate module instances in one process (as the core's bookingOnce)
+const g = globalThis as unknown as { bookingDrafts?: Map<string, Draft> };
+const store = (g.bookingDrafts ??= new Map<string, Draft>());
 
 export function putDraft(d: Omit<Draft, "id" | "createdAt">, now = Date.now()): Draft {
   if (store.size >= MAX_ENTRIES) {

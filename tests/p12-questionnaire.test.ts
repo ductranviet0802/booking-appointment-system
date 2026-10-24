@@ -3,8 +3,9 @@
 // dropped), 回答状況 / 次へ, the route (draft expiry → PE036, 戻る keeps answers, the language of 次へ), the page loader.
 jest.mock("next/headers", () => ({
   cookies: async () => {
-    const jar = (globalThis as unknown as { w1jar?: { sid?: string } }).w1jar;
-    return { get: (n: string) => (n === "sid" && jar?.sid ? { value: jar.sid } : undefined) };
+    const w = globalThis as unknown as { w1jar?: { sid?: string }; w1als?: { getStore(): string | undefined } };
+    const sid = w.w1als?.getStore() ?? w.w1jar?.sid;
+    return { get: (n: string) => (n === "sid" && sid ? { value: sid } : undefined) };
   },
   headers: async () => ({ get: () => null }),
 }));
