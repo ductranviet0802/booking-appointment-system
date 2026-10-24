@@ -258,9 +258,9 @@ describe("detail and save", () => {
     as(reception.token);
     const p = await patient();
     const bk = await booking(p.id);
-    await prisma.questionnaire.create({ data: { bookingId: bk.id, formVersion: "2026.1", language: "JA", answers: encryptJson({ C01: "腹痛" }), submittedAt: new Date(), purgeAfter: dbDate("2030-01-01") } });
+    await prisma.questionnaire.create({ data: { bookingId: bk.id, formVersion: "2026.1", language: "JA", answers: encryptJson({ C01: "腹痛", C02: "D1_3" }), submittedAt: new Date(), purgeAfter: dbDate("2030-01-01") } });
     const r = await act({ action: "questionnaire", id: p.id, bookingId: bk.id });
-    expect(r.body.questionnaire).toMatchObject({ language: "ja", answers: [{ key: "C01", value: "腹痛" }] });
+    expect(r.body.questionnaire).toMatchObject({ language: "ja", answers: [{ key: "主訴", value: "腹痛" }, { key: "発症時期", value: "1〜3日前" }] }); // 10 labels and choice texts (Q21)
     const [a] = await audits("QUESTIONNAIRE_VIEW", bk.id);
     expect(JSON.stringify(a.detail)).not.toContain("腹痛");
     const none = await booking(p.id);

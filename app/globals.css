@@ -313,7 +313,10 @@ a { color: inherit; }
 .w1-steps li.cur .w1-step-no { background: var(--pri); color: #fff; }
 .w1-steps li.past .w1-step-no { background: var(--pri-t); color: #075e5a; }
 .w1-bar { position: sticky; bottom: 0; z-index: 5; background: #fff; border-top: 1px solid var(--line); padding: 10px 16px; margin: 0 -16px; display: flex; flex-direction: column; gap: 6px; }
+/* P13 items 15 / 16: DOM (Tab) 15 → 16, drawn 16 above 15 (mobile) / left of 15 (desktop) */
+.w1-bar.back-first { flex-direction: column-reverse; }
 @media (min-width: 768px) {
   .w1-bar { position: static; border: 0; background: transparent; padding: 0; margin: 0; flex-direction: row; align-items: center; justify-content: flex-end; gap: 16px; }
+  .w1-bar.back-first { flex-direction: row-reverse; justify-content: flex-start; }
 }
 }

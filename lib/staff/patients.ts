@@ -13,6 +13,7 @@ import { decryptJson } from "@/lib/crypto/field";
 import { dbDate, todayJst, toHhmm, toIsoDate } from "@/lib/datetime";
 import { prisma } from "@/lib/prisma";
 import { formatPhone } from "@/lib/public/phone";
+import { answerRows } from "./questionnaire-labels";
 import {
   ACCOUNT_STATUS_LABEL, ageOn, checkCards, checkMergeBox, checkProfile, kindLabel, LANGUAGE_LABEL, NOTIFY_CHANNEL_LABEL, profileTampered, SEARCH_MAX,
   SEX_LABEL, slashDate, type CardValue, type Conditions, type ProfileValues,
@@ -330,8 +331,8 @@ export async function openQuestionnaire(a: Actor, b: Record<string, unknown>): P
     questionnaire: {
       title: `問診 — ${date.slice(5, 7)}/${date.slice(8, 10)} ${bk.department.nameJa} ${bk.visitType.nameJa}`,
       language: bk.questionnaire.language.toLowerCase(),
-      // shortcut: answers listed as stored key: value; the 10 question / choice labels come with P12 (w1) at merge
-      answers: answers && typeof answers === "object" ? Object.entries(answers as Record<string, unknown>).map(([k, v]) => ({ key: k, value: Array.isArray(v) ? v.join("、") : String(v) })) : [],
+      // labels and choice texts of 10 (Q21), from the P12 form definition
+      answers: answerRows(answers).map((r) => ({ key: r.question, value: r.answer })),
     },
   });
 }

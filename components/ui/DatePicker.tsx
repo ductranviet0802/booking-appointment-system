@@ -156,7 +156,7 @@ export function DateField(p: DateFieldProps) {
   return (
     <div className="dp" onKeyDown={(e) => { if (open && e.key === "Escape") { e.stopPropagation(); close(); } }}>
       <input
-        ref={inputRef} id={p.id} className="inp" value={p.value} placeholder={p.placeholder ?? "YYYY/MM/DD"} inputMode="numeric" aria-label={p.ariaLabel}
+        ref={inputRef} id={p.id} className="inp" value={p.value} placeholder={p.placeholder ?? "YYYY/MM/DD"} inputMode="numeric" maxLength={10} aria-label={p.ariaLabel}
         aria-invalid={p.invalid || undefined} aria-describedby={p.describedBy} disabled={p.disabled} autoFocus={p.autoFocus}
         onChange={(e) => p.onChange(e.target.value)} onBlur={p.onBlur}
       />

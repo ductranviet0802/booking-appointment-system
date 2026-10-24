@@ -82,12 +82,12 @@ export function ConfirmView(p: ConfirmProps) {
         <p className="sm m0 row">
           <Icon name="clock" size={16} />
           {p.deadline.passed
-            ? `${p.deadline.message || lw1("phoneDefault", lang)}（${p.deadline.clinic} ${formatPhone(p.deadline.phone)}）` // PI051 pattern of 04
+            ? t("PI051", lang, { 電話案内文: p.deadline.message || lw1("phoneDefault", lang), クリニック名: p.deadline.clinic, 電話番号: formatPhone(p.deadline.phone) })
             : t("PI056", lang, { 期限: formatDateTime(new Date(p.deadline.at), lang), deadline: formatDateTime(new Date(p.deadline.at), lang) })}
         </p>
       </section>
 
-      <div className="w1-bar">
+      <div className="w1-bar back-first">
         <Button busy={busy} busyLabel={lw1(p.changeMode ? "confirmingChange" : "confirmingBooking", lang)} onClick={() => (p.changeMode ? setAsk(true) : confirm())}>
           {lw1(p.changeMode ? "confirmChange" : "confirmBooking", lang)}
         </Button>

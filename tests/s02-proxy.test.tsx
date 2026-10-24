@@ -5,6 +5,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
+import { encryptText } from "@/lib/crypto/field";
 import { addDays, dbDate, dbTime, todayJst } from "@/lib/datetime";
 import { pool, prisma } from "@/lib/prisma";
 import { cleanupStaff, makeStaff, request } from "./a03-helpers";
@@ -265,11 +266,12 @@ describe("change mode", () => {
     const p = await person({ phone: "09055556666" });
     const created = await call("confirm", book(p.id, { date: DAY, startTime: "10:00", doctorId: f.doctors[1].id, ackNoTarget: true, channel: "COUNTER" }));
     const b = await prisma.booking.findFirstOrThrow({ where: { bookingNo: created.body.bookingNo } });
-    await prisma.booking.update({ where: { id: b.id }, data: { adjustRequiredAt: new Date() } });
+    await prisma.booking.update({ where: { id: b.id }, data: { adjustRequiredAt: new Date(), notes: encryptText("既存の備考") } });
     const session = await prisma.session.findFirstOrThrow({ where: { accountId: reception.account.id } });
     const actor = { accountId: reception.account.id, role: "RECEPTION" as const, clinicId: f.clinic.id, allClinics: false, sessionId: session.id, ip: null, now: new Date() };
     const preset = (await loadPreset(actor, { bookingId: b.id })) as Preset;
-    expect(preset.change).toMatchObject({ bookingNo: b.bookingNo, version: 0, start: "10:00", doctorId: "", channel: "COUNTER", departmentId: f.dept.id });
+    // the stored note is shown back (Q10 a editable): an untouched box keeps it instead of erasing it
+    expect(preset.change).toMatchObject({ bookingNo: b.bookingNo, version: 0, start: "10:00", doctorId: "", channel: "COUNTER", departmentId: f.dept.id, notes: "既存の備考" });
     expect(await loadPreset(actor, { bookingId: (await prisma.booking.create({ data: { bookingNo: "ZZZZ0001", clinicId: foreign.clinic.id, departmentId: foreign.dept.id, visitTypeId: foreign.visitType.id, doctorId: foreign.doctors[0].id, doctorRequested: true, patientId: p.id, channel: "PHONE", slotDate: dbDate(DAY), startTime: dbTime("09:00"), endTime: dbTime("09:15") } })).id })).toBe("ER03");
     expect(await loadPreset(actor, { bookingId: "nope" })).toBe("ER02");
     expect(await loadPreset(actor, { patientId: "11111111-1111-4111-8111-111111111111" })).toBe("ER02");

@@ -149,7 +149,7 @@ export function DetailClient({ detail: d, admin, back }: { detail: PatientDetail
     // T087: S01 at the booking's date; another clinic of the staff switches the session clinic first
     const res = await api(...postJson("/api/session/clinic", { clinicId: b.clinicId }));
     if (!res || (await openStaffErrorScreen(res))) return;
-    router.push(`/staff/ledger?date=${b.date}&booking=${b.id}`);
+    router.push(`/staff/ledger?date=${b.date}&booking=${b.bookingNo.replace("-", "")}`); // S01 highlights by 予約番号 (Q18)
   }
   const candKeys = (e: React.KeyboardEvent) => {
     const list = candidates ?? [];
@@ -371,7 +371,7 @@ export function DetailClient({ detail: d, admin, back }: { detail: PatientDetail
           <div className="dlg" role="dialog" aria-modal="true" aria-labelledby="s03-q-title">
             <h3 id="s03-q-title">{q.title}</h3>
             <p className="mut">回答言語: {q.language}</p>
-            <dl className={s.dl}>{q.answers.map((x) => <div key={x.key}><dt>{x.key}</dt><dd>{x.value}</dd></div>)}</dl>
+            <dl className={s.dl}>{q.answers.map((x, i) => <div key={i}><dt>{x.key}</dt><dd>{x.value}</dd></div>)}</dl>
             <div className="row" style={{ justifyContent: "flex-end" }}><Button variant="secondary" autoFocus onClick={() => setQ(null)}>閉じる</Button></div>
           </div>
         </div>

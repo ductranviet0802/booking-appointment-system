@@ -93,7 +93,14 @@ export async function deliverDue(now = new Date()) {
     select: { id: true },
     orderBy: { nextAttemptAt: "asc" },
   });
-  for (const { id } of due) await deliver(id, now);
+  for (const { id } of due) {
+    try {
+      await deliver(id, now);
+    } catch (e) {
+      // one row that cannot be rendered / sent must not block the other due rows every minute
+      await finish(id, { status: "FAILED", lastError: (e instanceof Error ? e.message : String(e)).slice(0, 500) });
+    }
+  }
   return due.length;
 }
 

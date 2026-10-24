@@ -8,6 +8,7 @@ import { audit, type Result } from "@/lib/auth/service";
 import { bookInTx, STAFF_CODE, type BookingInput } from "@/lib/booking/core";
 import { deliverAfterCommit, recipientOf } from "@/lib/booking/notify";
 import { policyOf } from "@/lib/booking/policy";
+import { decryptText } from "@/lib/crypto/field";
 import { addDays, dbDate, toHhmm, toIsoDate, todayJst } from "@/lib/datetime";
 import { prisma } from "@/lib/prisma";
 import { formatPhone } from "@/lib/public/phone";
@@ -112,7 +113,7 @@ export async function loadPreset(a: Actor, q: { date?: string; bookingId?: strin
     out.change = {
       bookingId: b.id, bookingNo: b.bookingNo, version: b.version, date: out.date, start: toHhmm(b.startTime), end: toHhmm(b.endTime),
       departmentId: b.departmentId, visitTypeId: b.visitTypeId, doctorId: b.doctorRequested ? b.doctorId : "",
-      channel: b.channel === "COUNTER" ? "COUNTER" : "PHONE", notes: "", // notes are not shown back (encrypted, F10-06); Q10 a: editable
+      channel: b.channel === "COUNTER" ? "COUNTER" : "PHONE", notes: b.notes ? decryptText(b.notes) : "", // Q10 a: editable, so start from the stored text (an empty box would erase it)
     };
   } else if (q.patientId !== undefined) {
     if (!isUuid(q.patientId)) return "ER02";

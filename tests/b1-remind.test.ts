@@ -199,6 +199,23 @@ describe("X1 / X2 retry rules (lib/notify/queue) through B1", () => {
     expect((await reminders(b.id))[0]).toMatchObject({ status: "SKIPPED", attempts: 1 });
   });
 
+  it("a row that throws while sending is FAILED and does not block the other due rows", async () => {
+    const a = await booking((await person()).id, { start: "16:00" });
+    const b = await booking((await person()).id, { start: "16:15" });
+    const spy = jest.spyOn(transport, "send").mockResolvedValue({ ok: false, retry: true, error: "HTTP 503" });
+    await remindClinic(f.clinic.id, tomorrow, noon, false);
+    const broken = (await reminders(a.id))[0].id;
+    spy.mockReset();
+    spy.mockImplementation(async (m) => {
+      if (m.notificationId === broken) throw new Error("render broke");
+      return { ok: true, providerMessageId: "fake-x" };
+    });
+    await deliverDue(plus(1));
+    spy.mockRestore();
+    expect((await reminders(a.id))[0]).toMatchObject({ status: "FAILED", lastError: "render broke" });
+    expect((await reminders(b.id))[0]).toMatchObject({ status: "SENT" });
+  });
+
   it("LINE refused (400): the LINE row is FAILED and the same NT-02 goes by MAIL to the account address", async () => {
     const p = await person({ line: `U${f.tag}fail400` });
     const b = await booking(p.id, { start: "15:30" });

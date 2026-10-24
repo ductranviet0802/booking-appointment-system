@@ -56,6 +56,7 @@ export function BookingEntry(p: EntryProps) {
   const [busy, setBusy] = useState(false);
   const [quit, setQuit] = useState(false);
   const [presetDoctor, setPresetDoctor] = useState(p.presetDoctorId);
+  const [noNext, setNoNext] = useState(false);
 
   const base = { clinic: sel.clinicId ?? "", department: sel.departmentId ?? "", ...(change && { change: change.bookingId }) };
   async function get<T>(params: Record<string, string>): Promise<T | null> {
@@ -140,8 +141,10 @@ export function BookingEntry(p: EntryProps) {
   }
   const after = { clinicId: null, departmentId: null, visitTypeId: null, doctorId: null, date: null, start: null };
   const pickDate = (date: string) => { choose({ date, start: null }); setMonth(monthOf(date)); };
+  // 6-2 / 6-3 (Q12 A): select the next free date, else answer PI032
   const nextFree = () => {
     const target = nextFreeAfter(sel.date ?? `${month}-00`);
+    setNoNext(!target);
     if (target) pickDate(target);
   };
 
@@ -300,9 +303,16 @@ export function BookingEntry(p: EntryProps) {
                     {(Object.keys(MARK) as Day["mark"][]).map((k) => <span key={k}>{MARK[k][0]} {lw1(MARK[k][1], lang)}</span>)}
                   </p>
                   {anyFree ? (
-                    <button type="button" className="btn bs btn-sm" onClick={nextFree} disabled={!nextFreeAfter(sel.date ?? `${month}-00`)}>
-                      <Icon name="cal" />{lw1("nextFree", lang)}
-                    </button>
+                    <>
+                      <button type="button" className="btn bs btn-sm" onClick={nextFree}>
+                        <Icon name="cal" />{lw1("nextFree", lang)}
+                      </button>
+                      {noNext && (
+                        <div className="info" role="status">
+                          <div>{t("PI032", lang)} {clinic && <a className="lnk" href={telHref(clinic.phone)}>{formatPhone(clinic.phone)}</a>}</div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="info" role="status">
                       <div>{t("PI032", lang)} {clinic && <a className="lnk" href={telHref(clinic.phone)}>{formatPhone(clinic.phone)}</a>}</div>

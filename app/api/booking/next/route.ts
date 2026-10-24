@@ -58,8 +58,9 @@ export function POST(req: NextRequest) {
       if (!b.adjustRequiredAt && !beforeDeadline(policy, toIsoDate(b.slotDate), toHhmm(b.startTime))) return setFlash(go(`/bookings/${b.id}`, 409), "PE041");
       // the person, clinic, department and visit type of the booking are fixed (F5-01)
       Object.assign(sel, { patientId: b.patientId, clinicId: b.clinicId, departmentId: b.departmentId, visitTypeId: b.visitTypeId });
-      const version = typeof body.version === "number" ? body.version : b.version;
-      change = { bookingId: b.id, version };
+      // the version read when change mode opened (P13 10-1); the page always sends it, a missing one would skip STALE
+      if (!Number.isInteger(body.version)) return tampered();
+      change = { bookingId: b.id, version: body.version as number };
     } else if (!sel.patientId) {
       const persons = await prisma.patient.findMany({ where: { accountId, mergedIntoId: null, anonymizedAt: null }, select: { id: true, relation: true } });
       if (persons.length > 1) errors.unshift({ field: "person", code: "PE001" }); // §4.2 row 4
