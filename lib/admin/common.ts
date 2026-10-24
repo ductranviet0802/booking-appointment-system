@@ -41,7 +41,7 @@ export const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code 
  */
 export function adminRoute(
   req: NextRequest,
-  fn: (actor: Actor, body: Record<string, unknown>) => Promise<Result>,
+  fn: (actor: Actor, body: Record<string, unknown>) => Promise<Result | Response>, // a Response (A06 download) is returned as is
   opts: { raw?: boolean; roles?: Role[] } = {},
 ) {
   const raw = opts.raw ?? false;
@@ -64,7 +64,8 @@ export function adminRoute(
       sessionId: s.sessionId, ip: clientOf(req).ip, now: new Date(),
     };
     try {
-      return answer(await fn(actor, raw || req.method === "GET" ? {} : await jsonBody(req)));
+      const r = await fn(actor, raw || req.method === "GET" ? {} : await jsonBody(req));
+      return r instanceof Response ? r : answer(r);
     } catch (error) {
       log("error", "admin route failed", { path: req.nextUrl.pathname, error: error instanceof Error ? error.message : String(error) });
       return NextResponse.json({ code: "SE090", params: {} }, { status: 500 });
