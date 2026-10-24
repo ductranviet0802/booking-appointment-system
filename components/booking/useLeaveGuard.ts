@@ -1,6 +1,6 @@
 "use client";
 
-// P12 event 14 / P13 event 9: a CF-01 link (menu, logo) pressed while a draft is open asks PW005 first. The header's
+// P12 event 14 / P13 event 9 (Q-039: PW005 はい → the link pressed on both): a CF-01 link (menu, logo) pressed while a draft is open asks PW005 first. The header's
 // ログアウト is a button and is not caught (P13 event 9: it discards the draft without PW005, by revoking the session);
 // the language switch is not a link either (_common event 2, the draft stays).
 import { useEffect } from "react";

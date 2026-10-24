@@ -18,6 +18,7 @@ import { lw1 } from "@/lib/i18n/labels-w1";
 import { formatPhone } from "@/lib/public/phone";
 import type { ConfirmProps } from "@/lib/entry/pages";
 import { Steps } from "./Steps";
+import { leaveTarget } from "./leave-target";
 import { useLeaveGuard } from "./useLeaveGuard";
 import s from "./confirm.module.css";
 
@@ -44,7 +45,7 @@ export function ConfirmView(p: ConfirmProps) {
   useLeaveGuard(useCallback((href: string) => setLeaveTo(href), []));
   async function leave() {
     await apiFetch(...postJson("/api/booking/discard", { origin: p.origin }));
-    window.location.assign(leaveTo ?? p.origin);
+    window.location.assign(leaveTarget(leaveTo, undefined, p.origin));
   }
 
   const row = (k: string, v: React.ReactNode) => (<><dt>{k}</dt><dd>{v}</dd></>);
