@@ -1,0 +1,11 @@
+/* P13 予約確認: mobile list; desktop a 640 px card, buttons right-aligned */
+.root { width: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.root h1 { font-size: 20px; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card h2 { margin: 0; font-size: 15px; }
+.when { display: flex; gap: 10px; align-items: flex-start; }
+.big { font-size: 18px; font-weight: 700; }
+.list { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; }
+.list dt { color: var(--mut); font-size: 13px; }
+.list dd { margin: 0; }
+.pre { white-space: pre-wrap; overflow-wrap: anywhere; }

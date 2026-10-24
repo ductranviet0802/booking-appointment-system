@@ -1,0 +1,18 @@
+/* P12 問診入力: one column (desktop ≈ 720 px) */
+.root { width: 100%; max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.root h1 { font-size: 20px; }
+.q { display: flex; flex-direction: column; gap: 8px; }
+.follow { margin-left: 12px; padding-left: 12px; border-left: 3px solid var(--pri-t); }
+.qhead { display: flex; flex-direction: column; gap: 2px; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 1px solid #c3ced1; border-radius: 8px; cursor: pointer; }
+.choice input { accent-color: var(--pri); width: 20px; height: 20px; margin: 0; flex: none; }
+.choice.on { border-color: var(--pri); background: var(--pri-t); }
+.num { max-width: 140px; }
+.band { margin: 8px 0 0; font-size: 14px; background: #eef2f3; border-radius: 6px; padding: 6px 10px; border: 0; }
+.progress { display: flex; flex-direction: column; gap: 4px; }
+.bar { display: block; height: 6px; background: #eef2f3; border-radius: 3px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--pri); }
+@media (min-width: 768px) {
+  .progress { display: none; } /* Q4 A: the indicator is drawn on the mobile layout only */
+}
