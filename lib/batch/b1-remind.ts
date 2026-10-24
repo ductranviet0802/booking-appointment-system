@@ -10,6 +10,7 @@ import { addDays, dbDate, jstInstant, todayJst, toHhmm, toIsoDate } from "@/lib/
 import { log } from "@/lib/logger";
 import { deliver, holdVars } from "@/lib/notify/queue";
 import { prisma } from "@/lib/prisma";
+import { lockKeyOf, SKIPPED, withLock } from "@/lib/batch/lock";
 import type { Job, JobResult } from "@/lib/batch/runner";
 
 // Q-033: a clinic's targets are read in chunks (memory bounded by the chunk) and every chunk is sent in the same run, so
@@ -108,9 +109,16 @@ export const b1Job: Job = async (ctx) => {
   const clinics = await prisma.clinic.findMany({ where: ctx.clinicId ? { id: ctx.clinicId } : { isActive: true }, orderBy: { displayOrder: "asc" }, select: { id: true, code: true } });
   const total = zero();
   const failedClinics: string[] = [];
+  const busy: string[] = [];
   for (const cl of clinics) {
     try {
-      const c = await remindClinic(cl.id, date, runStart, ctx.dryRun);
+      const work = () => remindClinic(cl.id, date, runStart, ctx.dryRun);
+      // a per-clinic run holds its clinic's lock in the runner; an all-clinic run takes each clinic's lock here
+      const c = ctx.clinicId || ctx.dryRun ? await work() : await withLock(lockKeyOf("B1", cl.id), work);
+      if (!c) {
+        busy.push(cl.code);
+        continue;
+      }
       for (const k of Object.keys(total) as Array<keyof B1Counts>) total[k] += c[k];
     } catch (e) {
       failedClinics.push(`${cl.code}: ${e instanceof Error ? e.message : String(e)}`);
@@ -118,7 +126,8 @@ export const b1Job: Job = async (ctx) => {
   }
   const message = [
     `${date} 送信${ctx.dryRun ? "予定" : ""}${total.queued}`, `通知先なし${total.noRecipient}`, `24時間以内${total.within24h}`, `送信済${total.already}`,
-    `取消等${total.skipped}`, `失敗${total.failed}`, ...(failedClinics.length ? [`エラー ${failedClinics.join("; ")}`] : []),
+    `取消等${total.skipped}`, `失敗${total.failed}`, ...(busy.length ? [`${SKIPPED} ${busy.join(", ")}`] : []),
+    ...(failedClinics.length ? [`エラー ${failedClinics.join("; ")}`] : []),
   ].join("・").slice(0, 500);
   // 06 B1 Failure: PARTIAL when a notification is FAILED at the end of the run; a clinic that could not run at all → FAILED / PARTIAL
   const status: JobResult["status"] = failedClinics.length === clinics.length && clinics.length > 0 ? "FAILED"

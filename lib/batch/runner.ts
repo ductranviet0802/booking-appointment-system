@@ -1,11 +1,12 @@
-// Batch runner (06 §0): one batch_runs row per run; a database advisory lock per job code, so two runs of one job
-// never overlap — a run that finds the lock taken ends SUCCESS 「実行中のため省略」 and writes nothing else.
+// Batch runner (06 §0): one batch_runs row per run; a database advisory lock per job code (B1: per clinic), so two runs
+// of one job never overlap — a run that finds the lock taken ends SUCCESS 「実行中のため省略」 and writes nothing else.
 // A dry run (B2 --dry-run) writes nothing at all and returns the counts.
 import type { BatchRun, BatchStatus, NotificationEvent, Prisma } from "@prisma/client";
 import { log } from "@/lib/logger";
 import { send } from "@/lib/notify/transport";
-import { pool, prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { JOBS } from "@/lib/batch/jobs";
+import { lockKeyOf, SKIPPED, withLock } from "@/lib/batch/lock";
 
 /** system_settings key of the vendor operator's alert address (N-OPS-06; key name: question in the W4 report), env fallback */
 export const OPERATOR_ALERT_KEY = "operator_alert_email";
@@ -81,31 +82,21 @@ export async function runJob(
     jobCode: code, trigger: opts.trigger, clinicId, params: params as Prisma.InputJsonValue, startedAt: new Date(),
     readCount: 0, writtenCount: 0, errorCount: 0,
   };
-  const lockKey = `batch:${code}`;
-  const client = await pool.connect();
-  try {
-    const { rows } = await client.query<{ locked: boolean }>("SELECT pg_try_advisory_lock(hashtext($1)) AS locked", [lockKey]);
-    if (!rows[0].locked) {
-      const result: JobResult = { status: "SUCCESS", read: 0, written: 0, errors: 0, message: "実行中のため省略" };
-      const run = await prisma.batchRun.create({ data: { ...base, status: "SUCCESS", endedAt: new Date(), message: result.message } });
-      return { run, result };
-    }
-    try {
-      const started = await prisma.batchRun.create({ data: { ...base, status: "RUNNING" } });
-      const result = await execute(started.id);
-      const run = await prisma.batchRun.update({
-        where: { id: started.id },
-        data: {
-          status: result.status, endedAt: new Date(), readCount: result.read, writtenCount: result.written,
-          errorCount: result.errors, message: result.message ?? null,
-        },
-      });
-      if (run.status === "FAILED" || run.status === "PARTIAL") await alertRun(run);
-      return { run, result };
-    } finally {
-      await client.query("SELECT pg_advisory_unlock(hashtext($1))", [lockKey]);
-    }
-  } finally {
-    client.release();
-  }
+  const ran = await withLock(lockKeyOf(code, clinicId), async () => {
+    const started = await prisma.batchRun.create({ data: { ...base, status: "RUNNING" } });
+    const result = await execute(started.id);
+    const run = await prisma.batchRun.update({
+      where: { id: started.id },
+      data: {
+        status: result.status, endedAt: new Date(), readCount: result.read, writtenCount: result.written,
+        errorCount: result.errors, message: result.message ?? null,
+      },
+    });
+    if (run.status === "FAILED" || run.status === "PARTIAL") await alertRun(run);
+    return { run, result };
+  });
+  if (ran) return ran;
+  const result: JobResult = { status: "SUCCESS", read: 0, written: 0, errors: 0, message: SKIPPED };
+  const run = await prisma.batchRun.create({ data: { ...base, status: "SUCCESS", endedAt: new Date(), message: result.message } });
+  return { run, result };
 }

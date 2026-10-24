@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { Prisma } from "@prisma/client";
 import { remindClinic } from "@/lib/batch/b1-remind";
+import { lockKeyOf, SKIPPED } from "@/lib/batch/lock";
 import { runJob } from "@/lib/batch/runner";
 import { cancelInTx } from "@/lib/booking/core";
 import { addDays, dbDate, dbTime, todayJst } from "@/lib/datetime";
@@ -134,6 +135,29 @@ describe("B1 selection, dry run, idempotency", () => {
   it("two B1 jobs at once through the runner: one is skipped 「実行中のため省略」", async () => {
     const [x, y] = await Promise.all([runJob("B1", { trigger: "MANUAL", clinicId: f.clinic.id }), runJob("B1", { trigger: "MANUAL", clinicId: f.clinic.id })]);
     expect([x, y].filter((r) => r.result.message === "実行中のため省略")).toHaveLength(1);
+  });
+
+  it("B1 lock per clinic: another clinic runs while one clinic's lock is held; that clinic is refused; B2 keeps its job lock", async () => {
+    const f2 = await fixture({ doctors: 1 });
+    const holder = await pool.connect();
+    try {
+      await holder.query("SELECT pg_advisory_lock(hashtext($1))", [lockKeyOf("B1", f.clinic.id)]);
+      const [mine, theirs] = await Promise.all([
+        runJob("B1", { trigger: "SCHEDULE", clinicId: f.clinic.id }),
+        runJob("B1", { trigger: "SCHEDULE", clinicId: f2.clinic.id }),
+      ]);
+      expect(mine.result.message).toBe(SKIPPED);
+      expect(theirs.result.message).not.toBe(SKIPPED);
+      expect(theirs.run!.status).toBe("SUCCESS");
+      // an all-clinic run skips the clinic being reminded by its own run and names it
+      const all = await runJob("B1", { trigger: "MANUAL", params: { date: addDays(today, 60) } }); // a date without seeded bookings
+      expect(all.result.message).toContain(`${SKIPPED} ${f.clinic.code}`);
+    } finally {
+      await holder.query("SELECT pg_advisory_unlock(hashtext($1))", [lockKeyOf("B1", f.clinic.id)]);
+      holder.release();
+      await f2.cleanup();
+    }
+    expect([lockKeyOf("B2", f.clinic.id), lockKeyOf("B4", null), lockKeyOf("B1", null)]).toEqual(["batch:B2", "batch:B4", "batch:B1"]);
   });
 
   it("a booking cancelled while B1 runs gets no reminder (the cancel holds the booking lock; B1 reads it FOR SHARE)", async () => {
