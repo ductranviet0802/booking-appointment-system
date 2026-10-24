@@ -7,7 +7,15 @@
 .tab { background: none; border: 0; padding: 10px 16px; font: inherit; font-weight: 700; color: var(--mut); border-bottom: 3px solid transparent; cursor: pointer; }
 .tabOn { color: var(--pri-d); border-bottom-color: var(--pri); }
 .panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
-.split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 16px; align-items: start; }
+.split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); grid-template-areas: "left side"; gap: 16px; align-items: start; }
+/* J-03: DOM order = Tab order (12 after 9–11, 17 after the content); the drawing comes from these areas */
+.leftPanel { grid-area: left; }
+.split > .side { grid-area: side; }
+.rangeBtn { grid-area: left; justify-self: end; align-self: start; margin: 16px 16px 0 0; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; }
+.page > * { grid-column: 1 / -1; }
+.page > .top { grid-row: 1; grid-column: 1; }
+.page > .adjust { grid-row: 1; grid-column: 2; align-self: center; margin-bottom: 8px; }
 .month { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .month b { font-size: 18px; }
 .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }

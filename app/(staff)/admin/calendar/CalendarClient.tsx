@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog, trapTab } from "@/components/ui/ConfirmDialog";
+import { DateField } from "@/components/ui/DatePicker";
 import { ErrorSummary, FieldError, RequiredMark } from "@/components/ui/FormParts";
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
@@ -262,13 +263,11 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
     );
     return (
       <div className={s.split}>
-        <div className={s.panel}>
+        <div className={`${s.panel} ${s.leftPanel}`}>
           <div className={s.month}>
             <Button variant="secondary" className="btn-sm" onClick={() => void moveMonth(-1)}>‹ 前月</Button>
             <b>{y}年{m}月</b>
             <Button variant="secondary" className="btn-sm" onClick={() => void moveMonth(1)}>翌月 ›</Button>
-            <span className="sp" />
-            {admin && <Button variant="secondary" className="btn-sm" onClick={() => { setRange({ start: "", end: "", kind: "CLOSED" }); setRangeErrors([]); setRangeOpen(true); }}><Icon name="cal" size={16} />期間で設定</Button>}
           </div>
           <div className={s.grid} aria-hidden>
             {WEEKDAY_JA.map((w, i) => <div key={w} className={`${s.wd} ${i === 0 ? s.sun : i === 6 ? s.sat : ""}`}>{w}</div>)}
@@ -321,6 +320,8 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
             {!past && booked > 0 && <div className={s.info}>この日に予約済みの枠 {booked}件 → 保存時に確認（要調整になります）</div>}
           </div>
         )}
+        {/* J-03: item 12 after 9–11 in the DOM (Tab rank 17), drawn in the month bar by its grid area */}
+        {admin && <Button variant="secondary" className={`btn-sm ${s.rangeBtn}`} onClick={() => { setRange({ start: "", end: "", kind: "CLOSED" }); setRangeErrors([]); setRangeOpen(true); }}><Icon name="cal" size={16} />期間で設定</Button>}
       </div>
     );
   }
@@ -502,12 +503,11 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
   const b2line = runLine(st.b2, "b2");
 
   return (
-    <div>
+    <div className={s.page}>
       <div className={s.top}>
         <h1 className={s.h1}>診療カレンダー</h1>
         <div className={s.chips}>
           {b2line && <span className={s.chip}>{b2line}</span>}
-          {st.adjustCount > 0 && <Link className={s.warn} href="/staff/ledger?filter=adjust"><Icon name="alert" size={16} /> 要調整 {st.adjustCount}件</Link>}
         </div>
       </div>
       <div className={s.tabs} role="tablist" aria-label="診療カレンダー">
@@ -525,6 +525,8 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
       {tab === "hours" && renderHours()}
       {tab === "calendar" && renderCalendar()}
       {tab === "holidays" && renderHolidays()}
+      {/* J-03: item 17 (Tab rank 19) after the items of rank ≤ 18 and before 20–29 / 18, drawn in the heading row by its grid area */}
+      {st.adjustCount > 0 && <Link className={`${s.warn} ${s.adjust}`} href="/staff/ledger?filter=adjust"><Icon name="alert" size={16} /> 要調整 {st.adjustCount}件</Link>}
       {tab === "clinic" && renderClinic()}
       {admin && (tab === "hours" || tab === "calendar") && (
         <div className={s.bar}>
@@ -540,9 +542,9 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
           <div className="dlg" role="dialog" aria-modal="true" aria-label="期間で設定">
             <h3>期間で設定</h3>
             <div className={s.dlgRow}>
-              <input id="a01-range-start" className="inp" autoFocus placeholder="YYYY/MM/DD" aria-label="開始日" value={range.start} onChange={(e) => setRange({ ...range, start: e.target.value })} onBlur={() => blurRange("range.start")} />
+              <DateField id="a01-range-start" autoFocus lang="ja" ariaLabel="開始日" min={st.today} value={range.start} onChange={(x) => setRange({ ...range, start: x })} onBlur={() => blurRange("range.start")} />
               〜
-              <input id="a01-range-end" className="inp" placeholder="YYYY/MM/DD" aria-label="終了日" value={range.end} onChange={(e) => setRange({ ...range, end: e.target.value })} onBlur={() => blurRange("range.end")} />
+              <DateField id="a01-range-end" lang="ja" ariaLabel="終了日" min={st.today} value={range.end} onChange={(x) => setRange({ ...range, end: x })} onBlur={() => blurRange("range.end")} />
             </div>
             {rangeErrors.map((e) => <FieldError key={e.field} id={`e-${e.field}`} message={msg(e)} />)}
             <div className={s.radios} role="radiogroup">

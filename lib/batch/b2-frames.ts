@@ -323,6 +323,32 @@ export async function notifySubstituted(bookingIds: string[]) {
 
 // ── the job ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
+class DryRunDone extends Error {
+  constructor(readonly value: Awaited<ReturnType<typeof generateClinic>>) {
+    super("dry run");
+  }
+}
+
+/**
+ * J-06: a dry run applies the real steps 4–7 inside a transaction that is always rolled back, so 要調整 and 代診 are counted
+ * exactly as a run would (the substitute's frames of step 4 exist for step 7). Nothing stays written and no NT-03 is sent;
+ * the rows it touches are locked until the rollback.
+ */
+async function simulateClinic(clinicId: string, dates: string[], now: Date) {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const run = await tx.batchRun.create({
+        data: { jobCode: "B2", trigger: "MANUAL", clinicId, startedAt: now, status: "RUNNING", readCount: 0, writtenCount: 0, errorCount: 0, message: "dry run" },
+      });
+      throw new DryRunDone(await generateClinic(tx, { clinicId, dates, runId: run.id, now, dryRun: false }));
+    }, { timeout: 120_000, maxWait: 20_000 });
+  } catch (e) {
+    if (e instanceof DryRunDone) return { ...e.value, substituted: [] };
+    throw e;
+  }
+  throw new Error("dry run did not roll back");
+}
+
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const isoDate = (v: unknown, name: string) => {
   if (typeof v !== "string" || !ISO.test(v) || toIsoDate(dbDate(v)) !== v) throw new Error(`bad parameter ${name}: ${String(v)}`);
@@ -354,7 +380,7 @@ export const b2Job: Job = async (ctx) => {
       const range = daysBetween(from ?? daily.from, to ?? daily.to);
       const dates = only ? range.filter((d) => only.includes(d)) : range;
       const run = ctx.dryRun
-        ? await generateClinic(prisma, { clinicId: c.id, dates, runId: null, now, dryRun: true })
+        ? await simulateClinic(c.id, dates, now)
         : await prisma.$transaction((tx) => generateClinic(tx, { clinicId: c.id, dates, runId: ctx.runId, now, dryRun: false }), { timeout: 120_000, maxWait: 20_000 });
       for (const k of Object.keys(total) as Array<keyof B2Counts>) total[k] += run.counts[k];
       notify.push(...run.substituted);

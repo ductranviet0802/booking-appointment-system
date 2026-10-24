@@ -128,9 +128,10 @@ describe("X5 CSV", () => {
 
 describe("batch runner", () => {
   it("records a run of a job that is not built yet as 'not implemented'", async () => {
-    const { run, result } = await runJob("B4", { trigger: "MANUAL", params: { test: MARK } });
-    expect(result).toMatchObject({ status: "FAILED", message: "not implemented (wave W4)" });
-    expect(run).toMatchObject({ jobCode: "B4", status: "FAILED", trigger: "MANUAL" });
+    // B4 is built in W4 (lib/batch/b4-close.ts); B5 is still to come
+    const { run, result } = await runJob("B5", { trigger: "MANUAL", params: { test: MARK } });
+    expect(result).toMatchObject({ status: "FAILED", message: "not implemented (wave W5)" });
+    expect(run).toMatchObject({ jobCode: "B5", status: "FAILED", trigger: "MANUAL" });
     expect(run!.endedAt).not.toBeNull();
   });
 
