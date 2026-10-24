@@ -23,6 +23,7 @@ import { DRAFT_TTL_MS, getDraft, putDraft, EMPTY_SELECTIONS } from "@/lib/bookin
 import { addDays, todayJst } from "@/lib/datetime";
 import { daysOf, type Frame } from "@/lib/entry/data";
 import { loadEntry } from "@/lib/entry/pages";
+import { ER01_PATH } from "@/lib/entry/route";
 import { pool, prisma } from "@/lib/prisma";
 import { cleanup, DAY, draftOf, holder, member, req, setup, type Setup } from "./w1-helpers";
 
@@ -102,8 +103,10 @@ describe("P11 availability (抽出6–8, F4-02 / F4-04, Q10 / Q13 A)", () => {
     await prisma.patientCard.create({ data: { patientId: h.self.id, clinicId: S.f.clinic.id, cardNo: `W1-${Date.now()}`, enteredByKind: "PATIENT" } });
     expect((await (await options(req(q({ step: "types", patient: h.self.id }), { as: h }))).json()).preselect).toBe(S.f.visitType.id);
     await prisma.patientCard.deleteMany({ where: { patientId: h.self.id } });
-    expect((await options(req(q({ step: "types", patient: other.self.id }), { as: h }))).status).toBe(404);
-    expect((await options(req(q({ step: "types", change: other.self.id }), { as: h }))).status).toBe(404);
+    // A-1: ER-01 (PE091 and the not-found address), not ER-02
+    const er01 = async (r: Response) => [r.status, await r.json()];
+    expect(await er01(await options(req(q({ step: "types", patient: other.self.id }), { as: h })))).toEqual([404, { code: "PE091", params: {}, to: ER01_PATH }]);
+    expect(await er01(await options(req(q({ step: "types", change: other.self.id }), { as: h })))).toEqual([404, { code: "PE091", params: {}, to: ER01_PATH }]);
   });
 });
 
@@ -168,7 +171,12 @@ describe("P11 event 10 / 11 (POST /api/booking/next)", () => {
     expect((await missing.json()).errors).toEqual([{ field: "person", code: "PE001" }, { field: "visitType", code: "PE001" }]);
     const other = await holder();
     const steal = await next(req("/api/booking/next", { body: { sel: sel({ patientId: other.self.id }), origin: "/" }, as: h }));
-    expect([steal.status, (await steal.json()).code]).toEqual([404, "PE091"]);
+    expect([steal.status, await steal.json()]).toEqual([404, { code: "PE091", params: {}, to: ER01_PATH }]); // A-1: ER-01
+    // change mode on another account's booking (tampered changeBookingId) → ER-01 too
+    const theirs = await S.frames(0, ["16:45"]).then(() => createBooking({ ...sel({ start: "16:45" }), patientId: other.self.id, doctorRequested: true, slotDate: DAY, startTime: "16:45", notes: null } as never, { kind: "PATIENT", accountId: other.acc.id, channel: "WEB" }));
+    if (!theirs.ok) throw new Error("setup");
+    const change = await next(req("/api/booking/next", { body: { sel: sel({ start: "16:45" }), origin: "/", changeBookingId: theirs.bookingId, version: 0 }, as: h }));
+    expect([change.status, (await change.json()).to]).toEqual([404, ER01_PATH]);
     expect((await next(req("/api/booking/next", { body: { sel: sel({ clinicId: "1; drop" }), origin: "/" }, as: h }))).status).toBe(400);
   });
 

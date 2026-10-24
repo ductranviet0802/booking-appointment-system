@@ -175,7 +175,9 @@ describe("drafts that may not be confirmed (nothing written)", () => {
     const [h, other] = [await holder(), await holder()];
     const d = putDraft({ kind: "DRAFT", accountId: h.acc.id, sessionId: h.ctx.sessionId, sel: { ...EMPTY_SELECTIONS, ...sel(other, { start: "12:30" }) }, origin: "/", change: null, questionnaire: null, bookingId: null });
     const res = await press(h, d.id);
-    expect([res.status, (await res.json()).code]).toEqual([404, "PE091"]);
+    expect([res.status, await res.json()]).toEqual([404, { code: "PE091", params: {}, to: "/booking/not-found" }]); // A-1: the client lands on ER-01
+    const q = await run(h, () => saveQ(req("/api/booking/questionnaire", { body: { answers: {}, action: "next" }, draft: d.id, as: h })));
+    expect([q.status, await q.json()]).toEqual([404, { code: "PE091", params: {}, to: "/booking/not-found" }]); // the P12 API too
     expect(await bookingsOf(other)).toHaveLength(0);
     expect((await confirm(req("/api/booking/confirm", { body: {}, draft: d.id }))).status).toBe(401);
     const staff = await prisma.account.create({
