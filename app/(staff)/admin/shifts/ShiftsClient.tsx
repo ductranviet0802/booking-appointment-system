@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { DateField } from "@/components/ui/DatePicker";
 import { ErrorSummary, FieldError, RequiredMark } from "@/components/ui/FormParts";
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
@@ -142,7 +143,12 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
 
   function renderPatterns() {
     const canEdit = admin;
-    const inp = (r: Row, k: "start" | "end" | "validFrom" | "validTo", o: { cls?: string; ph?: string; label: string }) => (
+    const inp = (r: Row, k: "start" | "end" | "validFrom" | "validTo", o: { cls?: string; ph?: string; label: string }) => k === "validFrom" ? (
+      // J-05: the shared date picker; 8-2 stays a text box because DateField has no placeholder for 「（無期限）」 / 「終了日」
+      <span className={s.date}>
+        <DateField id={`a02-p-${r.key}-${k}`} value={r.v[k]} lang="ja" ariaLabel={o.label} onChange={(x) => patch(r.key, { [k]: x })} onBlur={() => blurRow(r)} />
+      </span>
+    ) : (
       <input
         id={`a02-p-${r.key}-${k}`} className={`inp ${o.cls ?? s.time}`} value={r.v[k]} placeholder={o.ph} aria-label={o.label} inputMode="numeric"
         onChange={(e) => patch(r.key, { [k]: e.target.value })} onBlur={() => blurRow(r)}
@@ -287,7 +293,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
           <div className={s.form}>
             <div>
               <label htmlFor={f("date")}>日付 <RequiredMark lang="ja" /></label>
-              <input id={f("date")} className="inp" placeholder="YYYY/MM/DD" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} onBlur={() => blurX("date")} aria-invalid={err("x.date") ? true : undefined} />
+              <DateField id={f("date")} value={form.date} lang="ja" ariaLabel="日付" onChange={(x) => setForm({ ...form, date: x })} onBlur={() => blurX("date")} invalid={!!err("x.date")} describedBy="e-x-date" />
               <FieldError id="e-x-date" message={err("x.date")} />
             </div>
             <div>
