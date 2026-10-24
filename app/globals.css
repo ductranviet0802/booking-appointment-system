@@ -198,6 +198,7 @@ a { color: inherit; }
 .chk.on { border-color: var(--pri); background: var(--pri-t); box-shadow: inset 0 0 0 1px var(--pri); }
 .chk-bad { border-color: var(--dan); }
 .chk input { accent-color: var(--pri); width: 22px; height: 22px; margin: 1px 0 0; flex: none; }
+.chk-last { order: -1; } /* P03: the check after its document link in the DOM (Tab 21 → 22), drawn first */
 .doc { display: flex; align-items: center; gap: 8px; }
 .consent-actions { display: flex; flex-direction: column; align-items: stretch; gap: 4px; text-align: center; }
 @media (min-width: 768px) {
@@ -261,6 +262,9 @@ a { color: inherit; }
 .mp-save { position: sticky; bottom: 0; background: var(--page); padding: 8px 0; z-index: 5; }
 /* P07: mobile-only / desktop-only parts (item 6 placement, 23-1, the sheet's ×, Q10 headings) */
 .fam-d { display: none; }
+.fam-root { position: relative; }
+.fam-add { position: absolute; top: 0; right: 0; }
+.sheet-x { position: absolute; top: 10px; right: 10px; }
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th, .tbl td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eef2f3; vertical-align: middle; }
 @media (min-width: 768px) {
@@ -269,7 +273,7 @@ a { color: inherit; }
   .fld > .lbl { padding-top: 12px; }
   .pair .fld { display: flex; }
   .login-cards { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 284px); justify-content: center; align-items: start; }
-  .login-cards .fld, .acct-narrow .fld { display: flex; }
+  .login-cards .fld, .acct-narrow .fld { display: flex; align-items: stretch; }
   .login-cards .fld > .lbl, .acct-narrow .fld > .lbl { padding-top: 0; }
   .mp { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: auto 1fr auto; grid-template-areas: "nav main" "wd main" ". save"; gap: 24px; align-items: start; }
   .mp-nav { grid-area: nav; } .mp-main { grid-area: main; } .mp-wd { grid-area: wd; }

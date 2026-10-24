@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { parseHolidayCsv, X3_HEADER, X3ValidationError } from "@/lib/adapters/x3-holidays";
+import { fetchHolidayFile, parseHolidayCsv, X3_HEADER, X3HttpError, X3ValidationError } from "@/lib/adapters/x3-holidays";
 import { addDays, dbDate, jstInstant, todayJst, toHhmm, toIsoDate, weekdayOf, dbTime } from "@/lib/datetime";
 
 const fixture = readFileSync("fixtures/x3/syukujitsu.csv");
@@ -27,6 +27,10 @@ describe("X3 holiday CSV", () => {
 
   it("keeps an unknown name with en/vi null", () => {
     expect(parseHolidayCsv(sjisOf(["2026/8/1,new", "2027/1/1,c"]), 2026)[0]).toMatchObject({ nameEn: null, nameVi: null });
+  });
+
+  it("refuses a plain-http source (05 X3: HTTPS)", async () => {
+    await expect(fetchHolidayFile("http://x.example/syukujitsu.csv")).rejects.toBeInstanceOf(X3HttpError);
   });
 });
 

@@ -75,7 +75,8 @@ export function x3FailureReason(e: unknown) {
 }
 
 export async function fetchHolidayFile(source = process.env.X3_SOURCE || DEFAULT_SOURCE): Promise<Uint8Array> {
-  if (/^https?:\/\//.test(source)) {
+  if (/^http:\/\//i.test(source)) throw new X3HttpError("X3 source must be https (05 X3)");
+  if (/^https:\/\//i.test(source)) {
     let res: Response;
     try {
       res = await fetch(source, { signal: AbortSignal.timeout(30_000) });

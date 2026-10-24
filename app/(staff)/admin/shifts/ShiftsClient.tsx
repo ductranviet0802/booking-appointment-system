@@ -160,7 +160,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
             const dept = detail?.choices.departments.find((d) => d.id === r.v.departmentId)?.name ?? r.stored?.departmentName ?? "";
             const errs = rowErrs(r.key);
             const cls = m === "other" ? `${s.grey} ${s.hatch}` : m === "ended" ? s.grey : "";
-            const delOk = canEdit && (!r.stored || r.stored.validFrom > today);
+            const delOk = canEdit && m !== "other" && (!r.stored || r.stored.validFrom > today); // 2-1: no 削除 on another clinic's row
             return (
               <tr key={r.key} className={cls}>
                 <td>{r.stored?.clinicName ?? detail?.choices.clinicName}</td>
@@ -389,10 +389,9 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
   const doctor = doctors.find((d) => d.id === doctorId);
 
   return (
-    <div>
+    <div className={s.root}>
       <div className={s.top}>
         <h1 className={s.h1}>医師シフト</h1>
-        {role !== "DOCTOR" && adjust > 0 && <Link className={s.warn} href="/staff/ledger?filter=adjust"><Icon name="alert" size={16} /> 要調整の予約 {adjust}件 →</Link>}
       </div>
       {banner && <div className="err" role="alert" style={{ marginBottom: 12 }}><Icon name="alert" /> {banner}</div>}
       <ErrorSummary errors={summary} lang="ja" />
@@ -414,12 +413,13 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
         <div>
           {detail && doctor && (
             <>
-              <div className={s.panel}>
+              <div className={`${s.panel} ${s.patterns}`}>
                 <h2>
                   <span>定型シフト — {doctor.name}</span>
-                  {admin && <Button variant="secondary" className="btn-sm" onClick={addRow}>＋ 行追加</Button>}
                 </h2>
                 {renderPatterns()}
+                {/* after the rows in the DOM: Tab 11 (item 9-1); drawn top right of the panel */}
+                {admin && <Button variant="secondary" className={`btn-sm ${s.addRow}`} onClick={addRow}>＋ 行追加</Button>}
                 <div className={s.help}>適用中の行は削除できず、終了日（今日以降）を入れて終了。削除は開始日が未来の行のみ。他院のシフトは斜線で表示（重複チェック用）。</div>
               </div>
               <div className={s.panel}>
@@ -456,6 +456,8 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
           )}
         </div>
       </div>
+      {/* last in the DOM: Tab 25 (item 20); drawn top right by .warn */}
+      {role !== "DOCTOR" && adjust > 0 && <Link className={s.warn} href="/staff/ledger?filter=adjust"><Icon name="alert" size={16} /> 要調整の予約 {adjust}件 →</Link>}
       <ConfirmDialog open={sw041 !== null} title="予約がある枠が閉じます" messageId="SW041" params={{ n: sw041 ?? 0 }} onConfirm={commit} onCancel={() => setSw041(null)} />
     </div>
   );

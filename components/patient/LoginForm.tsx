@@ -132,19 +132,19 @@ export function LoginForm({ lang, guidance, maintenance }: { lang: Lang; guidanc
           <Link className="lnk row" href="/password/forgot">{label("forgotLink", lang)}<Icon name="right" size={16} /></Link>
           <Link className="lnk row md:hidden" href="/register">{label("firstTimeLink", lang)}<Icon name="right" size={16} /></Link>
           <p className="xs mut m0">{label("staffNote", lang)}</p>
-          {/* item 9 last in Tab order (marker order 3 … 8 → 9); the image draws it higher */}
-          {panel?.code === "PE017" && (
-            <div className="col g8">
-              <Button variant="secondary" full busy={resending} onClick={resend}><Icon name="refresh" />{label("resendBtn", lang)}</Button>
-              {resent !== null && <p className="info m0" role="status"><Icon name="check" />{t("PI001", lang, { メールアドレス: resent, email: resent })}</p>}
-            </div>
-          )}
         </section>
         <section className="frm hidden md:flex">
           <h2>{label("firstTime", lang)}</h2>
           <p className="m0 sm">{label("registerPitch", lang)}</p>
           <Link className="btn bs" href="/register">{label("register", lang)}</Link>
         </section>
+        {/* item 9 last in Tab order (marker order 3 … 8 → 9), after the desktop 会員登録 card too; the image draws it higher */}
+        {panel?.code === "PE017" && (
+          <section className="frm">
+            <Button variant="secondary" full busy={resending} onClick={resend}><Icon name="refresh" />{label("resendBtn", lang)}</Button>
+            {resent !== null && <p className="info m0" role="status"><Icon name="check" />{t("PI001", lang, { メールアドレス: resent, email: resent })}</p>}
+          </section>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,9 @@
 .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .h1 { margin: 0; font-size: 22px; }
+.root { position: relative; }
+.root > .warn { position: absolute; top: 0; right: 0; }
+.patterns { position: relative; }
+.addRow { position: absolute; top: 12px; right: 16px; }
 .warn { border: 1px solid #e8c36a; background: #fff6df; border-radius: 6px; padding: 4px 10px; font-size: 13px; font-weight: 700; color: #7a5200; }
 .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 16px; align-items: start; }
 .panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 16px; }

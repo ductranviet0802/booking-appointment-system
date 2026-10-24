@@ -168,13 +168,10 @@ export function FamilyManager({ lang, data }: { lang: Lang; data: FamilyData }) 
   );
 
   return (
-    <div className="col g16" data-testid="p07">
-      <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-        <div className="col g4">
-          <h1 className="m0" style={{ fontSize: 22 }}>{label("familyTitle", lang)}</h1>
-          <p className="m0 sm mut">{label("familyLead", lang, { n: data.max })}</p>
-        </div>
-        {!empty && addButton("fam-d")}
+    <div className="col g16 fam-root" data-testid="p07">
+      <div className="col g4">
+        <h1 className="m0" style={{ fontSize: 22 }}>{label("familyTitle", lang)}</h1>
+        <p className="m0 sm mut">{label("familyLead", lang, { n: data.max })}</p>
       </div>
       {banner && (
         <p className="err m0 row" role="alert" data-testid="p07-banner"><Icon name="alert" />{t(banner, lang, { n: data.max })}</p>
@@ -215,6 +212,8 @@ export function FamilyManager({ lang, data }: { lang: Lang; data: FamilyData }) 
                   );
                 })}
               </ul>
+              {/* after the cards in the DOM: Tab 1–3 per card → 4 (item 6); desktop draws it top right of the page */}
+              {addButton("fam-d fam-add")}
               {addButton("fam-m bw")}
             </>
           )}
@@ -223,11 +222,8 @@ export function FamilyManager({ lang, data }: { lang: Lang; data: FamilyData }) 
 
         {form && (
           <section className="sheet" aria-labelledby={id("heading")} data-testid="p07-form">
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              {/* Q8: one heading for add and edit (item 7: 「家族の情報を編集」 above the form) */}
-              <h2 id={id("heading")} className="m0" style={{ fontSize: 17 }}>{label("editHeading", lang)}</h2>
-              <button type="button" className="ib fam-m" aria-label={label("close", lang)} onClick={close}><Icon name="close" /></button>
-            </div>
+            {/* Q8: one heading for add and edit (item 7: 「家族の情報を編集」 above the form) */}
+            <h2 id={id("heading")} className="m0" style={{ fontSize: 17 }}>{label("editHeading", lang)}</h2>
             <ErrorSummary errors={fe.summary} lang={lang} />
             <form className="col g16" noValidate onSubmit={(e) => { e.preventDefault(); if (ready) void save(); }}>
               <Field id={id("relation")} name={label("relation", lang)} lang={lang} required error={err("relation")}>
@@ -273,6 +269,8 @@ export function FamilyManager({ lang, data }: { lang: Lang; data: FamilyData }) 
                 <Button variant="secondary" onClick={close}>{label("close", lang)}</Button>
               </div>
             </form>
+            {/* the sheet's × does what 22 does, so it takes 22's place in the Tab order (Q12); drawn in the sheet header */}
+            <button type="button" className="ib fam-m sheet-x" aria-label={label("close", lang)} onClick={close}><Icon name="close" /></button>
           </section>
         )}
       </div>

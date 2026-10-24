@@ -100,13 +100,13 @@ export function RegisterForm({ lang, terms, privacy, resend }: { lang: Lang; ter
     return (
       <div className="col g4">
         <label className={`chk ${agree[kind] ? "on" : ""} ${e ? "chk-bad" : ""}`} htmlFor={cid}>
-          <input id={cid} type="checkbox" checked={agree[kind]} onChange={(ev) => setAgree((a) => ({ ...a, [kind]: ev.target.checked }))} {...invalid(cid, e ? "x" : null)} />
           <span>
             {label("agreePre", lang)}
             {/* item 21 / 23: inside the label; pressing it opens the document and does not toggle the check */}
             {doc ? <a className="lnk" href={doc.url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}>{label(kind, lang)}</a> : label(kind, lang)}
             {label(kind === "terms" ? "agreeTermsPost" : "agreePrivacyPost", lang)} <RequiredMark lang={lang} />
           </span>
+          <input id={cid} className="chk-last" type="checkbox" checked={agree[kind]} onChange={(ev) => setAgree((a) => ({ ...a, [kind]: ev.target.checked }))} {...invalid(cid, e ? "x" : null)} />
         </label>
         {e && <p className="fe m0" id={`${cid}-err`}><Icon name="alert" size={16} />{t("PE008", lang)}</p>}
       </div>
