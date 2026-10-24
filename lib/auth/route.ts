@@ -2,7 +2,7 @@
 import type { Language } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Result } from "@/lib/auth/service";
-import { GUARD_COOKIE, LANG_COOKIE, LANG_COOKIE_MAX_AGE, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
+import { FLASH_COOKIE, GUARD_COOKIE, LANG_COOKIE, LANG_COOKIE_MAX_AGE, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
 import { log } from "@/lib/logger";
 import { enforceSameOriginMutation } from "@/lib/request-security";
 import { withRouteHandler } from "@/lib/route-handler";
@@ -67,6 +67,12 @@ export function answer(r: Result) {
     return NextResponse.json({ code: r.code, params: r.params ?? {}, ...(r.errors && { errors: r.errors }) }, { status: r.status });
   }
   return applyLogin(NextResponse.json({ ok: true, ...r.body }), r);
+}
+
+/** reading 6: one 04 id for the next screen (FLASH_COOKIE, 60 s, readable by the page script that shows it) */
+export function setFlash<T extends NextResponse>(res: T, id: string): T {
+  res.cookies.set(FLASH_COOKIE, id, { path: "/", maxAge: 60, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+  return res;
 }
 
 /** 303 to an internal path (relative Location: correct behind the reverse proxy) */

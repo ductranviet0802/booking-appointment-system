@@ -31,6 +31,18 @@ export function overAuthLimit(action: AuthAction, address: string, ip: string | 
   return byAddress || byIp;
 }
 
+/** P06 4.2 row 34 (Q10): 5 wrong current passwords of an account in 15 min → refused (PE092) until the window has passed */
+export const PW_CHANGE_LIMIT = { windowMs: 15 * MIN, failures: 5 } as const;
+
+export function pwChangeBlocked(accountId: string, now = Date.now()) {
+  const cur = hits.get(`pwchange:${accountId}`);
+  return !!cur && cur.resetAt > now && cur.count >= PW_CHANGE_LIMIT.failures;
+}
+
+export function countPwChangeFailure(accountId: string, now = Date.now()) {
+  bump(`pwchange:${accountId}`, PW_CHANGE_LIMIT.windowMs, now);
+}
+
 /** tests only */
 export function resetAuthLimits() {
   hits.clear();

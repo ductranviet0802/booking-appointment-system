@@ -45,23 +45,59 @@ export const PREFECTURES = [
 export const digitsOnly = (v: unknown) =>
   str(v).replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/[\s　\-‐－ー−]/g, "");
 
-const ROMAJI = /^[A-Za-z' -]+$/;
-const KATAKANA = /^[ァ-ヶー　 ]+$/;
+// S-02: the person rules of P03 §4.1 / §4.2 (03 §3.15), one function per rule; P03, P06 and P07 share them.
+/** ローマ字氏名 items 8 / 9: A–Z, a–z, space, hyphen, apostrophe (PE016) */
+export const romajiNameOk = (v: string) => /^[A-Za-z' -]+$/.test(v);
+/** 日本語氏名 items 10 / 11: full-width katakana (ァ…ヺ), ー, full- or half-width space (PE009) */
+export const katakanaOk = (v: string) => /^[ァ-ヺー　 ]+$/.test(v);
+/** a calendar date "YYYY-MM-DD" from 1900-01-01 to today JST (PE014) */
+export function birthDateOk(iso: string, now = new Date()) {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T00:00:00Z`) : null;
+  const exists = d !== null && !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === iso;
+  return exists && iso >= "1900-01-01" && iso <= todayJst(now);
+}
+/** after normalisation 7 digits (PE002) */
+export const postcodeOk = (digits: string) => /^\d{7}$/.test(digits);
+/** after normalisation 10 or 11 digits (PE015) */
+export const phoneOk = (digits: string) => /^\d{10,11}$/.test(digits);
 
-export type RegistrationInput = {
-  email: string; password: string; nameType: "JP" | "ROMAJI";
-  familyName: string; givenName: string; familyNameKana: string; givenNameKana: string;
-  birthDate: string; sex: "MALE" | "FEMALE"; postcode: string; prefecture: string; city: string; town: string | null;
-  addressLine: string; building: string | null; phone: string;
+/** 診察券番号 (03 §3.16; P06 22-2, P07 20-2): optional, 0–20 → PE003, `^[0-9A-Za-z-]+$` → PE002 */
+export function checkCardNo(raw: string, field: string): FieldError | null {
+  const v = raw.trim();
+  if (v.length > 20) return { field, code: "PE003", params: { n: 20 } };
+  return v && !/^[0-9A-Za-z-]+$/.test(v) ? { field, code: "PE002" } : null;
+}
+
+export type NameType = "JP" | "ROMAJI";
+export type Sex = "MALE" | "FEMALE";
+
+export type PersonInput = {
+  nameType: NameType; familyName: string; givenName: string; familyNameKana: string; givenNameKana: string;
+  birthDate: string; sex: Sex; postcode: string; prefecture: string; city: string; town: string | null;
+  addressLine: string; building: string | null; phone: string | null;
 };
 
+export type RegistrationInput = PersonInput & { email: string; password: string; phone: string };
+
+/** a text field: spaces only = empty (PE001 when required), longer than max → PE003, rule broken → its code */
+function textField(body: Record<string, unknown>, errors: FieldError[], field: string, max: number, required: boolean, rule?: [(v: string) => boolean, string]) {
+  const v = str(body[field]).trim();
+  if (blank(v)) {
+    if (required) errors.push({ field, code: "PE001" });
+    return v;
+  }
+  if (v.length > max) errors.push({ field, code: "PE003", params: { n: max } });
+  else if (rule && !rule[0](v)) errors.push({ field, code: rule[1] });
+  return v;
+}
+
 /**
- * P03 event 5. `tampered` = a value the UI cannot produce (5-6 → ER-02, nothing written); otherwise the field errors of
- * 4.2 rows 1–30, or the normalised input.
+ * The person fields of P03 (items 7–20), P06 (5–15, 25) and P07 (8–19). null = a value the UI cannot produce
+ * (name type, sex code or prefecture outside the lists → ER-02, nothing written). `phoneRequired` false: P07 family.
  */
-export function checkRegistration(body: Record<string, unknown>, now = new Date()):
-  | { tampered: true }
-  | { tampered: false; errors: FieldError[]; input: RegistrationInput } {
+export function checkPerson(body: Record<string, unknown>, now = new Date(), phoneRequired = true):
+  | null
+  | { errors: FieldError[]; input: PersonInput } {
   const nameType = body.nameType;
   const sex = body.sex;
   const prefecture = str(body.prefecture);
@@ -70,61 +106,76 @@ export function checkRegistration(body: Record<string, unknown>, now = new Date(
     || (sex !== undefined && sex !== "" && sex !== "1" && sex !== "2")
     || (prefecture !== "" && !PREFECTURES.includes(prefecture))
   ) {
-    return { tampered: true };
+    return null;
   }
-
   const errors: FieldError[] = [];
-  const emailError = checkEmail(body.email, "email", true);
-  if (emailError) errors.push(emailError);
-  errors.push(...checkNewPassword(body.password, body.passwordConfirm));
-
-  const text = (field: string, max: number, required: boolean, pattern?: RegExp, patternCode?: string) => {
-    const v = str(body[field]).trim();
-    if (blank(v)) {
-      if (required) errors.push({ field, code: "PE001" });
-      return v;
-    }
-    if (v.length > max) errors.push({ field, code: "PE003", params: { n: max } });
-    else if (pattern && !pattern.test(v)) errors.push({ field, code: patternCode! });
-    return v;
-  };
-  const romaji = nameType === "ROMAJI";
-  const familyName = text("familyName", 50, true, romaji ? ROMAJI : undefined, "PE016");
-  const givenName = text("givenName", 50, true, romaji ? ROMAJI : undefined, "PE016");
-  const familyNameKana = text("familyNameKana", 50, true, romaji ? undefined : KATAKANA, "PE009");
-  const givenNameKana = text("givenNameKana", 50, true, romaji ? undefined : KATAKANA, "PE009");
+  const name: [(v: string) => boolean, string] | undefined = nameType === "ROMAJI" ? [romajiNameOk, "PE016"] : undefined;
+  const kana: [(v: string) => boolean, string] | undefined = nameType === "JP" ? [katakanaOk, "PE009"] : undefined;
+  const familyName = textField(body, errors, "familyName", 50, true, name);
+  const givenName = textField(body, errors, "givenName", 50, true, name);
+  const familyNameKana = textField(body, errors, "familyNameKana", 50, true, kana);
+  const givenNameKana = textField(body, errors, "givenNameKana", 50, true, kana);
 
   const birthDate = str(body.birthDate);
   if (blank(birthDate)) errors.push({ field: "birthDate", code: "PE001" });
-  else {
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? new Date(`${birthDate}T00:00:00Z`) : null;
-    const exists = d !== null && !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === birthDate;
-    if (!exists || birthDate < "1900-01-01" || birthDate > todayJst(now)) errors.push({ field: "birthDate", code: "PE014" });
-  }
+  else if (!birthDateOk(birthDate, now)) errors.push({ field: "birthDate", code: "PE014" });
   if (sex === undefined || sex === "") errors.push({ field: "sex", code: "PE001" });
 
   const postcode = digitsOnly(body.postcode);
   if (blank(body.postcode)) errors.push({ field: "postcode", code: "PE001" });
-  else if (!/^\d{7}$/.test(postcode)) errors.push({ field: "postcode", code: "PE002" });
+  else if (!postcodeOk(postcode)) errors.push({ field: "postcode", code: "PE002" });
   if (prefecture === "") errors.push({ field: "prefecture", code: "PE001" });
-  const city = text("city", 50, true);
-  const town = text("town", 100, false);
-  const addressLine = text("addressLine", 200, true);
-  const building = text("building", 100, false);
+  const city = textField(body, errors, "city", 50, true);
+  const town = textField(body, errors, "town", 100, false);
+  const addressLine = textField(body, errors, "addressLine", 200, true);
+  const building = textField(body, errors, "building", 100, false);
   const phone = digitsOnly(body.phone);
-  if (blank(body.phone)) errors.push({ field: "phone", code: "PE001" });
-  else if (!/^\d{10,11}$/.test(phone)) errors.push({ field: "phone", code: "PE015" });
+  if (blank(body.phone)) {
+    if (phoneRequired) errors.push({ field: "phone", code: "PE001" });
+  } else if (!phoneOk(phone)) errors.push({ field: "phone", code: "PE015" });
 
+  return {
+    errors,
+    input: {
+      nameType, familyName, givenName, familyNameKana, givenNameKana, birthDate, sex: sex === "2" ? "FEMALE" : "MALE",
+      postcode, prefecture, city, town: town || null, addressLine, building: building || null, phone: phone || null,
+    },
+  };
+}
+
+/**
+ * P03 event 5. `tampered` = a value the UI cannot produce (5-6 → ER-02, nothing written); otherwise the field errors of
+ * 4.2 rows 1–30, or the normalised input.
+ */
+export function checkRegistration(body: Record<string, unknown>, now = new Date()):
+  | { tampered: true }
+  | { tampered: false; errors: FieldError[]; input: RegistrationInput } {
+  const person = checkPerson(body, now);
+  if (!person) return { tampered: true };
+  const errors: FieldError[] = [];
+  const emailError = checkEmail(body.email, "email", true);
+  if (emailError) errors.push(emailError);
+  errors.push(...checkNewPassword(body.password, body.passwordConfirm));
+  errors.push(...person.errors);
   if (body.agreeTerms !== true) errors.push({ field: "agreeTerms", code: "PE008" });
   if (body.agreePrivacy !== true) errors.push({ field: "agreePrivacy", code: "PE008" });
-
   return {
     tampered: false,
     errors,
-    input: {
-      email: normEmail(body.email), password: str(body.password), nameType, familyName, givenName, familyNameKana, givenNameKana,
-      birthDate, sex: sex === "2" ? "FEMALE" : "MALE", postcode, prefecture, city, town: town || null, addressLine,
-      building: building || null, phone,
-    },
+    input: { ...person.input, phone: person.input.phone ?? "", email: normEmail(body.email), password: str(body.password) },
+  };
+}
+
+/** a person row of the DB → the body shape of checkPerson (forms of P06 / P07) */
+export function personBody(p: {
+  nameType: NameType; familyName: string; givenName: string; familyNameKana: string; givenNameKana: string; birthDate: Date;
+  sex: Sex; postcode: string; prefecture: string; city: string; town: string | null; addressLine: string; building: string | null;
+  phone: string | null;
+}) {
+  return {
+    nameType: p.nameType, familyName: p.familyName, givenName: p.givenName, familyNameKana: p.familyNameKana,
+    givenNameKana: p.givenNameKana, birthDate: p.birthDate.toISOString().slice(0, 10), sex: p.sex === "FEMALE" ? "2" : "1",
+    postcode: p.postcode, prefecture: p.prefecture, city: p.city, town: p.town ?? "", addressLine: p.addressLine,
+    building: p.building ?? "", phone: p.phone ?? "",
   };
 }
