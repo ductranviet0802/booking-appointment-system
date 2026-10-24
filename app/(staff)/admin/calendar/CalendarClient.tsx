@@ -482,7 +482,7 @@ export function CalendarClient({ role, initial, clinic }: { role: Role; initial:
   function applyRange() {
     const start = range.start.trim().replace(/\//g, "-");
     const end = range.end.trim().replace(/\//g, "-");
-    const errs = validateRange(start, end, st.today);
+    const errs = validateRange(start, end, st.today, Object.keys(held));
     setRangeErrors(errs);
     if (errs.length > 0) return;
     hold(daysInRange(start, end).map((date) => (range.kind === "NORMAL" ? blankDay(date) : { ...current(date), kind: range.kind })));

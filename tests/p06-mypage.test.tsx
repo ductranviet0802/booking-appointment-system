@@ -233,12 +233,13 @@ describe("P06 e-mail change (7-2, 7-7, event 14)", () => {
 });
 
 describe("P06 password change (event 12)", () => {
-  it("wrong current → PE018; 5 wrong in 15 min → PE092 unverified; success revokes the other sessions and keeps the current", async () => {
+  it("wrong current → PE018; the 5th wrong in 15 min is PE092, then unverified; success revokes the other sessions and keeps the current", async () => {
     const h = await holder();
     const other = await login({ ip: IP, userAgent: "jest", email: h.acc.email, password: PW });
     const body = (current: string) => ({ currentPassword: current, newPassword: "Newpass99", newPasswordConfirm: "Newpass99" });
     expect(code(await changePassword(h.actor, { currentPassword: "", newPassword: "x", newPasswordConfirm: "y" }))).toBe("PE001");
-    for (let i = 0; i < 5; i++) expect(code(await changePassword(h.actor, body("Wrong999")))).toBe("PE018");
+    for (let i = 0; i < 4; i++) expect(code(await changePassword(h.actor, body("Wrong999")))).toBe("PE018");
+    expect(code(await changePassword(h.actor, body("Wrong999")))).toBe("PE092"); // Q-019: the 5th wrong one itself
     expect(code(await changePassword(h.actor, body(PW)))).toBe("PE092"); // even the right one, until the window passes
     resetAuthLimits();
     expect(code(await changePassword(h.actor, body(PW)))).toBe("PI049");

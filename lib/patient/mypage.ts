@@ -129,7 +129,7 @@ export async function changePassword(a: Actor, body: Record<string, unknown>): P
   if (pwChangeBlocked(a.accountId, a.now.getTime())) return fail(429, "PE092"); // 12-2: unverified until the window has passed
   const account = await prisma.account.findUniqueOrThrow({ where: { id: a.accountId }, select: { passwordHash: true, role: true } });
   if (!(await bcrypt.compare(str(body.currentPassword), account.passwordHash))) {
-    countPwChangeFailure(a.accountId, a.now.getTime());
+    if (countPwChangeFailure(a.accountId, a.now.getTime())) return fail(429, "PE092"); // Q-019: the 5th wrong one itself
     return fieldFail([{ field: "currentPassword", code: "PE018" }]);
   }
   const passwordHash = await hashPassword(str(body.newPassword));

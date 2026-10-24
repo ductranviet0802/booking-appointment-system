@@ -9,8 +9,8 @@ import {
 import { buildHoursTable, joinBands } from "./hours";
 import { clinicAddress, doctorName, nameOf, pick, titleLabel } from "./text";
 
-/** item 13-2: only these titles are written in front of the departments (P10 Q5 unstated; 質疑 Q-015, reading 2) */
-const TITLES_SHOWN = new Set(["DIRECTOR", "VICE_DIRECTOR", "PART_TIME"]);
+/** item 13-2: only these titles are written in front of the departments (Q-015 answer: 非常勤医師 not shown) */
+const TITLES_SHOWN = new Set(["DIRECTOR", "VICE_DIRECTOR"]);
 
 /** `/clinics`: with one active clinic its page opens (1-3), with none ER-01 (Q9 b), else the cards of state ① */
 export async function loadClinicIndex(lang: Lang, now = new Date()) {

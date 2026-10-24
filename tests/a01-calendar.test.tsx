@@ -12,6 +12,7 @@ import {
 } from "@/lib/admin/calendar-rules";
 import { runJob } from "@/lib/batch/runner";
 import { addDays, dbDate, todayJst, weekdayOf } from "@/lib/datetime";
+import { t } from "@/lib/i18n";
 import { pool, prisma } from "@/lib/prisma";
 import { cleanupStaff, makeStaff, request } from "./a03-helpers";
 import { fixture, type Fixture } from "./b2-helpers";
@@ -118,6 +119,15 @@ describe("rules (§4.2)", () => {
     expect(validateRange("2030-03-02", "2030-03-01", today)[0]).toMatchObject({ field: "range.end", code: "SE002" });
     expect(validateRange(addDays(today, -1), today, today)[0].code).toBe("SE043");
     expect(validateRange(today, addDays(today, 3), today)).toEqual([]);
+  });
+
+  it("Q-024: a range over 2,000 dates is a message in the dialog (TMP-Q024), 2,000 itself passes; held dates count", () => {
+    expect(validateRange(today, addDays(today, 1999), today)).toEqual([]);
+    expect(validateRange(today, addDays(today, 2000), today)).toEqual([{ field: "range.end", code: "TMP-Q024" }]);
+    const held = Array.from({ length: 1999 }, (_, i) => addDays(today, 5000 + i));
+    expect(validateRange(today, addDays(today, 1), today, held)[0]?.code).toBe("TMP-Q024");
+    expect(validateRange(today, today, today, held)).toEqual([]);
+    expect(t("TMP-Q024", "ja")).toBe("一度に設定できる日数は2,000日までです。期間を分けて設定してください。");
   });
 
   const clinic: ClinicValues = {
@@ -326,7 +336,7 @@ describe("clinic profile (event 8)", () => {
     for (const tamper of [{ ...values, code: "x" }, { ...values, phone: 123 }, { ...values, extra: "y" }]) {
       expect((await send(postClinic, "/api/admin/calendar/clinic", tamper)).body.code).toBe("SE090");
     }
-    expect((await loadClinic(f.clinic.id))!.nameKana).toBe("シンメイショウ クリニック");
+    expect((await loadClinic(f.clinic.id))!.nameKana).toBe("シンメイショウ　クリニック"); // Q-021: stored with a full-width space
   });
 });
 

@@ -11,6 +11,7 @@ import {
 } from "@/lib/admin/masters-rules";
 import { fileOfUrl, photoExists } from "@/lib/admin/photo-store";
 import type { Result } from "@/lib/auth/service";
+import { fullWidthSpaces } from "@/lib/auth/validate";
 import { dbDate, todayJst } from "@/lib/datetime";
 import { prisma } from "@/lib/prisma";
 
@@ -222,8 +223,8 @@ export function saveDoctor(a: Actor, body: Record<string, unknown>): Promise<Res
     if (errors.length > 0) return fieldFail(errors);
 
     const data = {
-      code: v.code.trim(), familyName: v.familyName.trim(), givenName: v.givenName.trim(), familyNameKana: v.familyNameKana.trim(),
-      givenNameKana: v.givenNameKana.trim(), nameRomaji: v.nameRomaji.trim(), title: v.title as (typeof TITLES)[number], photoUrl: v.photoUrl,
+      code: v.code.trim(), familyName: v.familyName.trim(), givenName: v.givenName.trim(), familyNameKana: fullWidthSpaces(v.familyNameKana.trim()),
+      givenNameKana: fullWidthSpaces(v.givenNameKana.trim()), nameRomaji: v.nameRomaji.trim(), title: v.title as (typeof TITLES)[number], photoUrl: v.photoUrl,
       profileJa: v.profileJa.trim(), profileEn: empty(v.profileEn), profileVi: empty(v.profileVi),
       qualificationsJa: empty(v.qualJa), qualificationsEn: empty(v.qualEn), qualificationsVi: empty(v.qualVi),
       languages: languagesOf(v), primaryClinicId: v.primaryClinicId, displayOrder: toInt(v.displayOrder),
@@ -268,7 +269,7 @@ export function saveDepartment(a: Actor, body: Record<string, unknown>): Promise
     if (errors.length > 0) return fieldFail(errors);
 
     const data = {
-      nameJa: v.nameJa.trim(), nameEn: empty(v.nameEn), nameVi: empty(v.nameVi), nameKana: v.nameKana.trim(), displayOrder: toInt(v.displayOrder),
+      nameJa: v.nameJa.trim(), nameEn: empty(v.nameEn), nameVi: empty(v.nameVi), nameKana: fullWidthSpaces(v.nameKana.trim()), displayOrder: toInt(v.displayOrder),
     };
     const code = v.code.trim();
     if (!before && (await prisma.department.count({ where: { code } }))) return fieldFail([{ field: "code", code: "SE051" }]);

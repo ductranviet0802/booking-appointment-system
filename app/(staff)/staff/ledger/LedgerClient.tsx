@@ -229,7 +229,7 @@ export function LedgerClient({ initial, flash }: { initial: LedgerView; flash: {
           {!view.isDoctor && view.shown > 0 && <Button onClick={() => setConfirm({ kind: "adjust", rows: view.rows })}>{W3.adjustBulk}</Button>}
         </div>
       ) : null}
-      {view.truncated && <div className="err" role="alert"><Icon name="alert" /> 表示件数の上限を超えました。条件を絞ってください。</div>}
+      {view.truncated && <div className="err" role="alert"><Icon name="alert" /> {t("TMP-Q028", "ja")}</div>}
 
       {view.rows.length === 0 && (dateMode ? view.totals.all === 0 : true) ? (
         <div className={s.empty}>

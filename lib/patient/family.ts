@@ -119,7 +119,7 @@ export async function saveMember(a: Actor, body: Record<string, unknown>): Promi
   } catch (e) {
     if (e instanceof NotOwn) return notOwn();
     if (e instanceof Limit) return fail(409, "PE046", { n: max });
-    if (e instanceof Duplicate) return fieldFail([{ field: "familyName", code: "DUP_MEMBER" }]);
+    if (e instanceof Duplicate) return fieldFail([{ field: "familyName", code: "TMP-Q017" }]);
     if (e instanceof CardTaken) return fieldFail([{ field: cardField(e.clinicId), code: "PE053" }]);
     throw e;
   }

@@ -14,9 +14,8 @@ import type { LabelKey } from "@/lib/i18n/labels";
 
 export type Errors = Record<string, ServerError>;
 
-/** the 04 text of a field error; codes without a 04 row (P07 duplicate) are label keys */
+/** the 04 text of a field error (P07 duplicate: temporary id TMP-Q017 until the next 04) */
 export function errorText(e: ServerError, lang: Lang, itemName: string) {
-  if (e.code === "DUP_MEMBER") return label("dupMember", lang);
   return t(e.code, lang, { 項目: itemName, ...(e.params ?? {}) });
 }
 

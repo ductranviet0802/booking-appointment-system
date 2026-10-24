@@ -18,6 +18,7 @@ import {
   checkOne, isRequired, progressOf, QUESTIONS, requiredSet, shownQuestions, tx, type Answers, type QError, type Question,
 } from "@/lib/entry/questionnaire";
 import { Steps } from "./Steps";
+import { leaveTarget } from "./leave-target";
 import { useLeaveGuard } from "./useLeaveGuard";
 import s from "./questionnaire.module.css";
 
@@ -33,6 +34,7 @@ export function QuestionnaireForm(p: QuestionnaireProps) {
   const [errors, setErrors] = useState<Record<string, QError>>({});
   const [busy, setBusy] = useState(false);
   const [quit, setQuit] = useState(false);
+  const [linkTo, setLinkTo] = useState<string | null>(null);
   const shown = shownQuestions(person, a);
   const progress = progressOf(person, a);
 
@@ -76,10 +78,10 @@ export function QuestionnaireForm(p: QuestionnaireProps) {
   async function leave() {
     const res = await apiFetch(...postJson("/api/booking/discard", { origin: p.origin }));
     const body = res ? await res.json().catch(() => ({})) : {};
-    window.location.assign(body.to ?? p.origin);
+    window.location.assign(leaveTarget(linkTo, body.to, p.origin));
   }
-  // P12 Q2 A: a header link asks PW005; はい → the origin screen of the draft
-  useLeaveGuard(useCallback(() => setQuit(true), []));
+  // Q-039 answer: a header link asks PW005; はい → the link pressed (the 中止 button below still goes to the origin screen)
+  useLeaveGuard(useCallback((href: string) => { setLinkTo(href); setQuit(true); }, []));
 
   const field = (q: Question) => {
     const id = fid(q.id);
@@ -167,9 +169,9 @@ export function QuestionnaireForm(p: QuestionnaireProps) {
       <div className="w1-bar">
         <button type="button" className="btn bs" disabled={busy} onClick={() => send("back")}>{lw1("back", lang)}</button>
         <Button busy={busy} disabled={!requiredSet(person, a)} onClick={() => send("next")}>{lw1("nextToConfirm", lang)}</Button>
-        <button type="button" className="lnk lnk-btn" onClick={() => setQuit(true)}>{lw1("quit", lang)}</button>
+        <button type="button" className="lnk lnk-btn" onClick={() => { setLinkTo(null); setQuit(true); }}>{lw1("quit", lang)}</button>
       </div>
-      <ConfirmDialog open={quit} title={lw1("quitTitle", lang)} messageId="PW005" onConfirm={leave} onCancel={() => setQuit(false)} />
+      <ConfirmDialog open={quit} title={lw1("quitTitle", lang)} messageId="PW005" onConfirm={leave} onCancel={() => { setQuit(false); setLinkTo(null); }} />
     </div>
   );
 }

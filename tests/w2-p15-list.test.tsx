@@ -90,7 +90,7 @@ describe("P15 tabs (抽出1 / 抽出2)", () => {
     expect(twelveMonthsBefore("2026-10-24")).toBe("2025-10-24");
   });
 
-  it("20 rows per page; もっと見る while the 12-month count is not reached (Q14 A); 予約中 shows its first 20 only", async () => {
+  it("20 rows per page; もっと見る while the 12-month count is not reached (Q14 A); 予約中 too (Q-040)", async () => {
     const h = await holder();
     for (let i = 1; i <= 25; i++) await rawBooking(w, h.self.id, addDays(today, -i), "09:00", canceled);
     const p1 = await listBookings(h.acc.id, "canceled", 0, "ja");
@@ -99,8 +99,12 @@ describe("P15 tabs (抽出1 / 抽出2)", () => {
     expect([p2.rows.length, p2.more]).toEqual([5, false]);
     expect(new Set([...p1.rows, ...p2.rows].map((r) => r.id)).size).toBe(25);
     for (let i = 1; i <= 21; i++) await rawBooking(w, h.self.id, addDays(today, i), "11:00");
-    const up = await listBookings(h.acc.id, "upcoming", 20, "ja");
-    expect([up.rows.length, up.more, up.counts.upcoming]).toEqual([20, false, 21]); // offset ignored on 予約中
+    // Q-040 answer: 予約中 pages like the other tabs
+    const up1 = await listBookings(h.acc.id, "upcoming", 0, "ja");
+    expect([up1.rows.length, up1.more, up1.counts.upcoming]).toEqual([20, true, 21]);
+    const up2 = await listBookings(h.acc.id, "upcoming", 20, "ja");
+    expect([up2.rows.length, up2.more]).toEqual([1, false]);
+    expect(new Set([...up1.rows, ...up2.rows].map((r) => r.id)).size).toBe(21);
   });
 
   it("scope: own + family (name with relation only when the account has family); not other accounts, not a detached member", async () => {

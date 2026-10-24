@@ -1,7 +1,7 @@
 // spec-screen: A01
 // A01 §4.2 input checks (rows 1-27): one pure module for the blur / press checks of the page and the server re-check of
 // events 4, 5 and 8. Times are strict HH:MM (Q11 a); order errors are SE002 with the item name (Q11 b).
-import type { FieldError } from "@/lib/auth/validate";
+import { KATAKANA, type FieldError } from "@/lib/auth/validate";
 
 export type BandCode = "AM" | "PM";
 export const BANDS: BandCode[] = ["AM", "PM"];
@@ -34,13 +34,14 @@ export const blank = (v: string) => v.replace(/[\s　]/g, "") === "";
 export const timeOk = (v: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 export const isoDateOk = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v;
 /** full-width katakana, ー and space (Q11 d, S-02) */
-export const KATAKANA = /^[ァ-ヶー　 ]+$/;
 
 export function addDaysIso(isoDate: string, days: number) {
   const d = new Date(`${isoDate}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+/** cap: exception dates in one A01 save (Q-024: 2,000 accepted; the server refuses more) */
+export const MAX_DAYS_PER_SAVE = 2_000;
 /** every date of start…end (both ISO, start ≤ end) */
 export function daysInRange(start: string, end: string) {
   const out: string[] = [];
@@ -123,13 +124,20 @@ export function validateDay(d: DayValues, today: string): FieldError[] {
 }
 
 /** 12-1 / 12-2 (events 14): empty → SE001, not a date or end before start → SE002, past → SE043; the dialog stays open */
-export function validateRange(start: string, end: string, today: string): FieldError[] {
+export function validateRange(start: string, end: string, today: string, heldDates: string[] = []): FieldError[] {
   const errors: FieldError[] = [];
   if (blank(start)) errors.push(e1("range.start", "開始日"));
   else if (!isoDateOk(start)) errors.push(e2("range.start", "開始日"));
   if (blank(end)) errors.push(e1("range.end", "終了日"));
   else if (!isoDateOk(end) || (isoDateOk(start) && end < start)) errors.push(e2("range.end", "終了日"));
   if (errors.length === 0 && start < today) errors.push({ field: "range.start", code: "SE043" });
+  // Q-024 answer: more than MAX_DAYS_PER_SAVE dates in one save → a message in the dialog (TMP-Q024), not ER-02
+  if (errors.length === 0) {
+    const span = (Date.parse(end) - Date.parse(start)) / 86_400_000 + 1;
+    if (span > MAX_DAYS_PER_SAVE || new Set([...heldDates, ...daysInRange(start, end)]).size > MAX_DAYS_PER_SAVE) {
+      errors.push({ field: "range.end", code: "TMP-Q024" });
+    }
+  }
   return errors;
 }
 

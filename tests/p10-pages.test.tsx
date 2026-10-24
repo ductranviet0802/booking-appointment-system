@@ -111,6 +111,18 @@ describe("P10 clinic page", () => {
     expect(page!.hours.cell(3, "PM")).toEqual({ kind: "closed" });
   });
 
+  it("Q-015: the title is shown for 院長 / 副院長 only; 非常勤医師 shows the departments alone", async () => {
+    const tanaka = await prisma.doctor.findFirstOrThrow({ where: { title: "DIRECTOR", shiftPatterns: { some: { clinic: { code: "honin" } } } } });
+    const subOf = async () => (await loadClinicPage("honin", "ja"))!.doctors.find((d) => d.id === tanaka.id)!.sub;
+    expect(await subOf()).toBe("院長・内科");
+    await prisma.doctor.update({ where: { id: tanaka.id }, data: { title: "PART_TIME" } });
+    try {
+      expect(await subOf()).toBe("内科");
+    } finally {
+      await prisma.doctor.update({ where: { id: tanaka.id }, data: { title: "DIRECTOR" } });
+    }
+  });
+
   it("no map url → the link is hidden; empty notice and closures → their areas change", async () => {
     const page = await loadClinicPage("ekimae", "ja");
     expect(page!.clinic.mapUrl).toBeNull();

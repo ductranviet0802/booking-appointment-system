@@ -4,10 +4,11 @@
 import type { Prisma } from "@prisma/client";
 import { bad, changedColumns, done, fail, fieldFail, masterAudit, type Actor, type Db } from "@/lib/admin/common";
 import {
-  BANDS, CLINIC_KEYS, DAY_KINDS, isoDateOk, specialBands, validateClinic, validateDay, validateHours, WEEK_ORDER,
+  BANDS, CLINIC_KEYS, DAY_KINDS, isoDateOk, MAX_DAYS_PER_SAVE, specialBands, validateClinic, validateDay, validateHours, WEEK_ORDER,
   type BandCode, type ClinicValues, type DayKind, type DayValues, type HoursCellValues,
 } from "@/lib/admin/calendar-rules";
 import type { Result } from "@/lib/auth/service";
+import { fullWidthSpaces } from "@/lib/auth/validate";
 import { adjustRequiredCount, dailyRange, daysBetween, generateClinic } from "@/lib/batch/b2-frames";
 import { runJob } from "@/lib/batch/runner";
 import { dbDate, dbTime, todayJst, toHhmm, toIsoDate, weekdayOf } from "@/lib/datetime";
@@ -110,7 +111,7 @@ const str = (v: unknown, max = 2_000) => {
 type Held = { hours: HoursCellValues[]; days: DayValues[] };
 
 function parseHeld(body: Record<string, unknown>): Held {
-  must(Array.isArray(body.hours) && body.hours.length === 14 && Array.isArray(body.days) && body.days.length <= 2_000);
+  must(Array.isArray(body.hours) && body.hours.length === 14 && Array.isArray(body.days) && body.days.length <= MAX_DAYS_PER_SAVE);
   const hours = (body.hours as Record<string, unknown>[]).map((c) => {
     must(!!c && typeof c === "object" && Number.isInteger(c.weekday) && (c.weekday as number) >= 0 && (c.weekday as number) <= 6);
     must(c.band === "AM" || c.band === "PM");
@@ -319,7 +320,7 @@ export async function saveClinic(a: Actor, body: Record<string, unknown>): Promi
   const errors = validateClinic(v);
   if (errors.length > 0) return fieldFail(errors);
   const data = {
-    nameJa: v.nameJa.trim(), nameEn: nullIfBlank(v.nameEn), nameVi: nullIfBlank(v.nameVi), nameKana: v.nameKana.trim(), postcode: v.postcode.trim(),
+    nameJa: v.nameJa.trim(), nameEn: nullIfBlank(v.nameEn), nameVi: nullIfBlank(v.nameVi), nameKana: fullWidthSpaces(v.nameKana.trim()), postcode: v.postcode.trim(),
     prefecture: v.prefecture.trim(), city: v.city.trim(), addressLine: v.addressLine.trim(), addressEn: nullIfBlank(v.addressEn), phone: v.phone.trim(),
     accessJa: v.accessJa.trim(), accessEn: nullIfBlank(v.accessEn), accessVi: nullIfBlank(v.accessVi), mapUrl: nullIfBlank(v.mapUrl),
     noticeJa: nullIfBlank(v.noticeJa), noticeEn: nullIfBlank(v.noticeEn), noticeVi: nullIfBlank(v.noticeVi),

@@ -325,7 +325,7 @@ describe("F9-05 sessions", () => {
     expect((await prisma.session.findUniqueOrThrow({ where: { id: row.id } })).lastSeenAt).toEqual(t1);
   });
 
-  it("patient: idle 7 days and absolute 30 days; staff: idle 30 min and absolute 12 h", async () => {
+  it("patient: idle 7 days and absolute 30 days; staff: idle 60 min and absolute 12 h", async () => {
     const p = await makeAccount();
     const t0 = new Date();
     const pt = sid(await loginAs(p.email, PW, { now: t0 }));
@@ -337,8 +337,8 @@ describe("F9-05 sessions", () => {
 
     const s = await makeAccount({ role: "RECEPTION", clinics: ["honin"] });
     const st = sid(await loginAs(s.email, PW, { now: t0 }));
-    expect((await readSession(st, new Date(t0.getTime() + 29 * MIN))).state).toBe("valid");
-    expect((await readSession(st, new Date(t0.getTime() + 60 * MIN))).state).toBe("invalid");
+    expect((await readSession(st, new Date(t0.getTime() + 59 * MIN))).state).toBe("valid"); // Q-008: 60 min
+    expect((await readSession(st, new Date(t0.getTime() + 120 * MIN))).state).toBe("invalid");
     const st2 = sid(await loginAs(s.email, PW, { now: t0 }));
     for (let m = 25; m < 12 * 60; m += 25) await readSession(st2, new Date(t0.getTime() + m * MIN));
     expect((await readSession(st2, new Date(t0.getTime() + 12 * 60 * MIN))).state).toBe("invalid");
@@ -414,8 +414,8 @@ describe("guardScreen (02 §2) and scope helpers", () => {
     for (const s of ["A04", "A05"] as const) expect(await guard(s, reception)).toBe("http:403");
     expect(await guard("A03", reception)).toBe("allow"); // Q-006
     for (const s of ["A04", "A05", "S03"] as const) expect(await guard(s, admin)).toBe("allow");
-    expect(await guard("S01", patient, "/staff/ledger")).toBe("redirect:/mypage");
-    expect(await guard("A05", patient, "/admin/staff")).toBe("redirect:/mypage");
+    expect(await guard("S01", patient, "/staff/ledger")).toBe("http:403"); // Q-011: ER-03, not P06
+    expect(await guard("A05", patient, "/admin/staff")).toBe("http:403");
   });
 
   it("must_change_password: every URL → P05 初回変更 until changed; re-consent: every patient URL → CF-04", async () => {

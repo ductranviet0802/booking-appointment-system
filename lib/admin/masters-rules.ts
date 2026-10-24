@@ -1,7 +1,7 @@
 // spec-screen: A03
 // Input checks of A03 §4.2 (items 5-32): one module for the blur checks of the form and the server re-check of event 5.
 // Pure (no database): uniqueness (SE051), the shift check (SE054) and the offered ids are the server's.
-import type { FieldError } from "@/lib/auth/validate";
+import { KATAKANA, type FieldError } from "@/lib/auth/validate";
 
 export const TITLES = ["DIRECTOR", "VICE_DIRECTOR", "DOCTOR", "PART_TIME"] as const;
 export const TITLE_LABEL: Record<string, string> = { DIRECTOR: "院長", VICE_DIRECTOR: "副院長", DOCTOR: "医師", PART_TIME: "非常勤医師" };
@@ -30,7 +30,6 @@ export type VisitTypeValues = {
 };
 
 const CODE = /^[A-Za-z0-9_-]+$/;
-const KATAKANA = /^[ァ-ヶー　 ]+$/;
 const ROMAJI = /^[A-Za-z' -]+$/;
 const ISO639 = /^[a-z]{2}$/;
 export const FILE_NAME = /^[0-9a-f-]{36}\.(jpg|png)$/;
