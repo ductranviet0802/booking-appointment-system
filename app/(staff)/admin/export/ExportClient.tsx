@@ -120,10 +120,10 @@ export function ExportClient({ initial }: { initial: ExportState }) {
               {A06.periodLabel} <RequiredMark lang="ja" /> <span className={s.help}>{A06.periodHelp}</span>
             </legend>
             <div className={s.row}>
-              <input id="a06-from" className={`${s.date} in`} inputMode="numeric" maxLength={10} value={from} aria-label={`${A06.periodLabel} ${A06.from}`}
+              <input id="a06-from" className={`${s.date} inp`} inputMode="numeric" maxLength={10} value={from} aria-label={`${A06.periodLabel} ${A06.from}`}
                 aria-invalid={!!err("from")} aria-describedby="a06-from-e" onChange={(e) => setFrom(e.target.value)} onBlur={blurPeriod} />
               {A06.to}
-              <input id="a06-to" className={`${s.date} in`} inputMode="numeric" maxLength={10} value={to} aria-label={`${A06.periodLabel} ${A06.until}`}
+              <input id="a06-to" className={`${s.date} inp`} inputMode="numeric" maxLength={10} value={to} aria-label={`${A06.periodLabel} ${A06.until}`}
                 aria-invalid={!!err("to")} aria-describedby="a06-to-e" onChange={(e) => setTo(e.target.value)} onBlur={blurPeriod} />
             </div>
             <FieldErrorText id="a06-from-e" message={err("from")} />

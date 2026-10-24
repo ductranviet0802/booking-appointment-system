@@ -1,17 +1,17 @@
 .h1 { margin: 0; font-size: 22px; }
 .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
-.filters { display: flex; gap: 12px; margin-bottom: 8px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 8px; }
 .filters label { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
 .filters select { min-height: 36px; border: 1px solid var(--line2); border-radius: 6px; padding: 0 8px; font: inherit; }
 .split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 16px; align-items: start; }
 .list { background: #fff; border: 1px solid var(--line); border-radius: 8px; max-height: 560px; overflow: auto; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table th { text-align: left; padding: 8px; color: var(--mut); font-weight: 700; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.table td { padding: 8px; border-bottom: 1px solid #eef2f3; }
+.table td { padding: 8px; border-bottom: 1px solid #eef2f3; white-space: nowrap; }
 .table tr[data-row] { cursor: pointer; }
 .sel { background: var(--pri-t); }
 .off { color: #8a979b; }
-.badge { font-size: 11px; font-weight: 700; background: #e7f4f3; color: #075e5a; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.badge { font-size: 12px; font-weight: 700; background: #e7f4f3; color: #075e5a; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
 .pill { font-size: 12px; font-weight: 700; border-radius: 10px; padding: 1px 8px; background: #e6f3ea; color: #1b5e32; white-space: nowrap; }
 .pillWarn { background: #fff5e0; color: #8a5300; }
 .pillOff { background: #eef2f3; color: var(--mut); }
@@ -25,4 +25,5 @@
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
 .actions .sp { flex: 1; }
 .pw { border: 2px dashed var(--line2); border-radius: 8px; padding: 12px; font-family: ui-monospace, monospace; font-size: 20px; text-align: center; letter-spacing: 1px; user-select: all; }
+@media (max-width: 799px) { .split { grid-template-columns: minmax(0, 1fr); } } /* B27 */
 .warn { background: #fff5e0; color: #6b4200; border: 1px solid #f0d49a; border-radius: 8px; padding: 10px 12px; font-size: 13px; display: flex; gap: 8px; }

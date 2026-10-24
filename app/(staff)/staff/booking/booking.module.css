@@ -12,10 +12,10 @@
 .tabs .on { border-bottom-color: var(--pri); color: var(--pri); }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-.f { display: flex; flex-direction: column; gap: 4px; }
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .lab { font-size: 14px; font-weight: 700; display: flex; gap: 6px; align-items: center; }
 .lab small { font-weight: 400; color: var(--mut); }
-.sel { min-height: 40px; border: 1px solid var(--line2); border-radius: 6px; padding: 0 8px; font: inherit; background: #fff; }
+.sel { max-width: 100%; min-width: 0; min-height: 40px; border: 1px solid var(--line2); border-radius: 6px; padding: 0 8px; font: inherit; background: #fff; }
 .checks { display: flex; gap: 16px; align-items: center; min-height: 40px; }
 .checks label { display: inline-flex; gap: 6px; align-items: center; }
 .note { font-size: 12px; color: var(--mut); }
@@ -30,14 +30,21 @@
 .grid table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 13px; }
 .grid th { position: sticky; top: 0; background: #fff; padding: 4px; z-index: 1; }
 .grid td { text-align: center; padding: 0; }
-.cell { display: block; width: 100%; min-height: 30px; border: 1px solid var(--line2); background: #fff; border-radius: 4px; font: inherit; cursor: pointer; }
+.cell { display: block; width: 100%; max-width: 160px; margin: 0 auto; min-height: 30px; border: 1px solid var(--line2); background: #fff; border-radius: 4px; font: inherit; cursor: pointer; }
 .cell.full { background: #eef2f3; color: var(--mut); cursor: default; }
 .cell.none { background: repeating-linear-gradient(135deg, #eef2f3 0 6px, #fff 6px 9px); cursor: default; color: transparent; }
 .cell.pick { background: var(--pri); color: #fff; border-color: var(--pri); font-weight: 700; }
 .cell.cur { outline: 2px solid #1a73e8; outline-offset: 1px; }
-.legend { font-size: 13px; color: var(--mut); }
-.foot { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 10px 24px; display: flex; gap: 16px; align-items: center; z-index: 5; }
+.legend { font-size: 13px; color: var(--mut); white-space: pre-wrap; word-spacing: 0.25em; } /* B10: keep the double spaces of the legend text */
+.foot { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; z-index: 5; }
+.foot a { white-space: nowrap; }
+.foot .readback { min-width: 0; }
 .foot .sp { flex: 1; }
 .readback { font-size: 14px; }
 .counter { font-size: 12px; color: var(--mut); text-align: right; }
 @media (max-width: 1100px) { .split { grid-template-columns: 1fr; } }
+@media (max-width: 479px) {
+  .two, .three { grid-template-columns: minmax(0, 1fr); }
+  .foot { padding: 10px 12px; }
+  .split { padding-bottom: 140px; } /* the wrapped bar is taller */
+}

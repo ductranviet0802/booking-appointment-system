@@ -155,6 +155,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
       />
     );
     return (
+      <div className={s.tw}>
       <table className={s.table}>
         <thead>
           <tr><th>クリニック</th><th>診療科</th><th>曜日</th><th>時間帯</th><th>開始〜終了</th><th>適用期間</th><th /></tr>
@@ -215,6 +216,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
           })}
         </tbody>
       </table>
+      </div>
     );
   }
 
@@ -272,6 +274,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
     const f = (field: string) => `a02-x-${field}`;
     return (
       <>
+        <div className={s.tw}>
         <table className={s.table}>
           <thead><tr><th>日付</th><th>種別</th><th>時間帯</th><th>クリニック・診療科</th><th>時間</th><th>代診医</th><th>メモ</th><th /></tr></thead>
           <tbody>
@@ -289,6 +292,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
             ))}
           </tbody>
         </table>
+        </div>
         {admin && (
           <div className={s.form}>
             <div>
@@ -448,6 +452,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
                 <Button variant="secondary" className="btn-sm" aria-label="翌週" onClick={() => void loadWeek(addDaysIso(week.start, 7))}>›</Button>
               </span>
             </h2>
+            <div className={s.tw}>
             <table className={s.table}>
               <thead>
                 <tr><th>医師</th>{week.days.map((d) => <th key={d} className={wdOf(d) === 0 ? s.sun : wdOf(d) === 6 ? s.sat : ""}>{short(d)}</th>)}</tr>
@@ -458,6 +463,7 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
           {admin && (
             <div className={s.bar}>
