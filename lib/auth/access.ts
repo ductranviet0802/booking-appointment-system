@@ -105,8 +105,8 @@ export function decideAccess(screen: ScreenId, s: SessionState, path: string): D
   if (account.role === "PATIENT") {
     if (firstChangeMode) return { kind: "redirect", to: PATIENT_HOME };
     if (reconsent.length > 0) return { kind: "redirect", to: CONSENT_PATH };
-    // 02 §2 "—" for patients = login guard to P02, which sends a logged-in patient on to P06 (質疑 drafted)
-    if (isStaffScreen(screen)) return { kind: "redirect", to: PATIENT_HOME };
+    // Q-011 answer: a logged-in patient on a staff URL gets ER-03, not a redirect to P06
+    if (isStaffScreen(screen)) return { kind: "forbidden" };
     if (screen === "P02" || screen === "P03" || screen === "P04") return { kind: "redirect", to: PATIENT_HOME };
     return { kind: "allow" };
   }

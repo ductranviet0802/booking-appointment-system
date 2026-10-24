@@ -414,8 +414,8 @@ describe("guardScreen (02 §2) and scope helpers", () => {
     for (const s of ["A04", "A05"] as const) expect(await guard(s, reception)).toBe("http:403");
     expect(await guard("A03", reception)).toBe("allow"); // Q-006
     for (const s of ["A04", "A05", "S03"] as const) expect(await guard(s, admin)).toBe("allow");
-    expect(await guard("S01", patient, "/staff/ledger")).toBe("redirect:/mypage");
-    expect(await guard("A05", patient, "/admin/staff")).toBe("redirect:/mypage");
+    expect(await guard("S01", patient, "/staff/ledger")).toBe("http:403"); // Q-011: ER-03, not P06
+    expect(await guard("A05", patient, "/admin/staff")).toBe("http:403");
   });
 
   it("must_change_password: every URL → P05 初回変更 until changed; re-consent: every patient URL → CF-04", async () => {

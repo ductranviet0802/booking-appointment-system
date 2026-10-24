@@ -93,7 +93,7 @@ export async function guardTarget() {
  * Access check of 02 §2 for a screen, called at the top of its page. Returns the session (null = anonymous allowed).
  * Otherwise it does not return: redirect (login guard to P02 with the target kept, logged-in redirects, CF-04 re-consent,
  * P05 初回変更), unauthorized() → ER-05 (session expired / revoked) or forbidden() → ER-03 (staff without the screen / clinic).
- * A patient on a staff screen is sent to P06 (02 §2 "—": login guard → P02 → P06).
+ * A patient on a staff screen gets ER-03 (Q-011 answer).
  */
 export async function guardScreen(screen: ScreenId): Promise<SessionContext | null> {
   const s = await currentState();
