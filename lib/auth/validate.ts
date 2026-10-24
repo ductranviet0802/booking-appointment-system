@@ -61,6 +61,13 @@ export const postcodeOk = (digits: string) => /^\d{7}$/.test(digits);
 /** after normalisation 10 or 11 digits (PE015) */
 export const phoneOk = (digits: string) => /^\d{10,11}$/.test(digits);
 
+/** 診察券番号 (03 §3.16; P06 22-2, P07 20-2): optional, 0–20 → PE003, `^[0-9A-Za-z-]+$` → PE002 */
+export function checkCardNo(raw: string, field: string): FieldError | null {
+  const v = raw.trim();
+  if (v.length > 20) return { field, code: "PE003", params: { n: 20 } };
+  return v && !/^[0-9A-Za-z-]+$/.test(v) ? { field, code: "PE002" } : null;
+}
+
 export type NameType = "JP" | "ROMAJI";
 export type Sex = "MALE" | "FEMALE";
 

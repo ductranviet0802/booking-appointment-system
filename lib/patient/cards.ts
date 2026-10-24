@@ -2,7 +2,7 @@
 // never written; new → INSERT (PATIENT, unconfirmed), changed unconfirmed → UPDATE, cleared unconfirmed → DELETE.
 // UNIQUE (clinic_id, card_no) (patient_cards_clinic_id_card_no_key) refuses a number another patient holds → PE053.
 import type { Prisma } from "@prisma/client";
-import type { FieldError } from "@/lib/auth/validate";
+import { checkCardNo, type FieldError } from "@/lib/auth/validate";
 import { prisma } from "@/lib/prisma";
 
 export type CardRow = { clinicId: string; cardNo: string };
@@ -27,10 +27,9 @@ export function checkCards(raw: unknown, activeIds: string[]): { rows: CardRow[]
   for (const r of raw as Array<Record<string, unknown>>) {
     if (!r || typeof r.clinicId !== "string" || !activeIds.includes(r.clinicId) || typeof r.cardNo !== "string") return null;
     if (rows.some((x) => x.clinicId === r.clinicId)) return null;
-    const cardNo = r.cardNo.trim();
-    if (cardNo.length > 20) errors.push({ field: cardField(r.clinicId), code: "PE003", params: { n: 20 } });
-    else if (cardNo && !/^[0-9A-Za-z-]+$/.test(cardNo)) errors.push({ field: cardField(r.clinicId), code: "PE002" });
-    rows.push({ clinicId: r.clinicId, cardNo });
+    const error = checkCardNo(r.cardNo, cardField(r.clinicId));
+    if (error) errors.push(error);
+    rows.push({ clinicId: r.clinicId, cardNo: r.cardNo.trim() });
   }
   return { rows, errors };
 }

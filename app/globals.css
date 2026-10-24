@@ -256,6 +256,8 @@ a { color: inherit; }
 .mp-body { display: flex; flex-direction: column; gap: 14px; }
 .mp-panel:not(.open) > .mp-body { display: none; }
 .mp-save { position: sticky; bottom: 0; background: var(--page); padding: 8px 0; z-index: 5; }
+/* P07: mobile-only / desktop-only parts (item 6 placement, 23-1, the sheet's ×, Q10 headings) */
+.fam-d { display: none; }
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th, .tbl td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eef2f3; vertical-align: middle; }
 @media (min-width: 768px) {
@@ -272,6 +274,8 @@ a { color: inherit; }
   .mp-ph { display: none; }
   .mp-h { display: block; }
   .mp-panel:not(.open) > .mp-body { display: flex; }
+  .fam-m { display: none; }
+  .fam-d { display: inline-flex; }
   .fam { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; }
   .sheet { position: static; inset: auto; z-index: auto; border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
 }

@@ -11,7 +11,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Icon } from "@/components/ui/Icon";
 import { useToast } from "@/components/ui/Toast";
 import { postJson, useApiFetch } from "@/lib/client/api";
-import { blank, checkEmail, checkNewPassword, checkPerson } from "@/lib/auth/validate";
+import { blank, checkCardNo, checkEmail, checkNewPassword, checkPerson } from "@/lib/auth/validate";
 import type { FieldError as ServerError } from "@/lib/auth/validate";
 import { LANG_NAMES, LANGS, t } from "@/lib/i18n";
 import type { Lang } from "@/lib/i18n";
@@ -74,9 +74,8 @@ export function MypageForm({ lang, data }: { lang: Lang; data: MypageData }) {
     if (b.notifyChannel === "LINE" && !data.lineLinked) errors.push({ field: "notifyChannel", code: "PE050" });
     if (b.notifyChannel === "SMS" && !b.smsOptIn) errors.push({ field: "notifyChannel", code: "PE051" });
     for (const c of b.cards) {
-      const no = c.cardNo.trim();
-      if (no.length > 20) errors.push({ field: cardKey(c.clinicId), code: "PE003", params: { n: 20 } });
-      else if (no && !/^[0-9A-Za-z-]+$/.test(no)) errors.push({ field: cardKey(c.clinicId), code: "PE002" });
+      const ce = checkCardNo(c.cardNo, cardKey(c.clinicId));
+      if (ce) errors.push(ce);
     }
     return errors;
   }, [body, data.lineLinked]);
