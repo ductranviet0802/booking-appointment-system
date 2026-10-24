@@ -151,6 +151,7 @@ describe("B5 per row class", () => {
   const y2 = cutOf(2, "years", new Date(now));
   const r: Record<string, { id: string }> = {};
   const x: Record<string, string> = {}; // extra ids
+  const audit: Record<string, bigint> = {};
   let firstRun: Awaited<ReturnType<typeof b5>>;
 
   it("builds rows just inside / just past each period; a dry run counts them and writes nothing", async () => {
@@ -220,8 +221,8 @@ describe("B5 per row class", () => {
     r.runHeld = await batchRun(new Date(y2.at.getTime() - H));
     await prisma.slot.update({ where: { id: held.id }, data: { generatedRunId: r.runHeld.id } });
     // audit logs: 5 years (Q-002)
-    r.aPast = await auditRow(new Date(y5.at.getTime() - H));
-    r.aIn = await auditRow(new Date(y5.at.getTime() + H));
+    audit.past = (await auditRow(new Date(y5.at.getTime() - H))).id;
+    audit.in = (await auditRow(new Date(y5.at.getTime() + H))).id;
 
     const runs = await prisma.batchRun.count();
     const audits = await prisma.auditLog.count({ where: { action: "RETENTION_PURGE" } });
@@ -301,8 +302,8 @@ describe("B5 per row class", () => {
     expect(await prisma.slot.count({ where: { id: { in: [r.slotIn.id, r.slotHeld.id] } } })).toBe(2);
     expect(await prisma.batchRun.findUnique({ where: { id: r.runPast.id } })).toBeNull();
     expect(await prisma.batchRun.count({ where: { id: { in: [r.runIn.id, r.runHeld.id] } } })).toBe(2);
-    expect(await prisma.auditLog.findUnique({ where: { id: r.aPast.id } })).toBeNull();
-    expect(await prisma.auditLog.findUnique({ where: { id: r.aIn.id } })).not.toBeNull();
+    expect(await prisma.auditLog.findUnique({ where: { id: audit.past } })).toBeNull();
+    expect(await prisma.auditLog.findUnique({ where: { id: audit.in } })).not.toBeNull();
   });
 
   it("writes one RETENTION_PURGE audit row with counts per table and no content", async () => {

@@ -9,6 +9,7 @@ import { fill } from "@/lib/notify/render";
 import { defaultTemplateRows } from "@/lib/notify/templates-default";
 import { cleanTown, lookupPostcode, normalizePostcode, X4UnavailableError } from "@/lib/adapters/x4-postcode";
 import { buildX5Csv, toCp932Safe, writeX5File, x5FileName } from "@/lib/adapters/x5-csv";
+import { JOBS } from "@/lib/batch/jobs";
 import { runJob } from "@/lib/batch/runner";
 import { dueJobs } from "@/lib/batch/schedule";
 
@@ -128,11 +129,17 @@ describe("X5 CSV", () => {
 
 describe("batch runner", () => {
   it("records a run of a job that is not built yet as 'not implemented'", async () => {
-    // B4 is built in W4 (lib/batch/b4-close.ts); B5 is still to come
-    const { run, result } = await runJob("B5", { trigger: "MANUAL", params: { test: MARK } });
-    expect(result).toMatchObject({ status: "FAILED", message: "not implemented (wave W5)" });
-    expect(run).toMatchObject({ jobCode: "B5", status: "FAILED", trigger: "MANUAL" });
-    expect(run!.endedAt).not.toBeNull();
+    // every job is built by W5: take B5 out of the registry for this case only
+    const b5 = JOBS.B5;
+    delete JOBS.B5;
+    try {
+      const { run, result } = await runJob("B5", { trigger: "MANUAL", params: { test: MARK } });
+      expect(result).toMatchObject({ status: "FAILED", message: "not implemented (wave W5)" });
+      expect(run).toMatchObject({ jobCode: "B5", status: "FAILED", trigger: "MANUAL" });
+      expect(run!.endedAt).not.toBeNull();
+    } finally {
+      JOBS.B5 = b5;
+    }
   });
 
   it("a dry run writes nothing", async () => {
