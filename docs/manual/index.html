@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="ja" data-lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Web予約システム デモマニュアル / Booking system demo manual</title>
+<style>
+:root {
+  --bg: #f5f8f8; --card: #fff; --fg: #1d2a2c; --muted: #5b6b6e; --line: #d8e1e2; --accent: #0f766e;
+  --accent-bg: #e3f2f0; --code: #eef3f3; --warn: #fff5e0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111818; --card: #1a2324; --fg: #e3ebeb; --muted: #9db0b2; --line: #2e3c3e; --accent: #4fc1b4;
+    --accent-bg: #1d3533; --code: #233031; --warn: #3a3020;
+  }
+}
+html[data-lang="ja"] .en, html[data-lang="en"] .ja { display: none !important; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); line-height: 1.7;
+  font: 15px/1.7 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+}
+header.top {
+  position: sticky; top: 0; z-index: 10; background: var(--card); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px; flex-wrap: wrap;
+}
+header.top strong { font-size: 16px; }
+header.top nav { display: flex; gap: 4px 14px; flex-wrap: wrap; font-size: 13px; flex: 1; }
+.langs { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.langs button {
+  border: 0; background: transparent; color: var(--fg); padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.langs button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+main { max-width: 1120px; margin: 0 auto; padding: 8px 20px 60px; }
+section { margin-top: 36px; scroll-margin-top: 70px; }
+h1 { font-size: 26px; margin: 24px 0 4px; }
+h2 { font-size: 21px; border-bottom: 2px solid var(--accent); padding-bottom: 4px; margin: 0 0 14px; }
+h3 { font-size: 16px; margin: 26px 0 6px; }
+a { color: var(--accent); }
+p, ul, ol { margin: 6px 0 10px; }
+code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 13px; overflow-wrap: anywhere; }
+pre { background: var(--code); padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+pre code { background: none; padding: 0; overflow-wrap: normal; }
+.lead { color: var(--muted); margin-top: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--accent-bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.id { font-weight: 600; white-space: nowrap; }
+td.route { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; overflow-wrap: anywhere; }
+table.wide { min-width: 760px; }
+table.matrix td, table.matrix th { text-align: center; white-space: nowrap; }
+table.matrix td:first-child, table.matrix th:first-child { text-align: left; }
+.group td { background: var(--code); font-weight: 600; }
+.step { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 14px 0; }
+.step h3 { margin-top: 0; }
+.acct { display: inline-block; background: var(--accent-bg); border-radius: 6px; padding: 2px 8px; font-size: 13px; margin: 2px 0 8px; }
+.shot { margin: 0; }
+.shot a { display: block; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.shot img { display: block; width: 100%; height: auto; max-height: 560px; object-fit: cover; object-position: top; }
+.shot.mobile a { max-width: 260px; margin: 0 auto; }
+.shot figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
+.note { background: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: 13.5px; }
+.legend { font-size: 13px; color: var(--muted); }
+footer { color: var(--muted); font-size: 12px; text-align: center; margin: 40px 0 20px; }
+@media (max-width: 760px) {
+  body { font-size: 14px; }
+  header.top { padding: 8px 12px; flex-wrap: nowrap; justify-content: space-between; }
+  header.top strong { font-size: 14px; }
+  header.top nav { display: none; }
+  main { padding: 4px 12px 40px; }
+  .step { grid-template-columns: 1fr; padding: 12px; }
+  h1 { font-size: 22px; }
+}
+@media print { header.top { position: static; } .step { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <strong><span class="ja">Web予約システム デモマニュアル</span><span class="en">Booking system — demo manual</span></strong>
+  <nav>
+    <a href="#overview"><span class="ja">1 概要</span><span class="en">1 Overview</span></a>
+    <a href="#screens"><span class="ja">2 画面一覧</span><span class="en">2 Screens</span></a>
+    <a href="#tour"><span class="ja">3 デモの流れ</span><span class="en">3 Guided tour</span></a>
+    <a href="#roles"><span class="ja">4 ロール別</span><span class="en">4 Roles</span></a>
+    <a href="#batch"><span class="ja">5 バッチ</span><span class="en">5 Batches</span></a>
+    <a href="#run"><span class="ja">6 起動方法</span><span class="en">6 Running it</span></a>
+    <a href="#accounts"><span class="ja">7 アカウント</span><span class="en">7 Accounts</span></a>
+    <a href="#limits"><span class="ja">8 制約</span><span class="en">8 Limits</span></a>
+  </nav>
+  <div class="langs" role="group" aria-label="Language / 言語">
+    <button type="button" data-set="ja" aria-pressed="true">日本語</button>
+    <button type="button" data-set="en" aria-pressed="false">English</button>
+  </div>
+</header>
+
+<main>
+<h1><span class="ja">Web予約システム デモマニュアル</span><span class="en">Web booking system — demo manual</span></h1>
+<p class="lead"><span class="ja">このページだけで、システムの全体像・画面・デモの進め方・起動方法がわかります（オフラインで開けます）。</span><span class="en">Everything needed to understand and demo the system: what it does, its screens, a guided tour and how to start it. Works offline.</span></p>
+
+<!-- 1 -->
+<section id="overview">
+<h2><span class="ja">1. 概要</span><span class="en">1. Overview</span></h2>
+<div class="step">
+  <div>
+    <p class="ja">医療法人のクリニックのための Web 予約システムです。患者さんはパソコンやスマートフォンから医師を探し、空いている日時を選んで予約し、変更・キャンセル、初診の問診入力、家族の代理予約ができます。受付・医師・管理者は同じシステムで予約台帳、電話予約の代行、患者情報、診療カレンダー、医師シフト、各種マスタ、通知文面、スタッフアカウント、CSV 出力を扱います。</p>
+    <p class="en">A web booking system for the clinics of a medical corporation. Patients find a doctor, pick a free date and time, book, change or cancel, fill in the first-visit questionnaire and book for family members, on a PC or a phone. Reception, doctors and administrators use the same system for the booking ledger, phone bookings on a patient's behalf, patient records, the clinic calendar, doctor shifts, masters, notification texts, staff accounts and CSV export.</p>
+    <div class="grid3">
+      <div class="card"><strong><span class="ja">デモの法人とクリニック</span><span class="en">Demo corporation and clinics</span></strong><br>
+        <span class="ja">医療法人社団 誠和会<br>たなか内科クリニック 本院・駅前院・西口院</span>
+        <span class="en">Seiwa Medical Corporation<br>Tanaka Clinic Main · Ekimae · Nishiguchi</span></div>
+      <div class="card"><strong><span class="ja">言語</span><span class="en">Languages</span></strong><br>
+        <span class="ja">患者画面：日本語・英語・ベトナム語（ヘッダーで切替）<br>スタッフ・管理画面：日本語</span>
+        <span class="en">Patient screens: Japanese, English, Vietnamese (switch in the header)<br>Staff and admin screens: Japanese</span></div>
+      <div class="card"><strong><span class="ja">利用者</span><span class="en">Users</span></strong><br>
+        <span class="ja">患者（家族の代理を含む）・受付・医師・管理者</span>
+        <span class="en">Patients (also acting for family) · reception · doctors · administrators</span></div>
+    </div>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P01-ja.jpg" target="_blank"><img src="img/P01-ja.jpg" alt="P01 トップ" loading="lazy"></a>
+    <a class="en" href="img/P01-en.jpg" target="_blank"><img src="img/P01-en.jpg" alt="P01 Top" loading="lazy"></a>
+    <figcaption><span class="ja">P01 トップ（クリックで拡大）</span><span class="en">P01 Top (click to enlarge)</span></figcaption>
+  </figure>
+</div>
+</section>
+
+<!-- 2 -->
+<section id="screens">
+<h2><span class="ja">2. 画面一覧</span><span class="en">2. Screen list</span></h2>
+<p><span class="ja">25 画面（患者 P01–P16、スタッフ S01–S03、管理 A01–A06）と、全画面に共通の枠・エラー画面です。</span><span class="en">25 screens (patient P01–P16, staff S01–S03, admin A01–A06) plus the common frames and error screens every screen uses.</span></p>
+<div class="table-wrap"><table class="wide">
+<thead><tr><th>ID</th><th><span class="ja">画面名</span><span class="en">Name</span></th><th><span class="ja">利用者</span><span class="en">Who</span></th><th>URL</th><th><span class="ja">内容</span><span class="en">What it does</span></th></tr></thead>
+<tbody>
+<tr class="group"><td colspan="5"><span class="ja">患者向け（日本語・英語・ベトナム語）</span><span class="en">Patient (ja / en / vi)</span></td></tr>
+<tr><td class="id">P01</td><td><span class="ja">トップ</span><span class="en">Top</span></td><td><span class="ja">全員</span><span class="en">everyone</span></td><td class="route">/</td><td><span class="ja">お知らせ、予約ボタン、医師検索、クリニック一覧と地図</span><span class="en">notices, Book button, doctor search, clinic list and map</span></td></tr>
+<tr><td class="id">P02</td><td><span class="ja">ログイン</span><span class="en">Login</span></td><td><span class="ja">全員</span><span class="en">everyone</span></td><td class="route">/login</td><td><span class="ja">メールアドレスとパスワードでログイン（スタッフもここから）</span><span class="en">email and password; staff log in here too</span></td></tr>
+<tr><td class="id">P03</td><td><span class="ja">会員登録</span><span class="en">Registration</span></td><td><span class="ja">未ログイン</span><span class="en">visitors</span></td><td class="route">/register</td><td><span class="ja">規約への同意、本人情報、確認メールで登録完了</span><span class="en">consent, personal details, completed by a verification mail</span></td></tr>
+<tr><td class="id">P04</td><td><span class="ja">パスワード再設定申請</span><span class="en">Password reset request</span></td><td><span class="ja">未ログイン</span><span class="en">visitors</span></td><td class="route">/password/forgot</td><td><span class="ja">再設定用リンクをメールで送る</span><span class="en">sends a reset link by mail</span></td></tr>
+<tr><td class="id">P05</td><td><span class="ja">パスワード再設定</span><span class="en">Password reset</span></td><td><span class="ja">リンクを持つ人／初回ログインのスタッフ</span><span class="en">link holder / staff at first login</span></td><td class="route">/password/reset?token= · /password/change</td><td><span class="ja">新しいパスワードを設定。スタッフの初回変更もこの画面</span><span class="en">sets a new password; also the staff first-login change</span></td></tr>
+<tr><td class="id">P06</td><td><span class="ja">マイページ／プロフィール</span><span class="en">My page / profile</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/mypage</td><td><span class="ja">本人情報、連絡先、通知方法、LINE 連携、パスワード変更、退会</span><span class="en">profile, contact, notification channel, LINE link, password, withdrawal</span></td></tr>
+<tr><td class="id">P07</td><td><span class="ja">家族管理</span><span class="en">Family members</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/mypage/family</td><td><span class="ja">家族の登録・編集・削除、「この家族で予約」</span><span class="en">add, edit, remove family members; book for one of them</span></td></tr>
+<tr><td class="id">P08</td><td><span class="ja">医師検索</span><span class="en">Doctor search</span></td><td><span class="ja">全員</span><span class="en">everyone</span></td><td class="route">/doctors</td><td><span class="ja">クリニック・診療科などの条件で医師を探す</span><span class="en">find doctors by clinic, department and other conditions</span></td></tr>
+<tr><td class="id">P09</td><td><span class="ja">医師詳細</span><span class="en">Doctor detail</span></td><td><span class="ja">全員</span><span class="en">everyone</span></td><td class="route">/doctors/{id}</td><td><span class="ja">経歴・担当、「この医師で予約」</span><span class="en">profile and schedule; "Book with this doctor"</span></td></tr>
+<tr><td class="id">P10</td><td><span class="ja">クリニック案内</span><span class="en">Clinic information</span></td><td><span class="ja">全員</span><span class="en">everyone</span></td><td class="route">/clinics · /clinics/{code}</td><td><span class="ja">住所、アクセス、診療時間、休診日、医師、地図</span><span class="en">address, access, hours, closed days, doctors, map</span></td></tr>
+<tr><td class="id">P11</td><td><span class="ja">予約入力</span><span class="en">Booking entry</span></td><td><span class="ja">患者（未ログインは途中でログイン）</span><span class="en">patient (visitors log in on the way)</span></td><td class="route">/booking/new · /bookings/{id}/change</td><td><span class="ja">受診する方 → クリニック → 診療科・診療区分 → 日付 → 時刻。予約変更も同じ画面</span><span class="en">who → clinic → department and visit type → date → time; also used to change a booking</span></td></tr>
+<tr><td class="id">P12</td><td><span class="ja">問診入力</span><span class="en">Questionnaire</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/booking/questionnaire</td><td><span class="ja">初診の予約のときだけ表示</span><span class="en">first-visit bookings only</span></td></tr>
+<tr><td class="id">P13</td><td><span class="ja">予約確認</span><span class="en">Booking confirmation</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/booking/confirm</td><td><span class="ja">内容を確認して予約を確定</span><span class="en">review and confirm the booking</span></td></tr>
+<tr><td class="id">P14</td><td><span class="ja">予約完了</span><span class="en">Booking completed</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/bookings/{id}/done</td><td><span class="ja">予約番号、日時、持ち物、確認メール送信</span><span class="en">booking number, date and time, what to bring; confirmation mail sent</span></td></tr>
+<tr><td class="id">P15</td><td><span class="ja">予約一覧</span><span class="en">My bookings</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/bookings</td><td><span class="ja">今後・過去のタブ。家族の予約も表示</span><span class="en">upcoming and past tabs, family bookings included</span></td></tr>
+<tr><td class="id">P16</td><td><span class="ja">予約詳細</span><span class="en">Booking detail</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/bookings/{id}</td><td><span class="ja">期限までなら変更・キャンセル</span><span class="en">change or cancel until the deadline</span></td></tr>
+<tr class="group"><td colspan="5"><span class="ja">スタッフ向け（日本語）</span><span class="en">Staff (Japanese)</span></td></tr>
+<tr><td class="id">S01</td><td><span class="ja">予約台帳</span><span class="en">Booking ledger</span></td><td><span class="ja">受付・管理者・医師（自分の分）</span><span class="en">reception, admin, doctor (own)</span></td><td class="route">/staff/ledger</td><td><span class="ja">日別の予約一覧。受付・受付取消・キャンセル・無断キャンセル・要調整</span><span class="en">bookings of a day; check-in, undo, cancel, no-show, needs-adjustment</span></td></tr>
+<tr><td class="id">S02</td><td><span class="ja">代理予約</span><span class="en">Proxy booking</span></td><td><span class="ja">受付・管理者</span><span class="en">reception, admin</span></td><td class="route">/staff/booking</td><td><span class="ja">電話などで受けた予約の入力・変更、新しい患者の登録</span><span class="en">book or change for a patient (e.g. by phone), register a new patient</span></td></tr>
+<tr><td class="id">S03</td><td><span class="ja">患者検索・詳細</span><span class="en">Patient search and detail</span></td><td><span class="ja">受付・管理者</span><span class="en">reception, admin</span></td><td class="route">/staff/patients · /staff/patients/{id}</td><td><span class="ja">患者の検索、予約履歴、「この患者で予約」、開示用データ出力（管理者）</span><span class="en">search, booking history, book for this patient, disclosure export (admin)</span></td></tr>
+<tr class="group"><td colspan="5"><span class="ja">管理者向け（日本語）</span><span class="en">Admin (Japanese)</span></td></tr>
+<tr><td class="id">A01</td><td><span class="ja">診療カレンダー・休診日</span><span class="en">Clinic calendar and closures</span></td><td><span class="ja">管理者（受付は閲覧）</span><span class="en">admin (reception read-only)</span></td><td class="route">/admin/calendar</td><td><span class="ja">診療時間、休診日・臨時診療、祝日の取込</span><span class="en">opening hours, closed and extra days, holiday import</span></td></tr>
+<tr><td class="id">A02</td><td><span class="ja">医師シフト</span><span class="en">Doctor shifts</span></td><td><span class="ja">管理者（受付は閲覧、医師は自分の分を閲覧）</span><span class="en">admin (reception read-only, doctor own read-only)</span></td><td class="route">/admin/shifts</td><td><span class="ja">週ごとの勤務パターンと例外</span><span class="en">weekly patterns and exceptions</span></td></tr>
+<tr><td class="id">A03</td><td><span class="ja">医師・診療科・診療区分マスタ</span><span class="en">Doctor, department, visit-type masters</span></td><td><span class="ja">管理者（受付は閲覧）</span><span class="en">admin (reception read-only)</span></td><td class="route">/admin/masters</td><td><span class="ja">医師（写真・紹介文）、診療科、診療区分</span><span class="en">doctors (photo, profile), departments, visit types</span></td></tr>
+<tr><td class="id">A04</td><td><span class="ja">通知テンプレート・キャンセルポリシー</span><span class="en">Notification templates and cancellation policy</span></td><td><span class="ja">管理者</span><span class="en">admin</span></td><td class="route">/admin/policy</td><td><span class="ja">メール・LINE・SMS の文面、予約受付期間、変更・キャンセル期限、リマインド時刻</span><span class="en">mail / LINE / SMS texts, booking window, change and cancel deadline, reminder time</span></td></tr>
+<tr><td class="id">A05</td><td><span class="ja">スタッフアカウント管理</span><span class="en">Staff accounts</span></td><td><span class="ja">管理者</span><span class="en">admin</span></td><td class="route">/admin/staff</td><td><span class="ja">作成・編集、無効化・有効化、ロック解除、パスワード再発行</span><span class="en">create, edit, disable / enable, unlock, reset password</span></td></tr>
+<tr><td class="id">A06</td><td><span class="ja">CSV出力</span><span class="en">CSV export</span></td><td><span class="ja">受付・管理者</span><span class="en">reception, admin</span></td><td class="route">/admin/export</td><td><span class="ja">レセコン用 CSV（患者・予約）の出力とダウンロード、開示用データ（管理者）</span><span class="en">receipt-system CSV (patients, bookings), downloads, disclosure files (admin)</span></td></tr>
+<tr class="group"><td colspan="5"><span class="ja">共通の枠</span><span class="en">Common frames</span></td></tr>
+<tr><td class="id">CF-01</td><td><span class="ja">患者ヘッダー</span><span class="en">Patient header</span></td><td>P01–P16</td><td class="route">—</td><td><span class="ja">ロゴ、メニュー（スマホはハンバーガー）、言語切替、ログイン／アカウント</span><span class="en">logo, menu (burger on phones), language switch, login / account</span></td></tr>
+<tr><td class="id">CF-02</td><td><span class="ja">患者フッター</span><span class="en">Patient footer</span></td><td>P01–P16</td><td class="route">—</td><td><span class="ja">法人名、利用規約、プライバシーポリシー、クリニック案内</span><span class="en">corporation name, terms, privacy policy, clinics</span></td></tr>
+<tr><td class="id">CF-03</td><td><span class="ja">スタッフヘッダー</span><span class="en">Staff header</span></td><td>S01–S03, A01–A06</td><td class="route">—</td><td><span class="ja">クリニック切替、ロール別メニュー、氏名、ログアウト</span><span class="en">clinic switch, role menu, user name, log out</span></td></tr>
+<tr><td class="id">CF-04</td><td><span class="ja">再同意</span><span class="en">Re-consent</span></td><td><span class="ja">患者</span><span class="en">patient</span></td><td class="route">/consent</td><td><span class="ja">規約が改定された後の最初のログインで同意を求める</span><span class="en">asks for consent at the first login after the terms changed</span></td></tr>
+<tr><td class="id">ER-01</td><td><span class="ja">ページが見つかりません (404)</span><span class="en">Page not found (404)</span></td><td><span class="ja">全員</span><span class="en">all</span></td><td class="route">—</td><td><span class="ja">存在しない URL、他人の予約など</span><span class="en">unknown URL or someone else's record</span></td></tr>
+<tr><td class="id">ER-02</td><td><span class="ja">システムエラー (500)</span><span class="en">System error (500)</span></td><td><span class="ja">全員</span><span class="en">all</span></td><td class="route">—</td><td><span class="ja">予期しないエラー。再試行とトップ／台帳へのリンク</span><span class="en">unexpected error; retry and a link to the top / ledger</span></td></tr>
+<tr><td class="id">ER-03</td><td><span class="ja">権限がありません (403)</span><span class="en">No permission (403)</span></td><td><span class="ja">スタッフ</span><span class="en">staff</span></td><td class="route">—</td><td><span class="ja">ロールやクリニックの権限がない画面</span><span class="en">a screen the role or clinic may not open</span></td></tr>
+<tr><td class="id">ER-04</td><td><span class="ja">メンテナンス中</span><span class="en">Maintenance</span></td><td><span class="ja">全員</span><span class="en">all</span></td><td class="route">—</td><td><span class="ja">計画メンテナンス中。終了予定時刻を表示</span><span class="en">planned maintenance, with its end time</span></td></tr>
+<tr><td class="id">ER-05</td><td><span class="ja">セッション切れ</span><span class="en">Session expired</span></td><td><span class="ja">ログイン中の利用者</span><span class="en">logged-in users</span></td><td class="route">—</td><td><span class="ja">ログインし直すと元の画面へ戻る</span><span class="en">log in again and return to the same page</span></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- 3 -->
+<section id="tour">
+<h2><span class="ja">3. デモの流れ（約20分）</span><span class="en">3. Guided tour (about 20 minutes)</span></h2>
+<p><span class="ja">全アカウントのパスワードは <code>Demo1234</code> です。予約番号や日付はデータ投入ごとに変わります。スタッフ画面は日本語のみのため、英語表示でも日本語の画面写真を載せています。</span><span class="en">Every password is <code>Demo1234</code>. Booking numbers and dates change with each reseed. Staff screens are Japanese only, so their pictures stay Japanese in the English view.</span></p>
+
+<h3><span class="ja">A. 公開ページ（ログインなし）</span><span class="en">A. Public pages (no login)</span></h3>
+<div class="step">
+  <div>
+    <h3>1. P10 <span class="ja">クリニック案内</span><span class="en">Clinic information</span></h3>
+    <span class="acct"><span class="ja">アカウント：不要</span><span class="en">Account: none</span></span>
+    <p class="ja">トップ（P01）から「クリニック案内」へ。3院の一覧と地図、各院の住所・診療時間・休診日・在籍医師を見せます。ヘッダーの言語切替で英語・ベトナム語に変わることもここで紹介します。</p>
+    <p class="en">From the top page (P01) open Clinics: the three clinics with a map, then one clinic's address, hours, closed days and doctors. Show the language switch in the header (English, Vietnamese) here.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P10-detail-ja.jpg" target="_blank"><img src="img/P10-detail-ja.jpg" alt="P10" loading="lazy"></a>
+    <a class="en" href="img/P10-detail-en.jpg" target="_blank"><img src="img/P10-detail-en.jpg" alt="P10" loading="lazy"></a>
+  </figure>
+</div>
+<div class="step">
+  <div>
+    <h3>2. P08 / P09 <span class="ja">医師検索・医師詳細</span><span class="en">Doctor search and detail</span></h3>
+    <span class="acct"><span class="ja">アカウント：不要</span><span class="en">Account: none</span></span>
+    <p class="ja">条件で医師を絞り込み、医師カードから詳細（P09）へ。「この医師で予約」を押すと、クリニック・診療科・医師が選ばれた状態で予約入力（P11）が開きます。未ログインなのでログイン画面に案内されます。</p>
+    <p class="en">Filter doctors, open a card for the detail (P09). "Book with this doctor" opens booking entry (P11) with clinic, department and doctor preset; as a visitor you are led to the login page first.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P08-ja.jpg" target="_blank"><img src="img/P08-ja.jpg" alt="P08" loading="lazy"></a>
+    <a class="en" href="img/P08-en.jpg" target="_blank"><img src="img/P08-en.jpg" alt="P08" loading="lazy"></a>
+  </figure>
+</div>
+
+<h3><span class="ja">B. 会員登録とログイン</span><span class="en">B. Registration and login</span></h3>
+<div class="step">
+  <div>
+    <h3>3. P03 <span class="ja">会員登録</span><span class="en">Registration</span></h3>
+    <span class="acct"><span class="ja">アカウント：新しいメールアドレス（任意）</span><span class="en">Account: any new email address</span></span>
+    <p class="ja">規約に同意し、氏名・フリガナ・生年月日・連絡先などを入力します。郵便番号から住所を補完できます。登録後の確認メールは実際には送られず、アウトボックス（<code>var/outbox</code>）にファイルとして保存されるので、その中のリンクを開いて登録を完了します。</p>
+    <p class="en">Accept the terms and enter name, kana, date of birth and contact details; the postcode fills in the address. The verification mail is not really sent: it is a file in the outbox (<code>var/outbox</code>); open the link in it to finish the registration.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P03-ja.jpg" target="_blank"><img src="img/P03-ja.jpg" alt="P03" loading="lazy"></a>
+    <a class="en" href="img/P03-en.jpg" target="_blank"><img src="img/P03-en.jpg" alt="P03" loading="lazy"></a>
+  </figure>
+</div>
+<div class="step">
+  <div>
+    <h3>4. P02 <span class="ja">ログイン</span><span class="en">Login</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code> (<span class="ja">英語：</span><span class="en">English: </span><code>emily.smith@example.com</code>)</span>
+    <p class="ja">ログインするとマイページ（P06）へ。予約の途中でログインした場合は、選んでいた内容のまま元の画面に戻ります。パスワードを忘れた場合は P04 → メールのリンク → P05 で再設定します。</p>
+    <p class="en">After login you land on My page (P06); a login in the middle of a booking returns to it with the choices kept. A forgotten password goes P04 → link in the mail → P05.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P02-ja.jpg" target="_blank"><img src="img/P02-ja.jpg" alt="P02" loading="lazy"></a>
+    <a class="en" href="img/P02-en.jpg" target="_blank"><img src="img/P02-en.jpg" alt="P02" loading="lazy"></a>
+  </figure>
+</div>
+
+<h3><span class="ja">C. 予約する（P11 → P12 → P13 → P14）</span><span class="en">C. Booking (P11 → P12 → P13 → P14)</span></h3>
+<div class="step">
+  <div>
+    <h3>5. P11 <span class="ja">予約入力</span><span class="en">Booking entry</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">ヘッダーの「予約」から。家族がいるアカウントでは最初に「受診する方」を選びます。クリニック（地図付き）→ 診療科・診療区分 → 日付 → 空いている時刻の順に選びます。</p>
+    <p class="en">Start from Book. An account with family members first picks who the visit is for. Then clinic (with a map) → department and visit type → date → a free time.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P11-ja.jpg" target="_blank"><img src="img/P11-ja.jpg" alt="P11" loading="lazy"></a>
+    <a class="en" href="img/P11-en.jpg" target="_blank"><img src="img/P11-en.jpg" alt="P11" loading="lazy"></a>
+  </figure>
+</div>
+<div class="step">
+  <div>
+    <h3>6. P12 <span class="ja">問診入力（スマートフォン表示）</span><span class="en">Questionnaire (phone view)</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">初診の診療区分を選んだときだけ表示されます。症状・既往歴・アレルギーなどに答えます。回答は暗号化して保存され、受付・医師が台帳から確認できます。スマートフォンでの見え方もここで見せます。</p>
+    <p class="en">Shown only for a first-visit type: symptoms, history, allergies and so on. Answers are stored encrypted and staff read them from the ledger. A good moment to show the phone layout.</p>
+  </div>
+  <figure class="shot mobile">
+    <a class="ja" href="img/P12-mobile-ja.jpg" target="_blank"><img src="img/P12-mobile-ja.jpg" alt="P12" loading="lazy"></a>
+    <a class="en" href="img/P12-mobile-en.jpg" target="_blank"><img src="img/P12-mobile-en.jpg" alt="P12" loading="lazy"></a>
+  </figure>
+</div>
+<div class="step">
+  <div>
+    <h3>7. P13 <span class="ja">予約確認</span><span class="en">Booking confirmation</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">内容を確認し、要望・症状を書いて確定します。同じ枠が先に埋まった場合は確定できず、選び直しを案内します。</p>
+    <p class="en">Review, add requests or symptoms and confirm. If the slot was taken meanwhile, the booking is refused and you are asked to pick again.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P13-ja.jpg" target="_blank"><img src="img/P13-ja.jpg" alt="P13" loading="lazy"></a>
+    <a class="en" href="img/P13-en.jpg" target="_blank"><img src="img/P13-en.jpg" alt="P13" loading="lazy"></a>
+  </figure>
+</div>
+<div class="step">
+  <div>
+    <h3>8. P14 <span class="ja">予約完了</span><span class="en">Booking completed</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">予約番号（コピー可）・日時・持ち物を表示します。予約確認メールはアウトボックスに保存されます。</p>
+    <p class="en">Shows the booking number (with a copy button), date and time and what to bring. The confirmation mail lands in the outbox.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P14-ja.jpg" target="_blank"><img src="img/P14-ja.jpg" alt="P14" loading="lazy"></a>
+    <a class="en" href="img/P14-en.jpg" target="_blank"><img src="img/P14-en.jpg" alt="P14" loading="lazy"></a>
+  </figure>
+</div>
+
+<h3><span class="ja">D. 予約の確認・変更・キャンセルと家族</span><span class="en">D. My bookings, change, cancel, family</span></h3>
+<div class="step">
+  <div>
+    <h3>9. P15 <span class="ja">予約一覧（スマートフォン表示）</span><span class="en">My bookings (phone view)</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">「今後の予約」「過去の予約」のタブ。家族の予約も受診者名つきで並びます。</p>
+    <p class="en">Upcoming and past tabs; family members' bookings appear with the patient's name.</p>
+  </div>
+  <figure class="shot mobile">
+    <a class="ja" href="img/P15-mobile-ja.jpg" target="_blank"><img src="img/P15-mobile-ja.jpg" alt="P15" loading="lazy"></a>
+    <a class="en" href="img/P15-mobile-en.jpg" target="_blank"><img src="img/P15-mobile-en.jpg" alt="P15" loading="lazy"></a>
+  </figure>
+</div>
+<div class="step">
+  <div>
+    <h3>10. P16 <span class="ja">予約詳細 — 変更・キャンセル</span><span class="en">Booking detail — change and cancel</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">期限（前日 23:59 など、管理者が設定）までは「予約を変更する」で P11 の変更モードへ、「予約をキャンセルする」で確認ダイアログの後に取り消します。期限後は電話での連絡を案内します。</p>
+    <p class="en">Until the deadline (e.g. 23:59 the day before, set by the admin) "Change booking" opens P11 in change mode and "Cancel booking" cancels after a confirmation dialog. After the deadline the page asks the patient to call.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P16-ja.jpg" target="_blank"><img src="img/P16-ja.jpg" alt="P16" loading="lazy"></a>
+    <a class="en" href="img/P16-en.jpg" target="_blank"><img src="img/P16-en.jpg" alt="P16" loading="lazy"></a>
+  </figure>
+</div>
+<div class="step">
+  <div>
+    <h3>11. P07 <span class="ja">家族管理</span><span class="en">Family members</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">マイページ（P06）から。山田さんには配偶者と子が登録済みです。「この家族で予約」で受診者を選んだ状態の P11 が開きます。</p>
+    <p class="en">From My page (P06). Yamada has a spouse and a child registered; "Book for this person" opens P11 with that patient chosen.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/P07-ja.jpg" target="_blank"><img src="img/P07-ja.jpg" alt="P07" loading="lazy"></a>
+    <a class="en" href="img/P07-en.jpg" target="_blank"><img src="img/P07-en.jpg" alt="P07" loading="lazy"></a>
+  </figure>
+</div>
+
+<h3><span class="ja">E. 受付（S01 / S02 / S03）</span><span class="en">E. Reception (S01 / S02 / S03)</span></h3>
+<div class="step">
+  <div>
+    <h3>12. S01 <span class="ja">予約台帳</span><span class="en">Booking ledger</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>reception.honin@example.jp</code></span>
+    <p class="ja">患者側でログアウトし、同じログイン画面から受付でログインします。先ほどの予約が当日の台帳に並びます。「受付」で来院済み、操作メニューからキャンセル・無断キャンセルなど。日付・医師・状態で絞り込めます。<code>reception.multi@example.jp</code> ならヘッダーでクリニックを切り替えられます。</p>
+    <p class="en">Log out as the patient and log in as reception on the same login page. The booking just made is on that day's ledger. Check-in marks the arrival; the action menu cancels or records a no-show. Filter by date, doctor and status. With <code>reception.multi@example.jp</code> the header switches clinics.</p>
+  </div>
+  <figure class="shot"><a href="img/S01-ja.jpg" target="_blank"><img src="img/S01-ja.jpg" alt="S01" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>13. S02 <span class="ja">代理予約</span><span class="en">Proxy booking</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>reception.honin@example.jp</code></span>
+    <p class="ja">台帳の「新規予約」から。電話で受けた予約を患者に代わって入力します。患者がいなければその場で新規登録もできます。</p>
+    <p class="en">From New booking on the ledger: enter a phone booking on the patient's behalf, registering a new patient on the spot if needed.</p>
+  </div>
+  <figure class="shot"><a href="img/S02-ja.jpg" target="_blank"><img src="img/S02-ja.jpg" alt="S02" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>14. S03 <span class="ja">患者検索・詳細</span><span class="en">Patient search and detail</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>reception.honin@example.jp</code></span>
+    <p class="ja">氏名・フリガナ・電話番号などで検索し、詳細で本人情報と予約履歴を確認します。「この患者で予約」で S02 へ。管理者は開示用データを出力できます（A06 に表示）。</p>
+    <p class="en">Search by name, kana, phone and more; the detail shows the record and booking history. "Book for this patient" opens S02. Admins can also build a disclosure file (listed on A06).</p>
+  </div>
+  <figure class="shot"><a href="img/S03-detail-ja.jpg" target="_blank"><img src="img/S03-detail-ja.jpg" alt="S03" loading="lazy"></a></figure>
+</div>
+
+<h3><span class="ja">F. 管理者（A01–A06）</span><span class="en">F. Admin (A01–A06)</span></h3>
+<div class="step">
+  <div>
+    <h3>15. A01 <span class="ja">診療カレンダー・休診日</span><span class="en">Clinic calendar</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>admin.all@example.jp</code></span>
+    <p class="ja">クリニックごとの診療時間、休診日・午後休診・臨時診療を月表示で設定します。祝日は「祝日を取り込む」で更新します。保存すると予約枠が作り直されます。</p>
+    <p class="en">Per clinic: opening hours, closed days, afternoon closures and extra days on a month view; "Import holidays" refreshes national holidays. Saving rebuilds the bookable slots.</p>
+  </div>
+  <figure class="shot"><a href="img/A01-ja.jpg" target="_blank"><img src="img/A01-ja.jpg" alt="A01" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>16. A02 <span class="ja">医師シフト</span><span class="en">Doctor shifts</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>admin.all@example.jp</code></span>
+    <p class="ja">医師ごとの週パターンと日単位の例外。既存の予約と重なる変更は警告し、影響する予約は台帳で「要調整」になります。医師アカウントは自分のシフトを閲覧できます。</p>
+    <p class="en">Weekly patterns and day exceptions per doctor. A change that hits existing bookings warns first; those bookings show as needs-adjustment on the ledger. Doctors see their own shifts.</p>
+  </div>
+  <figure class="shot"><a href="img/A02-ja.jpg" target="_blank"><img src="img/A02-ja.jpg" alt="A02" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>17. A03 <span class="ja">マスタ</span><span class="en">Masters</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>admin.all@example.jp</code></span>
+    <p class="ja">医師（写真・紹介文を日英越で）、診療科、診療区分（初診・再診・自費などの区分、所要時間、自費の料金）を管理します。</p>
+    <p class="en">Doctors (photo, profile in ja / en / vi), departments, visit types (first / follow-up / self-pay category, length, self-pay price).</p>
+  </div>
+  <figure class="shot"><a href="img/A03-ja.jpg" target="_blank"><img src="img/A03-ja.jpg" alt="A03" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>18. A04 <span class="ja">通知テンプレート・キャンセルポリシー</span><span class="en">Templates and cancellation policy</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>admin.all@example.jp</code></span>
+    <p class="ja">予約確認・リマインドなどのメール／LINE／SMS 文面をプレビュー付きで編集し、予約受付期間、変更・キャンセル期限、リマインド時刻を設定します。</p>
+    <p class="en">Edit the mail / LINE / SMS texts (booking confirmation, reminder…) with a preview; set the booking window, the change and cancel deadline and the reminder time.</p>
+  </div>
+  <figure class="shot"><a href="img/A04-ja.jpg" target="_blank"><img src="img/A04-ja.jpg" alt="A04" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>19. A05 <span class="ja">スタッフアカウント管理</span><span class="en">Staff accounts</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>admin.all@example.jp</code></span>
+    <p class="ja">受付・医師・管理者のアカウントを作成し、担当クリニックを割り当てます。無効化、ロック解除、仮パスワードの再発行（次回ログインで変更を求める）もここで行います。</p>
+    <p class="en">Create reception, doctor and admin accounts and assign clinics; disable, unlock, or issue a temporary password (changed at the next login).</p>
+  </div>
+  <figure class="shot"><a href="img/A05-ja.jpg" target="_blank"><img src="img/A05-ja.jpg" alt="A05" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>20. A06 <span class="ja">CSV出力</span><span class="en">CSV export</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>admin.all@example.jp</code></span>
+    <p class="ja">期間を選んでレセコン用の患者・予約 CSV（Shift_JIS 系 CP932）を出力し、ダウンロードします。夜間バッチ B6 の出力も同じ一覧に並びます。</p>
+    <p class="en">Choose a period, export the patient and booking CSV for the receipt system (CP932) and download it. The nightly B6 files are listed here too.</p>
+  </div>
+  <figure class="shot"><a href="img/A06-ja.jpg" target="_blank"><img src="img/A06-ja.jpg" alt="A06" loading="lazy"></a></figure>
+</div>
+
+<h3><span class="ja">G. エラー・例外のケース</span><span class="en">G. Errors and edge cases</span></h3>
+<div class="step">
+  <div>
+    <h3>21. P05 <span class="ja">スタッフの初回パスワード変更</span><span class="en">Staff first-login password change</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>reception.firstlogin@example.jp</code></span>
+    <p class="ja">ログインすると、パスワードを変更するまで他の画面に進めません。変更後は予約台帳へ。</p>
+    <p class="en">After login no other screen opens until the password is changed; then the ledger opens.</p>
+  </div>
+  <figure class="shot"><a href="img/P05-first-change-ja.jpg" target="_blank"><img src="img/P05-first-change-ja.jpg" alt="P05" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>22. ER-03 <span class="ja">権限がありません</span><span class="en">No permission</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>reception.noclinic@example.jp</code></span>
+    <p class="ja">担当クリニックのないスタッフはログインできても画面を開けません。受付で <code>/admin/staff</code> を開いた場合も同じ画面です。</p>
+    <p class="en">A staff member without a clinic logs in but can open no screen. Reception opening <code>/admin/staff</code> gets the same screen.</p>
+  </div>
+  <figure class="shot"><a href="img/ER-03-ja.jpg" target="_blank"><img src="img/ER-03-ja.jpg" alt="ER-03" loading="lazy"></a></figure>
+</div>
+<div class="step">
+  <div>
+    <h3>23. ER-05 <span class="ja">セッション切れ</span><span class="en">Session expired</span></h3>
+    <span class="acct"><span class="ja">アカウント：</span><span class="en">Account: </span><code>yamada.taro@example.jp</code></span>
+    <p class="ja">別のタブでログアウトしてから元のタブで操作すると表示されます。ログインし直すと元の画面に戻ります。</p>
+    <p class="en">Log out in another tab, then act in the first one. Logging in again returns to the same page.</p>
+  </div>
+  <figure class="shot">
+    <a class="ja" href="img/ER-05-ja.jpg" target="_blank"><img src="img/ER-05-ja.jpg" alt="ER-05" loading="lazy"></a>
+    <a class="en" href="img/ER-05-en.jpg" target="_blank"><img src="img/ER-05-en.jpg" alt="ER-05" loading="lazy"></a>
+  </figure>
+</div>
+<div class="card">
+  <strong><span class="ja">その他の確認ポイント（写真なし）</span><span class="en">More to try (no picture)</span></strong>
+  <ul class="ja">
+    <li><code>sasaki.pending@example.jp</code>：メール未確認。正しいパスワードでもログインできず、確認メールの再送ボタンが出ます。</li>
+    <li><code>reception.disabled@example.jp</code>：無効化されたアカウント。ログインできません。</li>
+    <li>存在しない URL（例 <code>/xyz</code>）→ ER-01。他人の予約番号の URL も ER-01 です。</li>
+    <li>スタッフで患者画面（<code>/doctors</code> など）を開くと予約台帳へ戻ります。</li>
+    <li><code>doctor.tanaka@example.jp</code>：自分の予約だけの台帳と自分のシフトを閲覧。</li>
+  </ul>
+  <ul class="en">
+    <li><code>sasaki.pending@example.jp</code>: mail not verified. Even the right password does not log in; a resend button appears.</li>
+    <li><code>reception.disabled@example.jp</code>: disabled account; login refused.</li>
+    <li>An unknown URL (e.g. <code>/xyz</code>) → ER-01; so is the URL of someone else's booking.</li>
+    <li>Staff opening a patient page (<code>/doctors</code> …) are sent back to the ledger.</li>
+    <li><code>doctor.tanaka@example.jp</code>: a ledger of own bookings and own shifts, read-only.</li>
+  </ul>
+</div>
+</section>
+
+<!-- 4 -->
+<section id="roles">
+<h2><span class="ja">4. ロール別にできること</span><span class="en">4. What each role can do</span></h2>
+<p class="legend"><span class="ja">○ 利用可　閲 閲覧のみ　自 自分の分だけ閲覧　ロ 表示はできるが進むにはログイン　→ 別画面へ移動　— 利用不可（患者はログイン画面、スタッフは ER-03）</span><span class="en">○ full use · R read-only · own = own data, read-only · L shown, login needed to go on · → sent to another screen · — no access (patients: login page, staff: ER-03)</span></p>
+<div class="table-wrap"><table class="matrix">
+<thead><tr><th><span class="ja">画面</span><span class="en">Screen</span></th><th><span class="ja">未ログイン</span><span class="en">Visitor</span></th><th><span class="ja">患者</span><span class="en">Patient</span></th><th><span class="ja">受付</span><span class="en">Reception</span></th><th><span class="ja">医師</span><span class="en">Doctor</span></th><th><span class="ja">管理者</span><span class="en">Admin</span></th></tr></thead>
+<tbody>
+<tr><td>P01 · P08 · P09 · P10</td><td>○</td><td>○</td><td>→ S01</td><td>→ S01</td><td>→ S01</td></tr>
+<tr><td>P02 · P03 · P04</td><td>○</td><td>→ P06</td><td>→ S01</td><td>→ S01</td><td>→ S01</td></tr>
+<tr><td>P05</td><td><span class="ja">○（リンク）</span><span class="en">○ (link)</span></td><td><span class="ja">○（リンク）</span><span class="en">○ (link)</span></td><td><span class="ja">初回変更</span><span class="en">first change</span></td><td><span class="ja">初回変更</span><span class="en">first change</span></td><td><span class="ja">初回変更</span><span class="en">first change</span></td></tr>
+<tr><td>P11</td><td><span class="ja">ロ</span><span class="en">L</span></td><td>○</td><td>→ S02</td><td>→ S01</td><td>→ S02</td></tr>
+<tr><td>P06 · P07 · P12 · P13</td><td>—</td><td>○</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>P14 · P15 · P16</td><td>—</td><td><span class="ja">○（本人・家族）</span><span class="en">○ (own + family)</span></td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>S01</td><td>—</td><td>—</td><td>○</td><td><span class="ja">自</span><span class="en">own</span></td><td>○</td></tr>
+<tr><td>S02 · S03</td><td>—</td><td>—</td><td>○</td><td>—</td><td>○</td></tr>
+<tr><td>A01</td><td>—</td><td>—</td><td><span class="ja">閲</span><span class="en">R</span></td><td>—</td><td>○</td></tr>
+<tr><td>A02</td><td>—</td><td>—</td><td><span class="ja">閲</span><span class="en">R</span></td><td><span class="ja">自</span><span class="en">own</span></td><td>○</td></tr>
+<tr><td>A03</td><td>—</td><td>—</td><td><span class="ja">閲</span><span class="en">R</span></td><td>—</td><td>○</td></tr>
+<tr><td>A04 · A05</td><td>—</td><td>—</td><td>—</td><td>—</td><td>○</td></tr>
+<tr><td>A06</td><td>—</td><td>—</td><td>○</td><td>—</td><td>○</td></tr>
+</tbody></table></div>
+<p class="legend"><span class="ja">スタッフはクリニック単位で権限を持ちます（管理者 <code>admin.all</code> は全院）。患者が家族の代理で予約・確認できるのは登録済みの家族だけです。</span><span class="en">Staff rights are per clinic (<code>admin.all</code> has every clinic). A patient acts only for registered family members.</span></p>
+</section>
+
+<!-- 5 -->
+<section id="batch">
+<h2><span class="ja">5. バッチ B1–B6</span><span class="en">5. Batch jobs B1–B6</span></h2>
+<p><span class="ja"><code>BATCH_SCHEDULER=on</code> のときアプリ内で自動実行されます（日本時間。火曜 2:00–5:00 のメンテナンス時間帯は起動しません）。手動実行は CLI で行います。</span><span class="en">With <code>BATCH_SCHEDULER=on</code> they run inside the app (Japan time; nothing starts in the Tuesday 02:00–05:00 maintenance window). Run one by hand with the CLI.</span></p>
+<div class="table-wrap"><table class="wide">
+<thead><tr><th>ID</th><th><span class="ja">内容</span><span class="en">What</span></th><th><span class="ja">実行時刻・きっかけ</span><span class="en">When</span></th><th><span class="ja">結果の出力先</span><span class="en">Output</span></th></tr></thead>
+<tbody>
+<tr><td class="id">B1</td><td><span class="ja">前日リマインド（メール／LINE／SMS）</span><span class="en">reminders for tomorrow's bookings (mail / LINE / SMS)</span></td><td><span class="ja">毎日、クリニックごとのリマインド時刻（既定 10:00）</span><span class="en">daily at each clinic's reminder time (default 10:00)</span></td><td><span class="ja">通知履歴とアウトボックス <code>var/outbox</code></span><span class="en">notification log and the outbox <code>var/outbox</code></span></td></tr>
+<tr><td class="id">B2</td><td><span class="ja">予約枠の生成</span><span class="en">bookable slots</span></td><td><span class="ja">毎日 1:00、A01・A02・A04 の保存後、B3 の後</span><span class="en">daily 01:00; after A01 / A02 / A04 saves and B3</span></td><td><span class="ja">予約枠。影響する予約は台帳で「要調整」</span><span class="en">slots; affected bookings flagged needs-adjustment</span></td></tr>
+<tr><td class="id">B3</td><td><span class="ja">祝日の取込</span><span class="en">national holidays import</span></td><td><span class="ja">毎月1日 1:45、A01「祝日を取り込む」</span><span class="en">1st of the month 01:45; A01 Import holidays</span></td><td><span class="ja">祝日データ（デモは同梱ファイル <code>fixtures/x3</code>）</span><span class="en">holidays (demo: bundled file <code>fixtures/x3</code>)</span></td></tr>
+<tr><td class="id">B4</td><td><span class="ja">夜間締め</span><span class="en">nightly close</span></td><td><span class="ja">毎日 0:30</span><span class="en">daily 00:30</span></td><td><span class="ja">来院のない予約を台帳の「無断キャンセル候補」に</span><span class="en">unattended bookings become no-show candidates on S01</span></td></tr>
+<tr><td class="id">B5</td><td><span class="ja">保存期間を過ぎたデータの削除・匿名化</span><span class="en">delete or anonymise data past retention</span></td><td><span class="ja">毎日 1:30</span><span class="en">daily 01:30</span></td><td><span class="ja">対象データ、監査ログ</span><span class="en">the data itself, audit log</span></td></tr>
+<tr><td class="id">B6</td><td><span class="ja">レセコン用 CSV の夜間出力</span><span class="en">nightly receipt-system CSV</span></td><td><span class="ja">毎日 5:30、A06「出力」</span><span class="en">daily 05:30; A06 Export</span></td><td><span class="ja"><code>var/export</code>（暗号化保存）、A06 からダウンロード</span><span class="en"><code>var/export</code> (stored encrypted), downloaded from A06</span></td></tr>
+</tbody></table></div>
+<pre><code>npm run batch -- B1                    # all clinics
+npm run batch -- B6 --clinic honin     # one clinic (honin / ekimae / nishiguchi)
+npm run batch -- B2 --dry-run          # show what would change, write nothing
+# prints the run as JSON; exit code 0 = success / partial, 1 = failed, 2 = usage error</code></pre>
+<p class="note"><span class="ja">本番用コンテナ（runner）には CLI が含まれません。本番構成ではスケジューラが実行するか、開発用チェックアウトから同じデータベースに対して実行します。</span><span class="en">The production (runner) image does not ship the CLI: there the scheduler runs the jobs, or run the CLI from a development checkout against the same database.</span></p>
+</section>
+
+<!-- 6 -->
+<section id="run">
+<h2><span class="ja">6. 起動方法</span><span class="en">6. Running it</span></h2>
+<p><span class="ja">Node 22 と PostgreSQL 17 が必要です。詳しくは README を参照してください。</span><span class="en">Needs Node 22 and PostgreSQL 17. Details in the README.</span></p>
+<h3><span class="ja">開発（npm）</span><span class="en">Development (npm)</span></h3>
+<pre><code>cp .env.example .env
+npm install --no-package-lock
+npx prisma generate
+npx prisma migrate deploy
+npm run seed            # demo data (destructive)
+npm run dev             # http://localhost:3000</code></pre>
+<h3><span class="ja">開発（Docker のみ）</span><span class="en">Development (Docker only)</span></h3>
+<pre><code>docker network create booking-dev
+docker run -d --name booking-pg --network booking-dev -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=booking_appointment postgres:17-alpine
+docker run --rm -it --network booking-dev -p 127.0.0.1:3000:3000 -v "$PWD":/app -w /app \
+  -e DATABASE_URL="postgresql://postgres:postgres@booking-pg:5432/booking_appointment?schema=public" \
+  -e JWT_SECRET=local-dev-only-secret-0123456789abcdef node:22-bookworm \
+  sh -c "npm install --no-package-lock &amp;&amp; npx prisma generate &amp;&amp; npx prisma migrate deploy &amp;&amp; npm run seed &amp;&amp; npx next dev -H 0.0.0.0"</code></pre>
+<h3><span class="ja">本番構成（docker-compose.yml）</span><span class="en">Production (docker-compose.yml)</span></h3>
+<pre><code>cp .env.example .env
+# in .env: APP_PORT=3100, APP_BASE_URL=http://127.0.0.1:3100,
+#          POSTGRES_PASSWORD, JWT_SECRET, FIELD_ENCRYPTION_KEY (long random values)
+docker compose up -d --build     # http://127.0.0.1:3100</code></pre>
+<p><span class="ja">デモデータは開発用チェックアウトからこのデータベースに <code>npm run seed</code> で投入します。本番構成は Cookie に <code>Secure</code> を付けるため、HTTP では <code>localhost</code> / <code>127.0.0.1</code> でのみログインできます。ヘルスチェック：<code>GET /api/health</code>。</span><span class="en">Seed it from a development checkout pointed at this database (<code>npm run seed</code>). Production cookies are <code>Secure</code>: over plain HTTP login works on <code>localhost</code> / <code>127.0.0.1</code> only. Health check: <code>GET /api/health</code>.</span></p>
+</section>
+
+<!-- 7 -->
+<section id="accounts">
+<h2><span class="ja">7. デモアカウント</span><span class="en">7. Demo accounts</span></h2>
+<p><span class="ja">パスワードはすべて <code>Demo1234</code>。</span><span class="en">Every password is <code>Demo1234</code>.</span></p>
+<div class="table-wrap"><table>
+<thead><tr><th><span class="ja">アカウント</span><span class="en">Account</span></th><th><span class="ja">ロール</span><span class="en">Role</span></th><th><span class="ja">用途</span><span class="en">Use</span></th></tr></thead>
+<tbody>
+<tr><td><code>yamada.taro@example.jp</code></td><td><span class="ja">患者（日本語）</span><span class="en">patient (ja)</span></td><td><span class="ja">メインの患者。家族（配偶者・子）と予約あり</span><span class="en">main demo patient; spouse, child and bookings</span></td></tr>
+<tr><td><code>suzuki.ichiro@example.jp</code></td><td><span class="ja">患者（日本語）</span><span class="en">patient (ja)</span></td><td><span class="ja">家族なしの患者</span><span class="en">a patient without family</span></td></tr>
+<tr><td><code>emily.smith@example.com</code></td><td><span class="ja">患者（英語）</span><span class="en">patient (en)</span></td><td><span class="ja">英語表示</span><span class="en">English UI</span></td></tr>
+<tr><td><code>nguyen.van.an@example.com</code></td><td><span class="ja">患者（ベトナム語）</span><span class="en">patient (vi)</span></td><td><span class="ja">ベトナム語表示</span><span class="en">Vietnamese UI</span></td></tr>
+<tr><td><code>reception.honin@example.jp</code></td><td><span class="ja">受付</span><span class="en">reception</span></td><td><span class="ja">本院</span><span class="en">Main clinic</span></td></tr>
+<tr><td><code>reception.multi@example.jp</code></td><td><span class="ja">受付</span><span class="en">reception</span></td><td><span class="ja">本院・駅前院（クリニック切替）</span><span class="en">Main and Ekimae (clinic switch)</span></td></tr>
+<tr><td><code>doctor.tanaka@example.jp</code></td><td><span class="ja">医師</span><span class="en">doctor</span></td><td><span class="ja">田中 誠（院長）</span><span class="en">Makoto Tanaka (director)</span></td></tr>
+<tr><td><code>doctor.kobayashi@example.jp</code></td><td><span class="ja">医師</span><span class="en">doctor</span></td><td><span class="ja">小林 直樹</span><span class="en">Naoki Kobayashi</span></td></tr>
+<tr><td><code>admin.honin@example.jp</code></td><td><span class="ja">管理者</span><span class="en">admin</span></td><td><span class="ja">本院</span><span class="en">Main clinic</span></td></tr>
+<tr><td><code>admin.all@example.jp</code></td><td><span class="ja">管理者</span><span class="en">admin</span></td><td><span class="ja">全クリニック</span><span class="en">all clinics</span></td></tr>
+<tr><td><code>sasaki.pending@example.jp</code></td><td><span class="ja">患者</span><span class="en">patient</span></td><td><span class="ja">例外：メール未確認（再送の案内）</span><span class="en">edge case: mail not verified (resend prompt)</span></td></tr>
+<tr><td><code>reception.firstlogin@example.jp</code></td><td><span class="ja">受付</span><span class="en">reception</span></td><td><span class="ja">例外：初回ログインでパスワード変更</span><span class="en">edge case: password change at first login</span></td></tr>
+<tr><td><code>reception.noclinic@example.jp</code></td><td><span class="ja">受付</span><span class="en">reception</span></td><td><span class="ja">例外：担当クリニックなし（ER-03）</span><span class="en">edge case: no clinic (ER-03)</span></td></tr>
+<tr><td><code>reception.disabled@example.jp</code></td><td><span class="ja">受付</span><span class="en">reception</span></td><td><span class="ja">例外：無効化済み（ログイン不可）</span><span class="en">edge case: disabled (login refused)</span></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- 8 -->
+<section id="limits">
+<h2><span class="ja">8. 既知の制約とデモ用の代替</span><span class="en">8. Known limits and demo stand-ins</span></h2>
+<h3><span class="ja">デモ用の代替（本番では差し替え）</span><span class="en">Demo stand-ins (replace for real use)</span></h3>
+<ul class="ja">
+  <li><strong>メール・SMS・LINE は送信しません。</strong>既定の <code>NOTIFY_TRANSPORT=fake</code> では、送るはずの通知を 1 通ずつ <code>var/outbox</code> にファイルで保存します。LINE ログイン連携も模擬です。</li>
+  <li><strong>クリニック地図はデモ用の追加機能です。</strong>OpenStreetMap（Leaflet を同梱、API キー・Cookie・位置情報・解析なし）。オフラインでは灰色の枠とピンだけになります。座標のないクリニックは地図を出さず、従来の地図リンクを表示します。</li>
+  <li><strong>秘密鍵はデモ専用です。</strong><code>.env.example</code> やデモ構成の <code>JWT_SECRET</code>・<code>FIELD_ENCRYPTION_KEY</code> は使い回さないでください。</li>
+  <li>祝日と郵便番号は同梱ファイル（<code>fixtures/</code>）から読み込むため、インターネット接続は不要です。</li>
+  <li>人物・クリニック・予約はすべて架空のデモデータです。</li>
+</ul>
+<ul class="en">
+  <li><strong>No mail, SMS or LINE is sent.</strong> With the default <code>NOTIFY_TRANSPORT=fake</code> every notification is a file in <code>var/outbox</code>. LINE Login is a fake too.</li>
+  <li><strong>The clinic map is a demo add-on.</strong> OpenStreetMap via bundled Leaflet (no API key, cookies, geolocation or analytics). Offline it is a grey box with pins; a clinic without coordinates shows the map link instead.</li>
+  <li><strong>Secrets are demo only.</strong> Never reuse the <code>JWT_SECRET</code> / <code>FIELD_ENCRYPTION_KEY</code> of <code>.env.example</code> or the demo setup.</li>
+  <li>Holidays and postcodes come from bundled files (<code>fixtures/</code>): no internet needed.</li>
+  <li>All people, clinics and bookings are fictitious demo data.</li>
+</ul>
+<h3><span class="ja">既知の制約</span><span class="en">Known limits</span></h3>
+<ul class="ja">
+  <li><strong>1 台構成のみ。</strong>ログイン試行の制御、アクセス数の制限、予約入力中の下書きはプロセスのメモリにあります。複数台で動かすには共有ストアが必要です。</li>
+  <li><strong><code>FIELD_ENCRYPTION_KEY</code> の鍵更新は未対応。</strong>鍵を失う・変えると問診回答、予約の備考、保存済み CSV が読めなくなります。</li>
+  <li><strong>バッチは既定で自動実行しません。</strong><code>BATCH_SCHEDULER=on</code> のときだけ自動、それ以外は <code>npm run batch</code>。</li>
+  <li>スタッフ・管理画面は日本語のみです。</li>
+</ul>
+<ul class="en">
+  <li><strong>Single instance only.</strong> Login guard, rate limits and the booking draft live in process memory; several instances would need a shared store.</li>
+  <li><strong>No rotation of <code>FIELD_ENCRYPTION_KEY</code>.</strong> Losing or changing it makes questionnaire answers, booking notes and stored CSV files unreadable.</li>
+  <li><strong>Batches do not run by themselves by default.</strong> Only with <code>BATCH_SCHEDULER=on</code>; otherwise <code>npm run batch</code>.</li>
+  <li>Staff and admin screens are Japanese only.</li>
+</ul>
+</section>
+
+<footer><span class="ja">医療法人社団 誠和会 Web予約システム — デモマニュアル</span><span class="en">Seiwa Medical Corporation web booking — demo manual</span></footer>
+</main>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var titles = { ja: "Web予約システム デモマニュアル", en: "Booking system demo manual" };
+  function set(l) {
+    root.setAttribute("data-lang", l);
+    root.lang = l;
+    document.title = titles[l];
+    try { localStorage.setItem("manual-lang", l); } catch (e) {}
+    document.querySelectorAll("[data-set]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.set === l)); });
+  }
+  var m = location.hash.match(/lang=(ja|en)/), saved = null;
+  try { saved = localStorage.getItem("manual-lang"); } catch (e) {}
+  set(m ? m[1] : saved === "en" ? "en" : "ja");
+  document.querySelectorAll("[data-set]").forEach(function (b) { b.addEventListener("click", function () { set(b.dataset.set); }); });
+})();
+</script>
+</body>
+</html>
