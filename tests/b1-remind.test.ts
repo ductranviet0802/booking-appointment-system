@@ -216,13 +216,22 @@ describe("X1 / X2 retry rules (lib/notify/queue) through B1", () => {
     expect((await reminders(b.id))[0]).toMatchObject({ status: "SENT" });
   });
 
-  it("LINE refused (400): the LINE row is FAILED and the same NT-02 goes by MAIL to the account address", async () => {
+  it("LINE refused (400): the LINE row is FAILED and the same NT-02 goes by MAIL to the account address — not a failure of the run (Q-042)", async () => {
     const p = await person({ line: `U${f.tag}fail400` });
     const b = await booking(p.id, { start: "15:30" });
-    await remindClinic(f.clinic.id, tomorrow, noon, false);
+    const c = await remindClinic(f.clinic.id, tomorrow, noon, false);
     const rows = await reminders(b.id);
     expect(rows.map((r) => [r.channel, r.status])).toEqual([["LINE", "FAILED"], ["MAIL", "SENT"]]);
     expect(rows[1].toAddress).toMatch(/\.w4test@example\.jp$/);
+    expect([c.queued, c.failed]).toEqual([1, 0]);
+  });
+
+  it("LINE refused and the MAIL fallback refused too: the notice reached no channel → counted failed (run PARTIAL, Q-042)", async () => {
+    const p = await person({ line: `U${f.tag}both.fail400`, email: `${f.tag}.both.fail400.w4test@example.jp` });
+    const b = await booking(p.id, { start: "17:00" });
+    const c = await remindClinic(f.clinic.id, tomorrow, noon, false);
+    expect((await reminders(b.id)).map((r) => [r.channel, r.status])).toEqual([["LINE", "FAILED"], ["MAIL", "FAILED"]]);
+    expect([c.queued, c.failed]).toEqual([1, 1]);
   });
 
   it("LINE inside the quiet hours (21:00–08:00) is held until 08:00, not sent", async () => {

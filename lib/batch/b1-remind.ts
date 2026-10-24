@@ -77,7 +77,11 @@ export async function remindClinic(clinicId: string, date: string, runStart: Dat
     c.queued++;
     try {
       const sent = await deliver(id, runStart); // the run's clock: quiet hours and retry times (tests move it)
-      if (sent.status === "FAILED") c.failed++;
+      // Q-042 (answered): a failure only when the notice reached no channel — a LINE refusal delivered (or still being
+      // delivered) by the MAIL fallback is not one
+      if (sent.status === "FAILED" && !(await prisma.notification.count({ where: { bookingId: b.id, event: "NT02_REMIND", status: { in: ["SENT", "QUEUED", "SENDING"] } } }))) {
+        c.failed++;
+      }
     } catch (e) {
       c.failed++;
       log("error", "B1 render / send failed", { notificationId: id, error: e instanceof Error ? e.message : String(e) });
