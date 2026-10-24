@@ -63,11 +63,31 @@ export function parseHolidayCsv(bytes: Uint8Array, currentYear: number): Holiday
   return rows;
 }
 
+/** SE041 {理由} kinds besides X3ValidationError (A01 Q9 c) */
+export class X3HttpError extends Error {}
+export class X3TimeoutError extends Error {}
+
+/** A01 SE041 {理由} of a failed import: ダウンロード失敗 / 応答なし (timeout) / ファイルの内容が不正 */
+export function x3FailureReason(e: unknown) {
+  if (e instanceof X3ValidationError) return "ファイルの内容が正しくありません";
+  if (e instanceof X3TimeoutError) return "応答がありませんでした";
+  return "ダウンロードに失敗しました";
+}
+
 export async function fetchHolidayFile(source = process.env.X3_SOURCE || DEFAULT_SOURCE): Promise<Uint8Array> {
   if (/^https?:\/\//.test(source)) {
-    const res = await fetch(source, { signal: AbortSignal.timeout(30_000) });
-    if (!res.ok) throw new Error(`X3 HTTP ${res.status}`);
+    let res: Response;
+    try {
+      res = await fetch(source, { signal: AbortSignal.timeout(30_000) });
+    } catch (e) {
+      throw (e as Error)?.name === "TimeoutError" ? new X3TimeoutError("X3 timeout") : new X3HttpError(String(e));
+    }
+    if (!res.ok) throw new X3HttpError(`X3 HTTP ${res.status}`);
     return new Uint8Array(await res.arrayBuffer());
   }
-  return readFile(source);
+  try {
+    return await readFile(source);
+  } catch (e) {
+    throw new X3HttpError(String(e));
+  }
 }

@@ -4,14 +4,14 @@ import "dotenv/config";
 import bcrypt from "bcrypt";
 import type { Band, Prisma } from "@prisma/client";
 import { pool, prisma } from "@/lib/prisma";
-import { addDays, dbDate, dbTime, todayJst, toHhmm, toIsoDate, weekdayOf } from "@/lib/datetime";
+import { addDays, dbDate, dbTime, todayJst, toIsoDate, weekdayOf } from "@/lib/datetime";
 import { fetchHolidayFile, parseHolidayCsv } from "@/lib/adapters/x3-holidays";
+import { runJob } from "@/lib/batch/runner";
 import { defaultTemplateRows } from "@/lib/notify/templates-default";
 import { SEED_ACCOUNTS, SEED_PASSWORD } from "./seed-accounts";
 
 const today = todayJst();
 const PAST_DAYS = 14; // frames before today, so past bookings have real frames
-const FRAME_MINUTES = 15; // booking_policies default (OD-11)
 
 type BandHours = { open: string; close: string; reception: string };
 type ClinicSeed = {
@@ -162,14 +162,6 @@ const BOOKING_NO_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // no I, O (F7-01)
 function bookingNo(i: number) {
   const l = (n: number) => BOOKING_NO_LETTERS[n % BOOKING_NO_LETTERS.length];
   return `${l(i * 7 + 3)}${l(i * 5 + 11)}${l(i * 3 + 17)}${l(i + 5)}${String(1000 + i * 137).slice(-4)}`;
-}
-
-function minutes(hhmm: string) {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-}
-function hhmmOf(min: number) {
-  return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 }
 
 async function wipe() {
@@ -344,56 +336,9 @@ async function main() {
   }
   await prisma.doctorShiftException.createMany({ data: exceptions });
 
-  // frames: a plain stand-in for B2 (wave W2) — patterns ∩ open bands (hours, calendar, holidays), minus OFF, plus EXTRA,
-  // from 14 days ago to today + window + 7
-  const b2 = await prisma.batchRun.create({
-    data: { jobCode: "B2", trigger: "MANUAL", startedAt: new Date(), status: "RUNNING", readCount: 0, writtenCount: 0, errorCount: 0 },
-  });
-  const slots: Prisma.SlotCreateManyInput[] = [];
-  for (let n = -PAST_DAYS; n <= 30 + 7; n++) {
-    const date = addDays(today, n);
-    const wd = weekdayOf(date);
-    for (const c of CLINICS) {
-      const cal = calendar.find((x) => x.clinicId === clinicId[c.code] && toIsoDate(x.calDate as Date) === date);
-      let openBands: Band[] = holidaySet.has(date) ? [] : (c.open[wd] ?? []);
-      if (cal?.kind === "CLOSED") openBands = [];
-      if (cal?.kind === "AM_CLOSED") openBands = openBands.filter((b) => b !== "AM");
-      if (cal?.kind === "PM_CLOSED") openBands = openBands.filter((b) => b !== "PM");
-      if (cal?.kind === "SPECIAL_OPEN") openBands = [...(cal.amOpen ? ["AM" as Band] : []), ...(cal.pmOpen ? ["PM" as Band] : [])];
-
-      const shifts: Array<{ doctor: string; dept: string; band: Band; start: string; end: string }> = [];
-      for (const d of DOCTORS) {
-        for (const s of d.shifts) {
-          if (s.clinic !== c.code || !s.weekdays.includes(wd)) continue;
-          for (const band of s.bands) {
-            if (!openBands.includes(band)) continue;
-            if (exceptions.some((e) => e.kind === "OFF" && e.doctorId === doctorId[d.code] && toIsoDate(e.shiftDate as Date) === date && (!e.band || e.band === band))) continue;
-            shifts.push({ doctor: d.code, dept: s.dept, band, start: c.bands[band].open, end: c.bands[band].close });
-          }
-        }
-      }
-      for (const e of exceptions) {
-        if (e.kind === "EXTRA" && e.clinicId === clinicId[c.code] && toIsoDate(e.shiftDate as Date) === date) {
-          const code = Object.keys(doctorId).find((k) => doctorId[k] === e.doctorId)!;
-          const dept = Object.keys(deptId).find((k) => deptId[k] === e.departmentId)!;
-          shifts.push({ doctor: code, dept, band: e.band!, start: toHhmm(e.startTime as Date), end: toHhmm(e.endTime as Date) });
-        }
-      }
-      for (const s of shifts) {
-        for (let t = minutes(s.start); t + FRAME_MINUTES <= minutes(s.end); t += FRAME_MINUTES) {
-          slots.push({
-            clinicId: clinicId[c.code], departmentId: deptId[s.dept], doctorId: doctorId[s.doctor], slotDate: dbDate(date),
-            startTime: dbTime(hhmmOf(t)), endTime: dbTime(hhmmOf(t + FRAME_MINUTES)), capacity: 1, status: "OPEN", generatedRunId: b2.id,
-          });
-        }
-      }
-    }
-  }
-  await prisma.slot.createMany({ data: slots });
-  await prisma.batchRun.update({
-    where: { id: b2.id },
-    data: { status: "SUCCESS", endedAt: new Date(), writtenCount: slots.length, message: "seed: frames for the demo" },
-  });
+  // frames: B2 itself (06 §B2) over PAST_DAYS before today … today + window + 7 (past frames, so past bookings have real ones)
+  const b2 = await runJob("B2", { trigger: "MANUAL", params: { from: addDays(today, -PAST_DAYS), to: addDays(today, 30 + 7) } });
+  if (b2.result.status !== "SUCCESS") throw new Error(`B2 failed in the seed: ${b2.result.message}`);
 
   // consent documents (vendor) and patients
   const docsEffective = new Date("2026-10-01T00:00:00+09:00");
@@ -487,7 +432,7 @@ async function main() {
   }
 
   console.log(`clinics ${CLINICS.length} · departments ${DEPARTMENTS.length} · doctors ${DOCTORS.length} · accounts ${SEED_ACCOUNTS.length}`);
-  console.log(`holidays ${holidays.length} · slots ${slots.length} · bookings ${plans.length}`);
+  console.log(`holidays ${holidays.length} · slots ${await prisma.slot.count()} · bookings ${plans.length}`);
   console.log("Seeding completed.");
 }
 
