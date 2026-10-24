@@ -10,7 +10,7 @@ import type { Language } from "@prisma/client";
 
 export const DRAFT_COOKIE = "bdraft";
 export const DRAFT_TTL_MS = 30 * 60_000;
-const MAX_ENTRIES = 10_000; // cap: anonymous callers can create records (質疑 pending)
+const MAX_ENTRIES = 10_000; // cap: drafts held in memory, oldest dropped first; anonymous callers can create them (質疑 pending)
 
 export type Selections = {
   patientId: string | null;
