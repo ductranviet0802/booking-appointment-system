@@ -693,6 +693,9 @@
    "ja": "同じご家族がすでに登録されています。",
    "en": "This family member is already registered.",
    "vi": "Thành viên gia đình này đã được đăng ký."
+  },
+  "TMP-Q024": {
+   "ja": "一度に設定できる日数は2,000日までです。期間を分けて設定してください。"
   }
  },
  "aliases": {

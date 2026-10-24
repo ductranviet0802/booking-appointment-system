@@ -40,6 +40,8 @@ export function addDaysIso(isoDate: string, days: number) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+/** cap: exception dates in one A01 save (Q-024: 2,000 accepted; the server refuses more) */
+export const MAX_DAYS_PER_SAVE = 2_000;
 /** every date of start…end (both ISO, start ≤ end) */
 export function daysInRange(start: string, end: string) {
   const out: string[] = [];
@@ -122,13 +124,20 @@ export function validateDay(d: DayValues, today: string): FieldError[] {
 }
 
 /** 12-1 / 12-2 (events 14): empty → SE001, not a date or end before start → SE002, past → SE043; the dialog stays open */
-export function validateRange(start: string, end: string, today: string): FieldError[] {
+export function validateRange(start: string, end: string, today: string, heldDates: string[] = []): FieldError[] {
   const errors: FieldError[] = [];
   if (blank(start)) errors.push(e1("range.start", "開始日"));
   else if (!isoDateOk(start)) errors.push(e2("range.start", "開始日"));
   if (blank(end)) errors.push(e1("range.end", "終了日"));
   else if (!isoDateOk(end) || (isoDateOk(start) && end < start)) errors.push(e2("range.end", "終了日"));
   if (errors.length === 0 && start < today) errors.push({ field: "range.start", code: "SE043" });
+  // Q-024 answer: more than MAX_DAYS_PER_SAVE dates in one save → a message in the dialog (TMP-Q024), not ER-02
+  if (errors.length === 0) {
+    const span = (Date.parse(end) - Date.parse(start)) / 86_400_000 + 1;
+    if (span > MAX_DAYS_PER_SAVE || new Set([...heldDates, ...daysInRange(start, end)]).size > MAX_DAYS_PER_SAVE) {
+      errors.push({ field: "range.end", code: "TMP-Q024" });
+    }
+  }
   return errors;
 }
 
