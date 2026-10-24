@@ -321,6 +321,29 @@ async function main() {
       noteJa: "臨時診療（午前のみ）", noteEn: "Special opening (morning only)", createdBy: adminHonin,
     });
   }
+  // demo days yesterday / today / tomorrow must have frames at 本院 (S01, B1, B4 show real cases): a closed day
+  // (Sunday, holiday, 休診 weekday) becomes 臨時診療 AM, staffed by D001 (内科) and D003 (小児科) where no pattern covers it
+  const demoExtras: Prisma.DoctorShiftExceptionCreateManyInput[] = [];
+  for (const day of [-1, 0, 1].map((n) => addDays(today, n))) {
+    const wd = weekdayOf(day);
+    if (CLINICS[0].open[wd]?.includes("AM") && !holidaySet.has(day)) continue;
+    if (day !== special) {
+      calendar.push({
+        clinicId: clinicId.honin, calDate: dbDate(day), kind: "SPECIAL_OPEN", amOpen: dbTime("09:00"), amClose: dbTime("12:00"),
+        noteJa: "臨時診療（午前のみ）", noteEn: "Special opening (morning only)", createdBy: adminHonin,
+      });
+    }
+    for (const code of ["D001", "D003"]) {
+      const d = DOCTORS.find((x) => x.code === code)!;
+      const s = d.shifts.find((x) => x.clinic === "honin" && x.weekdays.includes(wd) && x.bands.includes("AM"));
+      if (!s) {
+        demoExtras.push({
+          doctorId: doctorId[code], shiftDate: dbDate(day), kind: "EXTRA", clinicId: clinicId.honin, departmentId: deptId[d.depts[0]],
+          band: "AM", startTime: dbTime("09:00"), endTime: dbTime("12:00"), note: "臨時診療", createdBy: adminHonin,
+        });
+      }
+    }
+  }
   await prisma.clinicCalendarDay.createMany({ data: calendar });
 
   // doctor exceptions (A02): 田中 off next Monday-or-later AM, 高橋 extra shift on the 臨時診療 day
@@ -334,7 +357,7 @@ async function main() {
       band: "AM", startTime: dbTime("09:00"), endTime: dbTime("12:00"), note: "臨時診療", createdBy: adminHonin,
     });
   }
-  await prisma.doctorShiftException.createMany({ data: exceptions });
+  await prisma.doctorShiftException.createMany({ data: [...exceptions, ...demoExtras] });
 
   // frames: B2 itself (06 §B2) over PAST_DAYS before today … today + window + 7 (past frames, so past bookings have real ones)
   const b2 = await runJob("B2", { trigger: "MANUAL", params: { from: addDays(today, -PAST_DAYS), to: addDays(today, 30 + 7) } });
@@ -358,17 +381,27 @@ async function main() {
 
   const taro = await patient({ ...self("yamada.taro@example.jp"), nameType: "JP", familyName: "山田", givenName: "太郎", familyNameKana: "ヤマダ", givenNameKana: "タロウ", birthDate: dbDate("1980-04-01"), sex: "MALE", phone: "09012345678", building: "丸の内マンション301" });
   const hanako = await patient({ accountId: accountId["yamada.taro@example.jp"], relation: "SPOUSE", createdByKind: "PATIENT", nameType: "JP", familyName: "山田", givenName: "花子", familyNameKana: "ヤマダ", givenNameKana: "ハナコ", birthDate: dbDate("1982-06-15"), sex: "FEMALE" });
-  await patient({ accountId: accountId["yamada.taro@example.jp"], relation: "CHILD", createdByKind: "PATIENT", nameType: "JP", familyName: "山田", givenName: "恵子", familyNameKana: "ヤマダ", givenNameKana: "ケイコ", birthDate: dbDate("2015-09-10"), sex: "FEMALE" });
-  await patient({ ...self("suzuki.ichiro@example.jp"), nameType: "JP", familyName: "鈴木", givenName: "一郎", familyNameKana: "スズキ", givenNameKana: "イチロウ", birthDate: dbDate("1975-01-20"), sex: "MALE", phone: "0311112222" });
+  const keiko = await patient({ accountId: accountId["yamada.taro@example.jp"], relation: "CHILD", createdByKind: "PATIENT", nameType: "JP", familyName: "山田", givenName: "恵子", familyNameKana: "ヤマダ", givenNameKana: "ケイコ", birthDate: dbDate("2015-09-10"), sex: "FEMALE" });
+  const suzuki = await patient({ ...self("suzuki.ichiro@example.jp"), nameType: "JP", familyName: "鈴木", givenName: "一郎", familyNameKana: "スズキ", givenNameKana: "イチロウ", birthDate: dbDate("1975-01-20"), sex: "MALE", phone: "0311112222" });
   const nguyen = await patient({ ...self("nguyen.van.an@example.com"), nameType: "ROMAJI", familyName: "Nguyen", givenName: "Van An", familyNameKana: "グエン", givenNameKana: "ヴァン アン", birthDate: dbDate("1995-03-03"), sex: "MALE", phone: "08022223333" });
-  await patient({ ...self("emily.smith@example.com"), nameType: "ROMAJI", familyName: "Smith", givenName: "Emily", familyNameKana: "スミス", givenNameKana: "エミリー", birthDate: dbDate("1990-12-24"), sex: "FEMALE", phone: "08033334444" });
+  const emily = await patient({ ...self("emily.smith@example.com"), nameType: "ROMAJI", familyName: "Smith", givenName: "Emily", familyNameKana: "スミス", givenNameKana: "エミリー", birthDate: dbDate("1990-12-24"), sex: "FEMALE", phone: "08033334444" });
   await patient({ ...self("sasaki.pending@example.jp"), nameType: "JP", familyName: "佐々木", givenName: "美咲", familyNameKana: "ササキ", givenNameKana: "ミサキ", birthDate: dbDate("1998-07-07"), sex: "FEMALE", phone: "09044445555" });
   // staff-registered patient without a web account (F1-06), SMS consent given at S02
   const kimura = await patient({ createdByKind: "STAFF", nameType: "JP", familyName: "木村", givenName: "光", familyNameKana: "キムラ", givenNameKana: "ヒカル", birthDate: dbDate("1968-11-03"), sex: "MALE", phone: "08011112222", smsOptIn: true });
 
+  // demo patient on LINE (B1 reminder channel); not a login account of SEED_ACCOUNTS
+  const katoAccount = await prisma.account.create({
+    data: {
+      email: "kato.line@example.jp", passwordHash, role: "PATIENT", status: "ACTIVE", language: "JA", notifyChannel: "LINE",
+      lineUserId: "U0000000000000000000000000000demo", lineFriend: "FOLLOWING", emailVerifiedAt: now,
+    },
+  });
+  accountId["kato.line@example.jp"] = katoAccount.id;
+  const kato = await patient({ ...self("kato.line@example.jp"), nameType: "JP", familyName: "加藤", givenName: "陽子", familyNameKana: "カトウ", givenNameKana: "ヨウコ", birthDate: dbDate("1987-05-05"), sex: "FEMALE", phone: "09055556666" });
+
   await prisma.consent.createMany({
-    data: SEED_ACCOUNTS.filter((a) => a.role === "PATIENT").flatMap((a) =>
-      (["TERMS", "PRIVACY"] as const).map((kind) => ({ accountId: accountId[a.email], kind, version: "1.0", agreedAt: now })),
+    data: [...SEED_ACCOUNTS.filter((a) => a.role === "PATIENT").map((a) => a.email), "kato.line@example.jp"].flatMap((email) =>
+      (["TERMS", "PRIVACY"] as const).map((kind) => ({ accountId: accountId[email], kind, version: "1.0", agreedAt: now })),
     ),
   });
   await prisma.patientCard.createMany({
@@ -380,9 +413,10 @@ async function main() {
 
   // bookings (frames taken in the same step, as the booking transaction does)
   const slotRows = await prisma.slot.findMany({ orderBy: [{ slotDate: "asc" }, { startTime: "asc" }] });
-  const free = (doctor: string, clinic: string, fromDay: number, frames: number) => {
+  const free = (doctor: string, clinic: string, fromDay: number, frames: number, exact = false) => {
     const from = addDays(today, fromDay);
-    const own = slotRows.filter((s) => s.doctorId === doctorId[doctor] && s.clinicId === clinicId[clinic] && toIsoDate(s.slotDate) >= from && s.reservedCount === 0);
+    const own = slotRows.filter((s) => s.doctorId === doctorId[doctor] && s.clinicId === clinicId[clinic] && s.reservedCount === 0
+      && (exact ? toIsoDate(s.slotDate) === from : toIsoDate(s.slotDate) >= from));
     for (let i = 0; i + frames <= own.length; i++) {
       const run = own.slice(i, i + frames);
       const contiguous = run.every((s, k) => k === 0 || (s.slotDate.getTime() === run[0].slotDate.getTime() && s.startTime.getTime() === run[k - 1].endTime.getTime()));
@@ -397,7 +431,16 @@ async function main() {
   type Plan = {
     patient: string; doctor: string; clinic: string; dept: string; visit: string; fromDay: number; frames: number;
     channel: "WEB" | "PHONE" | "COUNTER"; bookedBy: string | null; requested: boolean; status: "RESERVED" | "CHECKED_IN" | "CANCELED"; price?: number;
+    exact?: boolean; createdDaysAgo?: number; adjust?: boolean;
   };
+  const shonikaDoctor = (n: number) => (DOCTORS.find((d) => d.code === "D004")!.shifts.some((s) => s.clinic === "honin" && s.weekdays.includes(weekdayOf(addDays(today, n)))) ? "D004" : "D003");
+  const taroAcc = accountId["yamada.taro@example.jp"];
+  const receptionHonin = accountId["reception.honin@example.jp"];
+  // demo bookings yesterday / today / tomorrow at 本院 (S01 ledger, B4 no-show candidate, B1 targets on MAIL / LINE / SMS, 要調整, family)
+  const demo = (n: number, patient: string, doctor: string, visit: string, by: string | null, extra: Partial<Plan> = {}): Plan => ({
+    patient, doctor, clinic: "honin", dept: doctor === "D001" ? "naika" : "shonika", visit, fromDay: n, frames: visit.endsWith("SHO") || visit === "N-KEN" ? 2 : 1,
+    channel: by === receptionHonin ? "PHONE" : "WEB", bookedBy: by, requested: true, status: "RESERVED", exact: true, createdDaysAgo: 3, ...extra,
+  });
   const plans: Plan[] = [
     { patient: taro, doctor: "D001", clinic: "honin", dept: "naika", visit: "N-SAI", fromDay: 3, frames: 1, channel: "WEB", bookedBy: accountId["yamada.taro@example.jp"], requested: true, status: "RESERVED" },
     { patient: hanako, doctor: "D002", clinic: "honin", dept: "naika", visit: "N-SHO", fromDay: 5, frames: 2, channel: "PHONE", bookedBy: accountId["reception.honin@example.jp"], requested: false, status: "RESERVED" },
@@ -405,9 +448,28 @@ async function main() {
     { patient: nguyen, doctor: "D005", clinic: "ekimae", dept: "hifuka", visit: "H-SAI", fromDay: 4, frames: 1, channel: "WEB", bookedBy: accountId["nguyen.van.an@example.com"], requested: true, status: "RESERVED" },
     { patient: taro, doctor: "D001", clinic: "honin", dept: "naika", visit: "N-KEN", fromDay: 7, frames: 2, channel: "WEB", bookedBy: accountId["yamada.taro@example.jp"], requested: false, status: "RESERVED", price: 4000 },
     { patient: kimura, doctor: "D007", clinic: "nishiguchi", dept: "naika", visit: "N-SAI", fromDay: 2, frames: 1, channel: "PHONE", bookedBy: accountId["reception.honin@example.jp"], requested: true, status: "CANCELED" },
+    // yesterday: 来院済 (family too) and one left RESERVED = B4 no-show candidate
+    demo(-1, taro, "D001", "N-SAI", taroAcc, { status: "CHECKED_IN" }),
+    demo(-1, keiko, shonikaDoctor(-1), "S-SAI", taroAcc, { status: "CHECKED_IN" }),
+    demo(-1, suzuki, "D001", "N-SAI", accountId["suzuki.ichiro@example.jp"]),
+    // today: a full ledger across doctors and statuses
+    demo(0, nguyen, "D001", "N-SAI", accountId["nguyen.van.an@example.com"], { status: "CHECKED_IN" }),
+    demo(0, taro, "D001", "N-SAI", taroAcc),
+    demo(0, emily, "D001", "N-KEN", accountId["emily.smith@example.com"], { requested: false, price: 4000 }),
+    demo(0, suzuki, "D001", "N-SAI", receptionHonin, { adjust: true }),
+    demo(0, kimura, "D001", "N-SAI", receptionHonin, { status: "CANCELED" }),
+    demo(0, keiko, shonikaDoctor(0), "S-SAI", taroAcc),
+    // tomorrow: reminder targets on MAIL (hanako via taro), LINE (kato), SMS (kimura, no account), one booked < 24 h ago, 要調整
+    demo(1, hanako, "D001", "N-SAI", taroAcc),
+    demo(1, kato, "D001", "N-SAI", katoAccount.id),
+    demo(1, kimura, "D001", "N-SAI", receptionHonin),
+    demo(1, emily, "D001", "N-SAI", accountId["emily.smith@example.com"], { createdDaysAgo: 0 }),
+    demo(1, nguyen, "D001", "N-SAI", accountId["nguyen.van.an@example.com"], { adjust: true }),
+    demo(1, keiko, shonikaDoctor(1), "S-SHO", taroAcc),
   ];
   for (const [i, p] of plans.entries()) {
-    const frames = free(p.doctor, p.clinic, p.fromDay, p.frames);
+    const frames = free(p.doctor, p.clinic, p.fromDay, p.frames, p.exact);
+    const createdAt = new Date(now.getTime() - (p.createdDaysAgo ?? 0) * 86_400_000);
     const staffBooked = p.channel !== "WEB";
     const canceled = p.status === "CANCELED";
     await prisma.booking.create({
@@ -415,11 +477,11 @@ async function main() {
         bookingNo: bookingNo(i + 1), clinicId: clinicId[p.clinic], departmentId: deptId[p.dept], visitTypeId: visitTypeId[`${p.clinic}/${p.visit}`],
         doctorId: doctorId[p.doctor], doctorRequested: p.requested, patientId: p.patient, bookedByAccountId: p.bookedBy, channel: p.channel,
         slotDate: frames[0].slotDate, startTime: frames[0].startTime, endTime: frames[frames.length - 1].endTime, status: p.status, priceYen: p.price ?? null,
-        checkedInAt: p.status === "CHECKED_IN" ? now : null,
+        checkedInAt: p.status === "CHECKED_IN" ? now : null, createdAt, adjustRequiredAt: p.adjust ? now : null,
         ...(canceled ? { canceledAt: now, canceledByKind: "STAFF" as const, canceledByAccountId: p.bookedBy, cancelReasonCode: "SCHEDULE" as const } : {}),
         events: {
           create: [
-            { event: "CREATED", actorKind: staffBooked ? "STAFF" : "PATIENT", actorAccountId: p.bookedBy, channel: staffBooked ? p.channel : null, at: now },
+            { event: "CREATED", actorKind: staffBooked ? "STAFF" : "PATIENT", actorAccountId: p.bookedBy, channel: staffBooked ? p.channel : null, at: createdAt },
             ...(p.status === "CHECKED_IN" ? [{ event: "CHECKED_IN", actorKind: "STAFF" as const, actorAccountId: accountId["reception.honin@example.jp"], channel: "COUNTER" as const, at: now }] : []),
             ...(canceled ? [{ event: "CANCELED", actorKind: "STAFF" as const, actorAccountId: p.bookedBy, channel: p.channel, at: now }] : []),
           ],
