@@ -40,7 +40,7 @@
 .aNotice { grid-area: notice; }
 .aConsent { grid-area: consent; }
 .aMerge { grid-area: merge; }
-.actions { grid-area: act; display: flex; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.actions { grid-area: act; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
 .name { font-size: 24px; font-weight: 700; }
 .tags { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
