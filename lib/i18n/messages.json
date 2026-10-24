@@ -391,9 +391,9 @@
    "vi": "Đã hủy lịch hẹn."
   },
   "PI051": {
-   "ja": "{電話案内文}（{クリニック名} {電話番号}） — default 電話案内文: Webでの変更・キャンセルは受付期限を過ぎました。お手数ですがお電話でご連絡ください。",
-   "en": "{phone message} ({clinic} {phone}) — default: Online changes and cancellations are closed for this booking. Please call us.",
-   "vi": "{phone message} ({clinic} {phone}) — mặc định: Đã hết hạn thay đổi hoặc hủy trực tuyến cho lịch hẹn này. Vui lòng gọi điện cho chúng tôi."
+   "ja": "{電話案内文}（{クリニック名} {電話番号}）",
+   "en": "{phone message} ({clinic} {phone})",
+   "vi": "{phone message} ({clinic} {phone})"
   },
   "PI052": {
    "ja": "ご予約が確定しました。",

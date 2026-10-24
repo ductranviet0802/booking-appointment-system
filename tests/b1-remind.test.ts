@@ -186,6 +186,19 @@ describe("X1 / X2 retry rules (lib/notify/queue) through B1", () => {
     spy.mockRestore();
   });
 
+  it("a reminder waiting for its retry is SKIPPED, not sent, once the booking is cancelled", async () => {
+    const b = await booking((await person()).id, { start: "15:30" });
+    const spy = jest.spyOn(transport, "send").mockResolvedValueOnce({ ok: false, retry: true, error: "HTTP 503" });
+    await remindClinic(f.clinic.id, tomorrow, noon, false);
+    spy.mockRestore();
+    await prisma.booking.update({ where: { id: b.id }, data: { status: "CANCELED", canceledAt: noon, canceledByKind: "STAFF", cancelReasonCode: "OTHER" } });
+    const sent = jest.spyOn(transport, "send");
+    await deliverDue(plus(1));
+    expect(sent).not.toHaveBeenCalled();
+    sent.mockRestore();
+    expect((await reminders(b.id))[0]).toMatchObject({ status: "SKIPPED", attempts: 1 });
+  });
+
   it("LINE refused (400): the LINE row is FAILED and the same NT-02 goes by MAIL to the account address", async () => {
     const p = await person({ line: `U${f.tag}fail400` });
     const b = await booking(p.id, { start: "15:30" });

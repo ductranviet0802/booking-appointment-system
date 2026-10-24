@@ -30,7 +30,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await f.cleanup().catch(() => undefined);
+  await f.cleanup();
   await prisma.patient.deleteMany({ where: { id: { in: extra } } });
   await prisma.$disconnect();
   await pool.end();

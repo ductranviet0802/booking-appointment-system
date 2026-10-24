@@ -56,6 +56,11 @@ export async function deliver(id: string, now = new Date()): Promise<{ id: strin
   const n = await prisma.notification.findUniqueOrThrow({ where: { id } });
   const vars = pendingVars.get(id);
   if (!vars) return finish(n.id, { status: "FAILED", lastError: "vars lost" });
+  // a reminder waiting for a retry is not sent once its booking left RESERVED (cancelled / changed state, B1)
+  if (n.event === "NT02_REMIND" && n.bookingId) {
+    const b = await prisma.booking.findUnique({ where: { id: n.bookingId }, select: { status: true } });
+    if (b?.status !== "RESERVED") return finish(id, { status: "SKIPPED", lastError: "booking no longer RESERVED" });
+  }
 
   const hold = quietUntil(n.channel, now);
   if (hold) {

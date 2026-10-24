@@ -11,7 +11,9 @@ export const AUTH_LIMITS = {
 
 export type AuthAction = keyof typeof AUTH_LIMITS;
 
-const hits = new Map<string, { count: number; resetAt: number }>();
+// one store per process (pages and route handlers are separate module instances)
+const g = globalThis as unknown as { authLimitHits?: Map<string, { count: number; resetAt: number }> };
+const hits = (g.authLimitHits ??= new Map());
 
 function bump(key: string, windowMs: number, now: number) {
   if (hits.size > 50_000) for (const [k, v] of hits) if (v.resetAt <= now) hits.delete(k);

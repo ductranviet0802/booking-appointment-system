@@ -156,9 +156,8 @@ describe("P16 cancel — races and version (DB: FOR UPDATE on account → patien
     expect(held).toBe(row.status === "RESERVED" ? 1 : 0);
   });
 
-  // core bug (reported): P16 5-1 / Q4 order is status → deadline → version; the core checks the version first, so a
-  // booking both stale and past its deadline answers PE047 where the spec says PE041. Passes once the core is fixed.
-  it.failing("stale and past the deadline at once → PE041 (spec order), not PE047", async () => {
+  // P16 5-1 / Q4 order is status → deadline → version (core fixed in W34 step 2)
+  it("stale and past the deadline at once → PE041 (spec order), not PE047", async () => {
     const h = await holder();
     const b = await book(w, h, h.self.id, 8, "09:00");
     await prisma.booking.update({ where: { id: b.id }, data: { version: { increment: 1 } } });

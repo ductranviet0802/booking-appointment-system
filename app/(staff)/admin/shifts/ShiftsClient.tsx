@@ -143,10 +143,10 @@ export function ShiftsClient({ role, today, doctors, detail: initial, week: init
 
   function renderPatterns() {
     const canEdit = admin;
-    const inp = (r: Row, k: "start" | "end" | "validFrom" | "validTo", o: { cls?: string; ph?: string; label: string }) => k === "validFrom" ? (
-      // J-05: the shared date picker; 8-2 stays a text box because DateField has no placeholder for 「（無期限）」 / 「終了日」
+    const inp = (r: Row, k: "start" | "end" | "validFrom" | "validTo", o: { cls?: string; ph?: string; label: string }) => k === "validFrom" || k === "validTo" ? (
+      // J-05: the shared date picker for 8-1 / 8-2 (8-2 keeps its 「（無期限）」 / 「終了日」 placeholder)
       <span className={s.date}>
-        <DateField id={`a02-p-${r.key}-${k}`} value={r.v[k]} lang="ja" ariaLabel={o.label} onChange={(x) => patch(r.key, { [k]: x })} onBlur={() => blurRow(r)} />
+        <DateField id={`a02-p-${r.key}-${k}`} value={r.v[k]} lang="ja" ariaLabel={o.label} placeholder={o.ph} onChange={(x) => patch(r.key, { [k]: x })} onBlur={() => blurRow(r)} />
       </span>
     ) : (
       <input

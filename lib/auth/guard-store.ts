@@ -8,7 +8,9 @@ const MAX_ENTRIES = 10_000; // anonymous callers can create records: cap memory
 
 export type GuardRecord = { target: string | null; selections?: Record<string, unknown>; expiresAt: number };
 
-const store = new Map<string, GuardRecord>();
+// on globalThis: pages and route handlers are separate module instances in one process (W34: found by P11's draft store)
+const g = globalThis as unknown as { guardStore?: Map<string, GuardRecord> };
+const store = (g.guardStore ??= new Map<string, GuardRecord>());
 
 export function createGuard(target: string | null, now = Date.now()) {
   if (store.size >= MAX_ENTRIES) {

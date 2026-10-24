@@ -96,7 +96,7 @@ export function ListView({ lang, initial }: { lang: Lang; initial: ListPage }) {
           <div className={`box ${s.empty}`} data-testid="p15-empty">
             <Icon name="cal" size={32} />
             <p className="m0">{t("PI045", lang)}</p>
-            {tab === "upcoming" && <Link className="btn bp" href="/booking/new" data-testid="p15-book">{w2("book", lang)}</Link>}
+            {tab === "upcoming" && <Link className="btn bp" href="/booking/new?from=bookings" data-testid="p15-book">{w2("book", lang)}</Link>}
           </div>
         ) : (
           <>

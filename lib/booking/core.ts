@@ -145,10 +145,11 @@ export async function bookInTx(
       throw new Error("change mode keeps patient, clinic, department and visit type (F5-01)");
     }
     if (old.status !== "RESERVED") return fail("NOT_RESERVED");
-    if (old.version !== changing.version) return fail("STALE");
+    // status → deadline → version, as cancel (P16 5-1 / Q4)
     if ((opts.deadline ?? patient) && !old.adjustRequiredAt && !beforeDeadline(await policyOf(old.clinicId, tx), toIsoDate(old.slotDate), toHhmm(old.startTime), now)) {
       return fail("DEADLINE");
     }
+    if (old.version !== changing.version) return fail("STALE");
     oldFrames = new Set((await tx.bookingSlot.findMany({ where: { bookingId: old.id }, select: { slotId: true } })).map((r) => r.slotId));
   }
 
@@ -312,10 +313,11 @@ export async function cancelInTx(tx: Tx, c: CancelInput, actor: Actor, opts: Opt
   const b = await tx.booking.findUniqueOrThrow({ where: { id: c.bookingId } });
   if (b.status === "CANCELED") return fail("ALREADY_CANCELED");
   if (b.status !== "RESERVED") return fail("NOT_RESERVED");
-  if (c.version !== undefined && b.version !== c.version) return fail("STALE");
+  // P16 5-1 / Q4: status → deadline → version
   if ((opts.deadline ?? actor.kind === "PATIENT") && !b.adjustRequiredAt && !beforeDeadline(await policyOf(b.clinicId, tx), toIsoDate(b.slotDate), toHhmm(b.startTime), now)) {
     return fail("DEADLINE");
   }
+  if (c.version !== undefined && b.version !== c.version) return fail("STALE");
 
   const frames = await tx.bookingSlot.findMany({ where: { bookingId: b.id }, select: { slotId: true } });
   await tx.bookingSlot.deleteMany({ where: { bookingId: b.id } }); // F5-05: frames free at once

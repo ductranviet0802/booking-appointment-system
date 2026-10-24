@@ -52,8 +52,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await foreign.cleanup().catch(() => undefined);
-  await f.cleanup().catch(() => undefined);
+  await foreign.cleanup();
+  await f.cleanup();
   await prisma.patient.deleteMany({ where: { id: { in: extra } } });
   await cleanupStaff();
   await prisma.$disconnect();

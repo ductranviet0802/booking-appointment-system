@@ -5,7 +5,9 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
-const store = new Map<string, RateLimitEntry>();
+// one store per process (pages and route handlers are separate module instances)
+const g = globalThis as unknown as { rateLimitStore?: Map<string, RateLimitEntry> };
+const store = (g.rateLimitStore ??= new Map<string, RateLimitEntry>());
 
 function prune(now: number) {
   for (const [key, value] of store.entries()) {

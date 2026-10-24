@@ -60,11 +60,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await foreign.cleanup().catch(() => undefined);
-  await f.cleanup().catch(() => undefined);
-  await prisma.patientCard.deleteMany({ where: { patientId: { in: extra } } });
+  // cards reference the fixture clinic: remove them first, else the clinic delete fails (and leaks into P01 / P10 suites)
+  await prisma.patientCard.deleteMany({ where: { OR: [{ patientId: { in: extra } }, { patient: { familyName: "代理試験" } }] } });
+  await foreign.cleanup();
+  await f.cleanup();
   await prisma.patient.deleteMany({ where: { id: { in: extra } } });
-  await prisma.patientCard.deleteMany({ where: { patient: { familyName: "代理試験" } } });
   await prisma.patient.deleteMany({ where: { familyName: "代理試験" } });
   await cleanupStaff();
   await prisma.$disconnect();

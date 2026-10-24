@@ -149,7 +149,7 @@ describe("P15 screen", () => {
     const h = await holder();
     const empty = renderToStaticMarkup(<ToastProvider lang="ja"><ListView lang="ja" initial={await listBookings(h.acc.id, "upcoming", 0, "ja")} /></ToastProvider>);
     expect(empty).toContain("該当するご予約はありません。");
-    expect(empty).toContain('href="/booking/new"');
+    expect(empty).toContain('href="/booking/new?from=bookings"'); // T061: P11 knows the origin P15 (中止 returns there)
     const b1 = await rawBooking(w, h.self.id, addDays(today, 2), "09:00");
     await rawBooking(w, h.self.id, addDays(today, 3), "09:00");
     const out = renderToStaticMarkup(<ToastProvider lang="ja"><ListView lang="ja" initial={await listBookings(h.acc.id, "upcoming", 0, "ja")} /></ToastProvider>);

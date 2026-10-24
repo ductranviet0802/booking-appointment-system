@@ -138,8 +138,7 @@ export async function loadDetail(bookingId: string, accountId: string, lang: Lan
     price: b.priceYen === null ? null : formatPrice(b.priceYen, lang),
     notes,
     deadline: formatDateTime(deadlineOf(policy, date, start), lang), // PI056 {期限}, full style (Q12)
-    // PI051; shortcut: the 04 catalog row carries its "— default …" note in the text, cut here until messages.json is fixed
-    phoneText: t("PI051", lang, { 電話案内文: phoneMessage, クリニック名: c.clinic.name, 電話番号: c.clinic.phone }).split(" — ")[0],
+    phoneText: t("PI051", lang, { 電話案内文: phoneMessage, クリニック名: c.clinic.name, 電話番号: c.clinic.phone }),
   };
 }
 export type DetailView = NonNullable<Awaited<ReturnType<typeof loadDetail>>>;
