@@ -2,6 +2,7 @@
 // A code without an entry runs as FAILED 「not implemented」 (lib/batch/runner.ts).
 import { b2Job } from "@/lib/batch/b2-frames";
 import { b3Job } from "@/lib/batch/b3-holidays";
+import { b4Job } from "@/lib/batch/b4-close";
 import type { Job, JobCode } from "@/lib/batch/runner";
 
-export const JOBS: Partial<Record<JobCode, Job>> = { B2: b2Job, B3: b3Job };
+export const JOBS: Partial<Record<JobCode, Job>> = { B2: b2Job, B3: b3Job, B4: b4Job };
