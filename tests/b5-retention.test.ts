@@ -11,7 +11,7 @@ import { runJob } from "@/lib/batch/runner";
 import { cutOf } from "@/lib/batch/b5-retention";
 import { lockPerson } from "@/lib/booking/core";
 import { addDays, dbDate, dbTime, todayJst, toIsoDate } from "@/lib/datetime";
-import { storeExportFile } from "@/lib/export/store";
+import { deleteExportFile, storeExportFile } from "@/lib/export/store";
 import { pool, prisma } from "@/lib/prisma";
 import { fixture, type Fixture } from "./b2-helpers";
 
@@ -36,6 +36,7 @@ afterAll(async () => {
   const bookings = { patientId: { in: mine.patients } };
   await prisma.notification.deleteMany({ where: { OR: [{ patientId: { in: mine.patients } }, { toAddress: { startsWith: tag } }] } });
   await prisma.booking.deleteMany({ where: bookings });
+  for (const e of await prisma.exportFile.findMany({ where: { id: { in: mine.exports } } })) if (e.storageKey) await deleteExportFile(e.storageKey);
   await prisma.exportFile.deleteMany({ where: { id: { in: mine.exports } } });
   await prisma.patientCard.deleteMany({ where: { patientId: { in: mine.patients } } });
   await prisma.patient.deleteMany({ where: { id: { in: mine.patients } } });
