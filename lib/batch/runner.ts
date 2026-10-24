@@ -1,9 +1,45 @@
 // Batch runner (06 §0): one batch_runs row per run; a database advisory lock per job code, so two runs of one job
 // never overlap — a run that finds the lock taken ends SUCCESS 「実行中のため省略」 and writes nothing else.
 // A dry run (B2 --dry-run) writes nothing at all and returns the counts.
-import type { BatchRun, BatchStatus, Prisma } from "@prisma/client";
+import type { BatchRun, BatchStatus, NotificationEvent, Prisma } from "@prisma/client";
+import { log } from "@/lib/logger";
+import { send } from "@/lib/notify/transport";
 import { pool, prisma } from "@/lib/prisma";
 import { JOBS } from "@/lib/batch/jobs";
+
+/** system_settings key of the vendor operator's alert address (N-OPS-06; key name: question in the W4 report), env fallback */
+export const OPERATOR_ALERT_KEY = "operator_alert_email";
+
+/**
+ * N-OPS-06 / 06 §0 (J-08): a FAILED or PARTIAL run mails the vendor operator and the active admins of the clinic concerned
+ * (a run for all clinics: every admin). Best effort after the run is recorded: a send failure is logged, never changes the run.
+ */
+export async function alertRun(run: BatchRun) {
+  try {
+    const [setting, admins, clinic] = await Promise.all([
+      prisma.systemSetting.findUnique({ where: { key: OPERATOR_ALERT_KEY } }),
+      prisma.account.findMany({
+        where: { role: "ADMIN", status: "ACTIVE", ...(run.clinicId && { OR: [{ allClinics: true }, { staffClinics: { some: { clinicId: run.clinicId } } }] }) },
+        select: { email: true },
+      }),
+      run.clinicId ? prisma.clinic.findUnique({ where: { id: run.clinicId }, select: { nameJa: true } }) : null,
+    ]);
+    const to = [...new Set([setting?.value ?? process.env.OPS_ALERT_EMAIL, ...admins.map((a) => a.email)].filter((x): x is string => !!x))];
+    const subject = `【バッチ${run.status === "FAILED" ? "失敗" : "一部失敗"}】${run.jobCode} ${clinic?.nameJa ?? "全クリニック"}`;
+    const body = [
+      `ジョブ: ${run.jobCode}（${run.trigger}）`, `状態: ${run.status}`, `対象: ${clinic?.nameJa ?? "全クリニック"}`,
+      `開始: ${run.startedAt.toISOString()}`, `終了: ${run.endedAt?.toISOString() ?? ""}`,
+      `件数: 読込 ${run.readCount}・書込 ${run.writtenCount}・エラー ${run.errorCount}`, `メッセージ: ${run.message ?? ""}`, `実行ID: ${run.id}`,
+    ].join("\n");
+    for (const addr of to) {
+      // shortcut: the transport types `event` as an NT code; the alert is no notification row (no outbox, no retry) — tag BATCH_ALERT
+      const r = await send({ notificationId: run.id, event: "BATCH_ALERT" as NotificationEvent, channel: "MAIL", to: addr, subject, body });
+      if (!r.ok) log("error", "batch alert mail failed", { runId: run.id, error: r.error });
+    }
+  } catch (e) {
+    log("error", "batch alert failed", { runId: run.id, error: e instanceof Error ? e.message : String(e) });
+  }
+}
 
 export const JOB_CODES = ["B1", "B2", "B3", "B4", "B5", "B6"] as const;
 export type JobCode = (typeof JOB_CODES)[number];
@@ -64,6 +100,7 @@ export async function runJob(
           errorCount: result.errors, message: result.message ?? null,
         },
       });
+      if (run.status === "FAILED" || run.status === "PARTIAL") await alertRun(run);
       return { run, result };
     } finally {
       await client.query("SELECT pg_advisory_unlock(hashtext($1))", [lockKey]);
