@@ -151,6 +151,191 @@ const L = {
   profileHeading: { ja: "経歴", en: "Background", vi: "Quá trình công tác" }, // draft
   qualificationsHeading: { ja: "資格・所属学会", en: "Qualifications and memberships", vi: "Chứng chỉ và hội chuyên môn" }, // draft
   dash: { ja: "—", en: "—", vi: "—" },
+  // P02–P07 (accounts). ja from the specs / images; en / vi from 07 where it has the term, else drafts.
+  fEmail: { ja: "メールアドレス", en: "E-mail address", vi: "Địa chỉ email" }, // 07
+  fPassword: { ja: "パスワード", en: "Password", vi: "Mật khẩu" }, // draft en/vi
+  fPasswordConfirm: { ja: "パスワード（確認）", en: "Password (confirm)", vi: "Mật khẩu (xác nhận)" }, // draft
+  showPassword: { ja: "パスワードを表示", en: "Show password", vi: "Hiện mật khẩu" }, // draft
+  pwRule: { ja: "8〜64文字、英字と数字をそれぞれ1文字以上", en: "8–64 characters, at least one letter and one number", vi: "8–64 ký tự, ít nhất một chữ cái và một chữ số" }, // draft
+  nameType: { ja: "氏名の種類", en: "Name type", vi: "Loại họ tên" }, // draft
+  nameJp: { ja: "日本語氏名", en: "Japanese name", vi: "Họ tên tiếng Nhật" }, // draft
+  nameRomaji: { ja: "ローマ字氏名", en: "Name in Latin letters", vi: "Họ tên bằng chữ Latinh" }, // vi 07; en draft
+  nameGroup: { ja: "氏名", en: "Name", vi: "Họ tên" }, // draft
+  familyName: { ja: "姓", en: "Family name", vi: "Họ" }, // vi 07; en draft
+  givenName: { ja: "名", en: "Given name", vi: "Tên" }, // vi 07; en draft
+  kanaGroup: { ja: "フリガナ", en: "Reading (furigana)", vi: "Cách đọc (furigana)" }, // vi 07; en draft
+  familyNameKana: { ja: "フリガナ（セイ）", en: "Reading of family name", vi: "Cách đọc họ" }, // draft
+  givenNameKana: { ja: "フリガナ（メイ）", en: "Reading of given name", vi: "Cách đọc tên" }, // draft
+  kanaSei: { ja: "セイ", en: "Family", vi: "Họ" }, // draft
+  kanaMei: { ja: "メイ", en: "Given", vi: "Tên" }, // draft
+  kanaHint: { ja: "フリガナは全角カタカナで入力してください。", en: "Enter the reading in full-width katakana.", vi: "Nhập cách đọc bằng katakana toàn độ rộng." }, // draft
+  birthDate: { ja: "生年月日", en: "Date of birth", vi: "Ngày sinh" }, // 07
+  yearOpt: { ja: "{y}年", en: "{y}", vi: "{y}" },
+  monthOpt: { ja: "{m}月", en: "{m}", vi: "Tháng {m}" }, // draft
+  dayOpt: { ja: "{d}日", en: "{d}", vi: "{d}" },
+  yearAria: { ja: "年", en: "Year", vi: "Năm" }, // draft
+  monthAria: { ja: "月", en: "Month", vi: "Tháng" }, // draft
+  dayAria: { ja: "日", en: "Day", vi: "Ngày" }, // draft
+  choose: { ja: "選択してください", en: "Please select", vi: "Vui lòng chọn" }, // draft
+  sex: { ja: "性別", en: "Sex", vi: "Giới tính" }, // 07
+  male: { ja: "男性", en: "Male", vi: "Nam" }, // 07
+  female: { ja: "女性", en: "Female", vi: "Nữ" }, // 07
+  sexNote: { ja: "保険証の記載のとおり", en: "As on your health insurance card", vi: "Theo thẻ bảo hiểm y tế" }, // draft
+  postcode: { ja: "郵便番号", en: "Postcode", vi: "Mã bưu chính" }, // 07
+  postcodeHelp: { ja: "入力すると住所を自動で入力します", en: "The address is filled in automatically", vi: "Địa chỉ sẽ được điền tự động" }, // draft
+  postcodeSearching: { ja: "住所を検索中…", en: "Looking up the address…", vi: "Đang tìm địa chỉ…" }, // draft
+  prefecture: { ja: "都道府県", en: "Prefecture", vi: "Tỉnh/thành phố" }, // 07
+  city: { ja: "市区町村", en: "City / ward / town", vi: "Quận/huyện/thành phố" }, // 07
+  town: { ja: "町域", en: "Area", vi: "Khu vực" }, // draft
+  townOther: { ja: "その他（直接入力）", en: "Other (enter directly)", vi: "Khác (nhập trực tiếp)" }, // draft
+  addressLine: { ja: "番地", en: "Street number", vi: "Số nhà" }, // draft
+  building: { ja: "建物名・部屋番号", en: "Building and room number", vi: "Tên tòa nhà và số phòng" }, // draft
+  buildingPh: { ja: "○○マンション 101号室", en: "○○ Mansion 101", vi: "○○ Mansion 101" }, // draft
+  phone: { ja: "電話番号", en: "Phone number", vi: "Số điện thoại" }, // 07
+  phoneHelp: { ja: "ハイフンなしでも入力できます。", en: "You can enter it without hyphens.", vi: "Có thể nhập không cần dấu gạch ngang." }, // draft
+  phonePh: { ja: "例: 090-1234-5678", en: "e.g. 090-1234-5678", vi: "Ví dụ: 090-1234-5678" }, // draft
+  optional: { ja: "任意", en: "Optional", vi: "Không bắt buộc" }, // draft
+  addressGroup: { ja: "住所", en: "Address", vi: "Địa chỉ" }, // draft
+  addressContact: { ja: "住所・連絡先", en: "Address and contact", vi: "Địa chỉ và liên hệ" }, // draft
+  loginInfo: { ja: "ログイン情報", en: "Login details", vi: "Thông tin đăng nhập" }, // draft
+  selfInfo: { ja: "ご本人の情報", en: "Your details", vi: "Thông tin của bạn" }, // draft
+  consentHeading: { ja: "同意事項", en: "Agreements", vi: "Đồng ý" }, // draft
+  agreePre: { ja: "", en: "I agree to the ", vi: "Tôi đồng ý với " }, // draft
+  agreeTermsPost: { ja: "に同意する", en: "", vi: "" },
+  agreePrivacyPost: {
+    ja: "に同意し、問診などの要配慮個人情報の取得に同意する",
+    en: " and to the collection of sensitive personal information such as questionnaire answers",
+    vi: " và đồng ý thu thập thông tin cá nhân nhạy cảm như câu trả lời phiếu hỏi bệnh",
+  }, // draft en/vi
+  newTabNote: { ja: "リンクは新しいタブで開きます。", en: "Links open in a new tab.", vi: "Liên kết mở trong tab mới." }, // draft
+  registerLead: {
+    ja: "ご本人の情報を登録します。ご家族は登録後にマイページから追加できます。",
+    en: "Register your own details. You can add family members on My page afterwards.",
+    vi: "Đăng ký thông tin của bạn. Bạn có thể thêm thành viên gia đình tại Trang của tôi sau khi đăng ký.",
+  }, // draft en/vi
+  registerBtn: { ja: "登録する", en: "Register", vi: "Đăng ký" }, // 07 §3
+  registering: { ja: "登録しています…", en: "Registering…", vi: "Đang đăng ký…" }, // draft
+  haveAccount: { ja: "アカウントをお持ちの方は", en: "Already have an account? ", vi: "Đã có tài khoản? " }, // draft
+  loginHere: { ja: "ログインはこちら", en: "Log in here", vi: "Đăng nhập tại đây" }, // draft
+  sentHeading: { ja: "確認メールを送信しました", en: "We have sent a confirmation e-mail", vi: "Đã gửi email xác nhận" }, // draft
+  spamHint: {
+    ja: "メールが届かない場合は、迷惑メールフォルダをご確認ください。",
+    en: "If the e-mail does not arrive, please check your spam folder.",
+    vi: "Nếu không nhận được email, vui lòng kiểm tra thư mục thư rác.",
+  }, // draft
+  sendBtn: { ja: "送信する", en: "Send", vi: "Gửi" }, // 07 §3
+  // P02
+  loggingIn: { ja: "ログインしています…", en: "Logging in…", vi: "Đang đăng nhập…" }, // draft
+  forgotLink: { ja: "パスワードを忘れた方", en: "Forgot your password?", vi: "Quên mật khẩu?" }, // vi spec item 7; en draft
+  firstTime: { ja: "初めての方", en: "New here?", vi: "Lần đầu sử dụng?" }, // draft
+  firstTimeLink: { ja: "初めての方: 会員登録", en: "New here? Register", vi: "Lần đầu sử dụng? Đăng ký" }, // draft
+  registerPitch: {
+    ja: "会員登録すると、Web予約・予約の確認・変更ができます。",
+    en: "Register to book online and to check or change your bookings.",
+    vi: "Đăng ký để đặt lịch trực tuyến và xem hoặc thay đổi lịch hẹn.",
+  }, // draft
+  staffNote: { ja: "スタッフの方も同じ画面からログインします。", en: "Staff log in on this screen too.", vi: "Nhân viên cũng đăng nhập tại màn hình này." }, // draft
+  resendBtn: { ja: "確認メールを再送する", en: "Resend the confirmation e-mail", vi: "Gửi lại email xác nhận" }, // draft
+  // P04 / P05
+  resetTitle: { ja: "パスワードの再設定", en: "Reset your password", vi: "Đặt lại mật khẩu" }, // vi 07; en draft
+  forgotLead: {
+    ja: "ご登録のメールアドレスを入力してください。パスワード再設定用のリンクをお送りします。",
+    en: "Enter your registered e-mail address. We will send you a link to reset your password.",
+    vi: "Nhập địa chỉ email đã đăng ký. Chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.",
+  }, // draft
+  mailSent: { ja: "メールを送信しました", en: "E-mail sent", vi: "Đã gửi email" }, // draft
+  backToLogin: { ja: "ログイン画面へ戻る", en: "Back to login", vi: "Quay lại đăng nhập" }, // draft
+  newPwTitle: { ja: "新しいパスワードの設定", en: "Set a new password", vi: "Đặt mật khẩu mới" }, // draft
+  targetPrefix: { ja: "対象:", en: "Account:", vi: "Tài khoản:" }, // draft
+  newPassword: { ja: "新しいパスワード", en: "New password", vi: "Mật khẩu mới" }, // draft
+  newPasswordConfirm: { ja: "新しいパスワード（確認）", en: "New password (confirm)", vi: "Mật khẩu mới (xác nhận)" }, // draft
+  changeBtn: { ja: "変更する", en: "Change", vi: "Thay đổi" }, // draft
+  changing: { ja: "変更しています…", en: "Changing…", vi: "Đang thay đổi…" }, // draft
+  changeNote: {
+    ja: "変更すると、ログイン中のすべての端末からログアウトします。",
+    en: "After the change you are logged out on every device.",
+    vi: "Sau khi thay đổi, bạn sẽ bị đăng xuất trên mọi thiết bị.",
+  }, // draft
+  applyAgain: { ja: "もう一度申し込む", en: "Request again", vi: "Yêu cầu lại" }, // draft
+  // P06
+  familyBtn: { ja: "家族を管理", en: "Manage family", vi: "Quản lý thành viên gia đình" }, // vi spec item 2; en draft
+  secProfile: { ja: "プロフィール", en: "Profile", vi: "Hồ sơ" }, // draft
+  secCards: { ja: "診察券番号", en: "Patient card numbers", vi: "Số thẻ khám bệnh" }, // vi 07; en draft
+  secLangNotify: { ja: "表示言語・通知", en: "Language and notifications", vi: "Ngôn ngữ và thông báo" }, // draft
+  pendingEmail: {
+    ja: "確認待ち: {address}（リンクを開くと変更されます）",
+    en: "Awaiting confirmation: {address} (changes when you open the link)",
+    vi: "Đang chờ xác nhận: {address} (sẽ thay đổi khi bạn mở liên kết)",
+  }, // draft en/vi
+  pendingBadge: { ja: "確認待ちあり", en: "Pending", vi: "Đang chờ" }, // draft
+  currentPassword: { ja: "現在のパスワード", en: "Current password", vi: "Mật khẩu hiện tại" }, // draft
+  pwChangeBtn: { ja: "パスワードを変更する", en: "Change password", vi: "Đổi mật khẩu" }, // draft
+  pwChangeHelp: {
+    ja: "3項目を入力すると押せます（保存するとは別）",
+    en: "Fill in all three fields to enable (separate from Save)",
+    vi: "Nhập đủ 3 mục để bật (tách biệt với Lưu)",
+  }, // draft; ja: spec 30-1 names the items 27–29
+  displayLang: { ja: "表示言語", en: "Display language", vi: "Ngôn ngữ hiển thị" }, // draft
+  notifyChannel: { ja: "通知方法", en: "Notification method", vi: "Phương thức thông báo" }, // draft
+  chMAIL: { ja: "メール", en: "E-mail", vi: "Email" }, // draft
+  chLINE: { ja: "LINE", en: "LINE", vi: "LINE" },
+  chSMS: { ja: "SMS", en: "SMS", vi: "SMS" },
+  smsAgree: { ja: "SMSでの通知を受け取ることに同意する", en: "I agree to receive notifications by SMS", vi: "Tôi đồng ý nhận thông báo qua SMS" }, // draft
+  smsHint: { ja: "（SMSは電話番号宛て）", en: " (sent to your phone number)", vi: " (gửi tới số điện thoại)" }, // draft
+  lineGroup: { ja: "LINE連携", en: "LINE link", vi: "Liên kết LINE" }, // draft
+  lineLinked: { ja: "連携済み", en: "Linked", vi: "Đã liên kết" }, // draft
+  lineNone: { ja: "未連携", en: "Not linked", vi: "Chưa liên kết" }, // draft
+  lineNeedFriend: { ja: "友だち追加が必要です", en: "Please add us as a friend", vi: "Cần kết bạn" }, // draft
+  lineLink: { ja: "LINEと連携する", en: "Link with LINE", vi: "Liên kết với LINE" }, // 07 §3
+  lineUnlink: { ja: "LINE連携を解除", en: "Unlink LINE", vi: "Hủy liên kết LINE" }, // draft
+  cardNoCol: { ja: "診察券番号（任意）", en: "Card number (optional)", vi: "Số thẻ khám bệnh (không bắt buộc)" }, // draft
+  cardNo: { ja: "診察券番号", en: "Patient card number", vi: "Số thẻ khám bệnh" }, // 07 (en draft)
+  cardState: { ja: "状態", en: "Status", vi: "Trạng thái" }, // draft
+  confirmed: { ja: "確認済み", en: "Confirmed", vi: "Đã xác nhận" }, // draft
+  unconfirmed: { ja: "未確認", en: "Unconfirmed", vi: "Chưa xác nhận" }, // draft
+  unregistered: { ja: "未登録", en: "Not registered", vi: "Chưa đăng ký" }, // draft
+  cardNote: {
+    ja: "未確認: ご自身で入力した番号です。来院時にスタッフが確認します。",
+    en: "Unconfirmed: a number you entered yourself. Staff will check it at your visit.",
+    vi: "Chưa xác nhận: số do bạn tự nhập. Nhân viên sẽ kiểm tra khi bạn đến khám.",
+  }, // draft
+  saveBtn: { ja: "保存する", en: "Save", vi: "Lưu" }, // 07 §3
+  withdrawHeading: { ja: "退会", en: "Close account", vi: "Xóa tài khoản" }, // vi 07; en draft
+  withdrawNote: {
+    ja: "退会すると、ご家族の情報を含めて利用できなくなります。今後の予約がある場合は退会できません。",
+    en: "After closing your account you can no longer use it, including your family members' details. You cannot close it while you have upcoming bookings.",
+    vi: "Sau khi xóa tài khoản, bạn không thể sử dụng nữa, kể cả thông tin gia đình. Không thể xóa khi còn lịch hẹn sắp tới.",
+  }, // draft
+  withdrawBtn: { ja: "退会する", en: "Close account", vi: "Xóa tài khoản" }, // vi 07; en draft
+  withdrawTitle: { ja: "退会しますか？", en: "Close your account?", vi: "Xóa tài khoản?" }, // draft
+  // P07
+  familyTitle: { ja: "家族管理", en: "Family members", vi: "Thành viên gia đình" }, // vi 07; en draft
+  familyLead: {
+    ja: "ご家族の予約をあなたのアカウントから行えます。登録できるご家族は{n}人までです。",
+    en: "You can book for your family from your account. You can register up to {n} family members.",
+    vi: "Bạn có thể đặt lịch cho gia đình từ tài khoản của mình. Có thể đăng ký tối đa {n} thành viên.",
+  }, // draft
+  familyLeadShort: { ja: "登録できるご家族は{n}人までです。", en: "Up to {n} family members.", vi: "Tối đa {n} thành viên." }, // draft
+  familyListHeading: { ja: "登録済みのご家族（{n}人）", en: "Registered family members ({n})", vi: "Thành viên đã đăng ký ({n})" }, // draft
+  bornOn: { ja: "{y}年{m}月{d}日生", en: "Born {d}/{m}/{y}", vi: "Sinh ngày {d}/{m}/{y}" }, // draft en/vi
+  editing: { ja: "編集中", en: "Editing", vi: "Đang sửa" }, // draft
+  bookForMember: { ja: "この家族で予約", en: "Book for this person", vi: "Đặt lịch cho người này" }, // vi spec item 3; en draft
+  edit: { ja: "編集", en: "Edit", vi: "Sửa" }, // draft
+  delete: { ja: "削除", en: "Remove", vi: "Xóa" }, // draft
+  addMember: { ja: "家族を追加する", en: "Add a family member", vi: "Thêm thành viên gia đình" }, // draft
+  relation: { ja: "続柄", en: "Relationship", vi: "Quan hệ" }, // draft
+  relCHILD: { ja: "子", en: "Child", vi: "Con" }, // 03 §2
+  relSPOUSE: { ja: "配偶者", en: "Spouse", vi: "Vợ/Chồng" }, // 03 §2
+  relPARENT: { ja: "親", en: "Parent", vi: "Cha/Mẹ" }, // 03 §2
+  relOTHER: { ja: "その他", en: "Other", vi: "Khác" }, // 03 §2
+  editHeading: { ja: "家族の情報を編集", en: "Edit family member", vi: "Sửa thông tin thành viên" }, // draft
+  addPrefillHelp: { ja: "追加時はあなたの住所を初期表示", en: "Your address is filled in when adding", vi: "Địa chỉ của bạn được điền sẵn khi thêm" }, // draft
+  deleteTitle: { ja: "{name}様を削除しますか？", en: "Remove {name}?", vi: "Xóa {name}?" }, // draft en/vi
+  dupMember: {
+    ja: "このご家族は既に登録されています。",
+    en: "This family member is already registered.",
+    vi: "Thành viên gia đình này đã được đăng ký.",
+  }, // draft: no 04 id for P07 §6-1 "not registered twice" (question in the W2 report)
 } satisfies Record<string, Row>;
 
 export type LabelKey = keyof typeof L;
